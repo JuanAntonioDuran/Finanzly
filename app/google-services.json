@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1001573231137",
+    "firebase_url": "https://finanzly-5b388-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "finanzly-5b388",
+    "storage_bucket": "finanzly-5b388.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001573231137:android:638e5841745b4eedbad160",
+        "android_client_info": {
+          "package_name": "com.Finanzly.es"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1001573231137-8u8nhjgbla97gs0anl0l9rp8ibhm9bpk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Finanzly.es",
+            "certificate_hash": "e1ca5a3d1d4a272d6e4d388efdc92f7d03b722b4"
+          }
+        },
+        {
+          "client_id": "1001573231137-ifqnmkc9jqnjjqb1t845val6ntuke36s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXPGcSqMe9DQqqjkzXJ8EkSk2jicQ8QMc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1001573231137-ifqnmkc9jqnjjqb1t845val6ntuke36s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

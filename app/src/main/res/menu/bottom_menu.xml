@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_movements"
+        android:icon="@drawable/ic_movement"
+        android:title="Movimientos" />
+
+    <item
+        android:id="@+id/nav_budgets"
+        android:icon="@drawable/ic_budget"
+        android:title="Presupuestos" />
+
+    <item
+        android:id="@+id/nav_goals"
+        android:icon="@drawable/ic_goal"
+        android:title="Metas" />
+
+    <item
+        android:id="@+id/nav_reminders"
+        android:icon="@drawable/ic_reminder"
+        android:title="Recordatorios" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_user"
+        android:title="Perfil" />
+
+</menu>

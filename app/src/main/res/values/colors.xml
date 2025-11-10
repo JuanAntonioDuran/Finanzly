@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- Básicos -->
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="gray_light">#FFF5F5F5</color>
+    <color name="gray_dark">#FF333333</color>
+
+    <!-- Azules (navbar y botones primarios) -->
+    <color name="blue_primary">#0D6EFD</color>      <!-- similar a Bootstrap primary -->
+    <color name="blue_light">#66B2FF</color>
+    <color name="blue_dark">#0042A5</color>
+
+    <!-- Verdes (éxito, iconos, alertas positivas) -->
+    <color name="green_success">#198754</color>    <!-- similar a Bootstrap success -->
+    <color name="green_light">#4CAF50</color>
+    <color name="green_dark">#0F5132</color>
+
+    <!-- Rojos / alertas (opcional) -->
+    <color name="red_error">#DC3545</color>
+    <color name="red_light">#FF6B6B</color>
 </resources>

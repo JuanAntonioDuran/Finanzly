@@ -10,12 +10,13 @@
     <color name="blue_primary">#0D6EFD</color>      <!-- similar a Bootstrap primary -->
     <color name="blue_light">#66B2FF</color>
     <color name="blue_dark">#0042A5</color>
+    <color name="blueAccent">#2980B9</color>   <!-- Azul acentuado -->
 
     <!-- Verdes (éxito, iconos, alertas positivas) -->
     <color name="green_success">#198754</color>    <!-- similar a Bootstrap success -->
     <color name="green_light">#4CAF50</color>
     <color name="green_dark">#0F5132</color>
-
+    <color name="green_primary">#43A047</color>
     <!-- Rojos / alertas (opcional) -->
     <color name="red_error">#DC3545</color>
     <color name="red_light">#FF6B6B</color>

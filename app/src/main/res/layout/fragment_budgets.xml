@@ -4,9 +4,9 @@
     android:id="@+id/budget_fragment_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/white">
 
-    <!-- Contenedor principal para scroll -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,103 +14,141 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:paddingBottom="24dp">
 
-            <!-- HEADER -->
+            <!-- 🟢 HEADER -->
             <TextView
                 android:id="@+id/tvBudgetTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Presupuestos"
                 android:textColor="@color/green_primary"
-                android:textSize="22sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 android:drawableStart="@drawable/ic_wallet"
                 android:drawablePadding="8dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/btnAddBudget"
-                app:layout_constraintHorizontal_bias="0" />
+                app:layout_constraintHorizontal_bias="0"
+                android:layout_marginBottom="8dp"/>
 
             <Button
                 android:id="@+id/btnAddBudget"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nuevo presupuesto"
+                android:text="Nuevo"
+                android:textAllCaps="false"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
                 android:backgroundTint="@color/green_primary"
                 android:textColor="@color/white"
+                android:textStyle="bold"
                 android:drawableStart="@drawable/ic_add_circle"
-                android:drawablePadding="4dp"
+                android:drawablePadding="6dp"
+                android:elevation="4dp"
+                android:layout_marginTop="4dp"
                 app:layout_constraintTop_toTopOf="@id/tvBudgetTitle"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- FILTROS -->
-            <EditText
-                android:id="@+id/etCategoryFilter"
+            <!-- 🧭 FILTROS -->
+            <LinearLayout
+                android:id="@+id/filter_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Categoría"
-                android:inputType="text"
-                android:padding="8dp"
-                android:background="@drawable/edit_text_background"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:elevation="3dp"
+                android:layout_marginTop="16dp"
                 app:layout_constraintTop_toBottomOf="@id/tvBudgetTitle"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/spinnerStatusFilter"
-                app:layout_constraintWidth_percent="0.45"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="8dp"/>
+                app:layout_constraintEnd_toEndOf="parent">
 
-            <Spinner
-                android:id="@+id/spinnerStatusFilter"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:entries="@array/budget_status_options"
-                app:layout_constraintTop_toBottomOf="@id/tvBudgetTitle"
-                app:layout_constraintStart_toEndOf="@id/etCategoryFilter"
-                app:layout_constraintEnd_toStartOf="@+id/btnApplyFilter"
-                app:layout_constraintWidth_percent="0.25"
-                android:layout_marginEnd="8dp"
-                android:layout_marginTop="12dp"/>
+                <!-- Primera fila: categoría y estado -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="12dp">
 
-            <Button
-                android:id="@+id/btnApplyFilter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Filtrar"
-                android:drawableStart="@drawable/ic_filter"
-                android:drawablePadding="4dp"
-                android:backgroundTint="@color/blueAccent"
-                android:textColor="@color/white"
-                app:layout_constraintTop_toBottomOf="@id/tvBudgetTitle"
-                app:layout_constraintEnd_toStartOf="@+id/btnClearFilter"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="4dp"/>
+                    <EditText
+                        android:id="@+id/etCategoryFilter"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:hint="Categoría"
+                        android:inputType="text"
+                        android:padding="12dp"
+                        android:background="@drawable/edit_text_background"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginEnd="8dp" />
 
-            <Button
-                android:id="@+id/btnClearFilter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Limpiar"
-                android:drawableStart="@drawable/ic_clear"
-                android:drawablePadding="4dp"
-                android:backgroundTint="@color/gray_dark"
-                android:textColor="@color/white"
-                app:layout_constraintTop_toBottomOf="@id/tvBudgetTitle"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp"/>
+                    <Spinner
+                        android:id="@+id/spinnerStatusFilter"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:entries="@array/budget_status_options"
+                        android:padding="10dp"
+                        android:background="@drawable/spinner_background"
+                        android:textAlignment="center" />
+                </LinearLayout>
 
-            <!-- RECYCLER VIEW -->
+                <!-- Segunda fila: botones -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btnApplyFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filtrar"
+                        android:textAllCaps="false"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/blueAccent"
+                        android:drawableStart="@drawable/ic_filter"
+                        android:drawablePadding="6dp"
+                        android:layout_marginEnd="8dp"
+                        android:elevation="3dp"/>
+
+                    <Button
+                        android:id="@+id/btnClearFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Limpiar"
+                        android:textAllCaps="false"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/gray_dark"
+                        android:drawableStart="@drawable/ic_clear"
+                        android:drawablePadding="6dp"
+                        android:elevation="3dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 🧾 LISTA -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvBudgets"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/etCategoryFilter"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintTop_toBottomOf="@id/filter_container"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:clipToPadding="false"/>
+                android:clipToPadding="false" />
 
-            <!-- VISTA VACÍA -->
+            <!-- ⚠️ VISTA VACÍA -->
             <TextView
                 android:id="@+id/tvNoBudgets"
                 android:layout_width="0dp"
@@ -118,11 +156,12 @@
                 android:text="No hay presupuestos creados todavía."
                 android:gravity="center"
                 android:textColor="@color/gray_dark"
+                android:textSize="16sp"
+                android:padding="24dp"
                 android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/rvBudgets"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="24dp"/>
+                app:layout_constraintEnd_toEndOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

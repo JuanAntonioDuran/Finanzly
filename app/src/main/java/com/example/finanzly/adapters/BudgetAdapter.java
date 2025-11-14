@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.finanzly.R;
 import com.example.finanzly.models.Budget;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -49,11 +50,12 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     @Override
     public void onBindViewHolder(@NonNull BudgetViewHolder holder, int position) {
         Budget budget = budgets.get(position);
+
         holder.tvCategory.setText(budget.getCategory());
         holder.tvLimit.setText("Límite: €" + budget.getLimit());
         holder.tvSpent.setText("Gastado: €" + budget.getSpent());
 
-        // Estado
+        // Estado del presupuesto
         if (budget.getSpent() < budget.getLimit()) {
             holder.tvStatus.setText("Activo");
             holder.tvStatus.setBackgroundResource(R.color.green_primary);
@@ -66,15 +68,29 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         int progress = (int) ((budget.getSpent() / budget.getLimit()) * 100);
         holder.progressBar.setProgress(Math.min(progress, 100));
 
-        // Click listeners
+        // UID del usuario actual
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // 🔐 Solo el dueño del presupuesto puede ver "Movimientos"
+        if (budget.getUserId().equals(currentUserId)) {
+            holder.btnViewMovements.setVisibility(View.VISIBLE);
+        } else {
+            holder.btnViewMovements.setVisibility(View.GONE);
+        }
+
+        // Listeners
         holder.btnEdit.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(budget);
         });
+
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(budget);
         });
+
         holder.btnViewMovements.setOnClickListener(v -> {
-            if (listener != null) listener.onViewMovements(budget);
+            if (listener != null && budget.getUserId().equals(currentUserId)) {
+                listener.onViewMovements(budget);
+            }
         });
     }
 

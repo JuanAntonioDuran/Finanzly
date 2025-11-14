@@ -1,5 +1,6 @@
 package com.example.finanzly.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.finanzly.R;
+import com.example.finanzly.activities.BudgetMovements;
 import com.example.finanzly.adapters.BudgetAdapter;
 import com.example.finanzly.adapters.UserAdapter;
 import com.example.finanzly.models.Budget;
@@ -317,9 +319,16 @@ public class BudgetsFragment extends Fragment {
     }
 
     private void goToMovements(Budget budget) {
-        // Aquí puedes abrir la Activity o Fragment de movimientos
-        showAlert("Movimientos", "Aquí se mostrarán los movimientos de: " + budget.getCategory());
+        if (budget == null || budget.getId() == null) {
+            showAlert("Error", "No se ha podido obtener el ID del presupuesto.");
+            return;
+        }
+
+        Intent intent = new Intent(getContext(), BudgetMovements.class);
+        intent.putExtra("budgetId", budget.getId());
+        startActivity(intent);
     }
+
 
 
 }

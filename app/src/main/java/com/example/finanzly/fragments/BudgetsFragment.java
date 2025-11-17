@@ -47,22 +47,18 @@ public class BudgetsFragment extends Fragment {
     private List<Budget> filteredBudgets = new ArrayList<>();
     private BudgetAdapter adapter;
 
-    // UID del usuario logueado
     private String currentUserId;
 
-    public BudgetsFragment() { }
+    public BudgetsFragment() {}
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_budgets, container, false);
 
-        // UID del usuario logueado
         currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
                 ? FirebaseAuth.getInstance().getCurrentUser().getUid()
                 : null;
 
-        // Inicializar vistas
         rvBudgets = root.findViewById(R.id.rvBudgets);
         tvNoBudgets = root.findViewById(R.id.tvNoBudgets);
         etCategoryFilter = root.findViewById(R.id.etCategoryFilter);
@@ -70,47 +66,39 @@ public class BudgetsFragment extends Fragment {
         btnApplyFilter = root.findViewById(R.id.btnApplyFilter);
         btnClearFilter = root.findViewById(R.id.btnClearFilter);
 
-        // Inicializar servicio
         budgetService = new BudgetService(getContext());
 
-        // Configurar RecyclerView y adaptador con acciones
         adapter = new BudgetAdapter(filteredBudgets, getContext());
         adapter.setOnBudgetClickListener(new BudgetAdapter.OnBudgetClickListener() {
             @Override
             public void onEdit(Budget budget) {
-                openBudgetDialog(budget); // Abrir diálogo para editar
+                openBudgetDialog(budget);
             }
 
             @Override
             public void onDelete(Budget budget) {
-                onDeleteBudget(budget); // Manejar eliminación
+                onDeleteBudget(budget);
             }
 
             @Override
             public void onViewMovements(Budget budget) {
-                goToMovements(budget); // Ir a movimientos
+                goToMovements(budget);
             }
         });
-
 
         rvBudgets.setLayoutManager(new LinearLayoutManager(getContext()));
         rvBudgets.setAdapter(adapter);
 
-        // Cargar presupuestos desde Firebase
         loadBudgets();
 
-        // Botones de filtros
         btnApplyFilter.setOnClickListener(v -> applyFilters());
         btnClearFilter.setOnClickListener(v -> clearFilters());
 
-        // Botón de agregar presupuesto
-        Button btnAddBudget = root.findViewById(R.id.btnAddBudget);
-        btnAddBudget.setOnClickListener(v -> openBudgetDialog(null));
+        root.findViewById(R.id.btnAddBudget).setOnClickListener(v -> openBudgetDialog(null));
 
         return root;
     }
 
-    // 📦 Cargar presupuestos desde Firebase
     private void loadBudgets() {
         budgetService.getReference().addValueEventListener(new ValueEventListener() {
             @Override
@@ -119,14 +107,13 @@ public class BudgetsFragment extends Fragment {
                 for (DataSnapshot child : snapshot.getChildren()) {
                     Budget budget = child.getValue(Budget.class);
                     if (budget != null) {
-                        // Mostrar solo si es propietario o colaborador
                         if (budget.getUserId().equals(currentUserId) ||
                                 (budget.getSharedUserIds() != null && budget.getSharedUserIds().contains(currentUserId))) {
                             allBudgets.add(budget);
                         }
                     }
                 }
-                applyFilters(); // Aplica filtros cada vez que cambia la data
+                applyFilters();
             }
 
             @Override
@@ -136,15 +123,16 @@ public class BudgetsFragment extends Fragment {
         });
     }
 
-    // 📊 Aplicar filtros
     private void applyFilters() {
         String categoryFilter = etCategoryFilter.getText().toString().trim();
         String statusFilter = spinnerStatusFilter.getSelectedItem().toString();
 
         filteredBudgets.clear();
+
         for (Budget budget : allBudgets) {
-            boolean matchesCategory = TextUtils.isEmpty(categoryFilter) ||
-                    budget.getCategory().toLowerCase().contains(categoryFilter.toLowerCase());
+            boolean matchesCategory = TextUtils.isEmpty(categoryFilter)
+                    || budget.getCategory().toLowerCase().contains(categoryFilter.toLowerCase());
+
             boolean matchesStatus = true;
 
             if ("Activo".equals(statusFilter)) {
@@ -162,14 +150,15 @@ public class BudgetsFragment extends Fragment {
         tvNoBudgets.setVisibility(filteredBudgets.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    // 🧹 Limpiar filtros
     private void clearFilters() {
         etCategoryFilter.setText("");
         spinnerStatusFilter.setSelection(0);
         applyFilters();
     }
 
-    // 🧾 Diálogo para crear o editar presupuesto
+    // -------------------------------------------------------------------------
+    // 🔥 AQUÍ ESTA TODA LA INTEGRACIÓN DEL BOTÓN ❌ Y ACTUALIZACIÓN EN FIREBASE
+    // -------------------------------------------------------------------------
     private void openBudgetDialog(Budget budgetToEdit) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_budget_form, null);
 
@@ -181,21 +170,29 @@ public class BudgetsFragment extends Fragment {
         TextView tvUsersTitle = dialogView.findViewById(R.id.tvUsersTitle);
 
         boolean isEditing = (budgetToEdit != null);
+
         List<User> sharedUsers = new ArrayList<>();
         List<String> sharedUserIds = new ArrayList<>();
-        UserAdapter usersAdapter = new UserAdapter(sharedUsers);
-
-        recyclerSharedUsers.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerSharedUsers.setAdapter(usersAdapter);
 
         UserService userService = new UserService(getContext());
 
-        // 🔁 Si estamos editando, cargamos los datos del presupuesto existente
+        // ⭐ FIX DEFINITIVO: Usar array para evitar error "might not have been initialized"
+        UserAdapter[] usersAdapter = new UserAdapter[1];
+
+        usersAdapter[0] = new UserAdapter(sharedUsers, user -> {
+            sharedUsers.remove(user);
+            sharedUserIds.remove(user.getUid());
+            usersAdapter[0].notifyDataSetChanged();
+        });
+
+        recyclerSharedUsers.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerSharedUsers.setAdapter(usersAdapter[0]);
+
         if (isEditing) {
             etCategory.setText(budgetToEdit.getCategory());
             etLimit.setText(String.valueOf(budgetToEdit.getLimit()));
 
-            if (budgetToEdit.getSharedUserIds() != null && !budgetToEdit.getSharedUserIds().isEmpty()) {
+            if (budgetToEdit.getSharedUserIds() != null) {
                 tvUsersTitle.setVisibility(View.VISIBLE);
                 recyclerSharedUsers.setVisibility(View.VISIBLE);
 
@@ -206,7 +203,7 @@ public class BudgetsFragment extends Fragment {
                             if (u != null) {
                                 sharedUsers.add(u);
                                 sharedUserIds.add(u.getUid());
-                                usersAdapter.notifyItemInserted(sharedUsers.size() - 1);
+                                usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
                             }
                         }
                     });
@@ -214,16 +211,16 @@ public class BudgetsFragment extends Fragment {
             }
         }
 
-        // ➕ Agregar usuario
         btnAddUser.setOnClickListener(v -> {
             String uid = etAddUserId.getText().toString().trim();
+
             if (uid.isEmpty()) {
                 Toast.makeText(getContext(), "Introduce un UID válido", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (sharedUserIds.contains(uid)) {
-                Toast.makeText(getContext(), "Ese usuario ya está agregado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Ese usuario ya está agregado.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -232,22 +229,19 @@ public class BudgetsFragment extends Fragment {
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
                         sharedUsers.add(user);
-                        sharedUserIds.add(user.getUid());
-                        usersAdapter.notifyItemInserted(sharedUsers.size() - 1);
+                        sharedUserIds.add(uid);
+                        usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
 
                         etAddUserId.setText("");
                         tvUsersTitle.setVisibility(View.VISIBLE);
                         recyclerSharedUsers.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    Toast.makeText(getContext(), "Usuario no encontrado", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Usuario no encontrado.", Toast.LENGTH_SHORT).show();
                 }
-            }).addOnFailureListener(e ->
-                    Toast.makeText(getContext(), "Error al buscar el usuario", Toast.LENGTH_SHORT).show()
-            );
+            });
         });
 
-        // 💾 Crear o actualizar presupuesto
         new androidx.appcompat.app.AlertDialog.Builder(getContext())
                 .setTitle(isEditing ? "Editar presupuesto" : "Nuevo presupuesto")
                 .setView(dialogView)
@@ -255,8 +249,8 @@ public class BudgetsFragment extends Fragment {
                     String category = etCategory.getText().toString().trim();
                     String limitStr = etLimit.getText().toString().trim();
 
-                    if (TextUtils.isEmpty(category) || TextUtils.isEmpty(limitStr)) {
-                        showAlert("Campos incompletos", "Introduce una categoría y un límite válido.");
+                    if (category.isEmpty() || limitStr.isEmpty()) {
+                        showAlert("Campos incompletos", "Debes llenar todos los campos.");
                         return;
                     }
 
@@ -270,7 +264,9 @@ public class BudgetsFragment extends Fragment {
                         budgetToEdit.setCategory(category);
                         budgetToEdit.setLimit(limit);
                         budgetToEdit.setSharedUserIds(sharedUserIds);
+
                         budgetService.update(budgetToEdit.getId(), budgetToEdit);
+
                         showAlert("Actualizado", "Presupuesto actualizado correctamente.");
                     } else {
                         Budget newBudget = new Budget();
@@ -279,7 +275,9 @@ public class BudgetsFragment extends Fragment {
                         newBudget.setSpent(0);
                         newBudget.setUserId(currentUserId);
                         newBudget.setSharedUserIds(sharedUserIds);
+
                         budgetService.insert(newBudget);
+
                         showAlert("Creado", "Presupuesto creado correctamente.");
                     }
 
@@ -290,7 +288,6 @@ public class BudgetsFragment extends Fragment {
     }
 
 
-    // 📍 Mostrar alerta simple
     private void showAlert(String title, String message) {
         new androidx.appcompat.app.AlertDialog.Builder(getContext())
                 .setTitle(title)
@@ -301,7 +298,6 @@ public class BudgetsFragment extends Fragment {
 
     private void onDeleteBudget(Budget budget) {
         if (budget.getUserId().equals(currentUserId)) {
-            // Propietario elimina
             new androidx.appcompat.app.AlertDialog.Builder(getContext())
                     .setTitle("¿Eliminar presupuesto?")
                     .setMessage("Esta acción no se puede deshacer")
@@ -312,7 +308,6 @@ public class BudgetsFragment extends Fragment {
                     .setNegativeButton("Cancelar", null)
                     .show();
         } else {
-            // Colaborador sale
             budgetService.removeCollaborator(budget.getId(), currentUserId);
             loadBudgets();
         }
@@ -320,7 +315,7 @@ public class BudgetsFragment extends Fragment {
 
     private void goToMovements(Budget budget) {
         if (budget == null || budget.getId() == null) {
-            showAlert("Error", "No se ha podido obtener el ID del presupuesto.");
+            showAlert("Error", "No se pudo obtener el ID del presupuesto.");
             return;
         }
 
@@ -328,7 +323,4 @@ public class BudgetsFragment extends Fragment {
         intent.putExtra("budgetId", budget.getId());
         startActivity(intent);
     }
-
-
-
 }

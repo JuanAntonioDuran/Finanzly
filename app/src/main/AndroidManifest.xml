@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Finanzly">
         <activity
+            android:name=".activities.GoalMovements"
+            android:exported="false" />
+        <activity
             android:name=".activities.BudgetMovements"
             android:exported="false" />
         <activity

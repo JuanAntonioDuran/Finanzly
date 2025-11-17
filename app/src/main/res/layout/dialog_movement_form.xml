@@ -15,7 +15,6 @@
         android:text="Fecha"
         android:textColor="@color/gray_dark"
         android:textStyle="bold"
-        android:layout_marginTop="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_percent="0.3"/>
@@ -76,6 +75,19 @@
         app:layout_constraintTop_toTopOf="@id/tvDescriptionLabel"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- Tipo de movimiento (oculto por defecto) -->
+    <Button
+        android:id="@+id/btnType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tipo"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/etDescription"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:backgroundTint="@color/blue_dark"
+        android:textColor="@color/white"/>
+
     <!-- Botones -->
     <LinearLayout
         android:id="@+id/buttonContainer"
@@ -83,7 +95,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/etDescription"
+        app:layout_constraintTop_toBottomOf="@id/btnType"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:gravity="end">

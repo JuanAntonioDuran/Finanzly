@@ -5,4 +5,11 @@
         <item>Activo</item>
         <item>Excedido</item>
     </string-array>
+    <string-array name="goal_status_options">
+        <item>Todos</item>
+        <item>Completada</item>
+        <item>En progreso</item>
+        <item>Fallida</item>
+
+    </string-array>
 </resources>

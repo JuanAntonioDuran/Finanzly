@@ -1,66 +1,337 @@
 package com.example.finanzly.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.finanzly.R;
+import com.example.finanzly.activities.GoalMovements;
+import com.example.finanzly.adapters.GoalAdapter;
+import com.example.finanzly.adapters.UserAdapter;
+import com.example.finanzly.models.Goal;
+import com.example.finanzly.models.User;
+import com.example.finanzly.services.GoalService;
+import com.example.finanzly.services.UserService;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link GoalsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.List;
+
 public class GoalsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private GoalService goalService;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView rvGoals;
+    private TextView tvNoGoals;
+    private EditText etTitleFilter;
+    private Button btnApplyFilter, btnClearFilter;
 
-    public GoalsFragment() {
-        // Required empty public constructor
-    }
+    private List<Goal> allGoals = new ArrayList<>();
+    private List<Goal> filteredGoals = new ArrayList<>();
+    private GoalAdapter adapter;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment GoalsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static GoalsFragment newInstance(String param1, String param2) {
-        GoalsFragment fragment = new GoalsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private String currentUserId;
+
+    public GoalsFragment() {}
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_goals, container, false);
+
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : null;
+
+        rvGoals = root.findViewById(R.id.rvGoals);
+        tvNoGoals = root.findViewById(R.id.tvNoGoals);
+        etTitleFilter = root.findViewById(R.id.etTitleFilter);
+        btnApplyFilter = root.findViewById(R.id.btnApplyGoalFilter);
+        btnClearFilter = root.findViewById(R.id.btnClearGoalFilter);
+
+        goalService = new GoalService(getContext());
+
+        adapter = new GoalAdapter(filteredGoals, getContext());
+        adapter.setOnGoalClickListener(new GoalAdapter.OnGoalClickListener() {
+            @Override
+            public void onAddProgress(Goal goal) {
+                goToGoalMovements(goal);
+            }
+
+            @Override
+            public void onEdit(Goal goal) {
+                openGoalDialog(goal);
+            }
+
+            @Override
+            public void onDelete(Goal goal) {
+                onDeleteGoal(goal);
+            }
+        });
+
+        rvGoals.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvGoals.setAdapter(adapter);
+
+        loadGoals();
+
+        btnApplyFilter.setOnClickListener(v -> applyFilters());
+        btnClearFilter.setOnClickListener(v -> clearFilters());
+
+        root.findViewById(R.id.btnAddGoal).setOnClickListener(v -> openGoalDialog(null));
+
+        return root;
+    }
+
+    private void loadGoals() {
+        goalService.getReference().addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                allGoals.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Goal goal = child.getValue(Goal.class);
+                    if (goal != null && (goal.getUserId().equals(currentUserId)
+                            || (goal.getSharedUserIds() != null && goal.getSharedUserIds().contains(currentUserId)))) {
+                        allGoals.add(goal);
+                    }
+                }
+                applyFilters();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                showAlert("Error", "No se pudieron cargar las metas: " + error.getMessage());
+            }
+        });
+    }
+
+    private void applyFilters() {
+        String titleFilter = etTitleFilter.getText().toString().trim();
+
+        filteredGoals.clear();
+        for (Goal goal : allGoals) {
+            boolean matchesTitle = TextUtils.isEmpty(titleFilter) ||
+                    goal.getTitle().toLowerCase().contains(titleFilter.toLowerCase());
+            if (matchesTitle) filteredGoals.add(goal);
+        }
+
+        adapter.notifyDataSetChanged();
+        tvNoGoals.setVisibility(filteredGoals.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void clearFilters() {
+        etTitleFilter.setText("");
+        applyFilters();
+    }
+
+    private void openGoalDialog(Goal goalToEdit) {
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_goal_form, null);
+
+        EditText etTitle = dialogView.findViewById(R.id.etTitle);
+        EditText etTargetAmount = dialogView.findViewById(R.id.etTargetAmount);
+        EditText etDeadline = dialogView.findViewById(R.id.etDeadline);
+        EditText etAddUserId = dialogView.findViewById(R.id.etAddUserId);
+        Button btnAddUser = dialogView.findViewById(R.id.btnAddUser);
+        RecyclerView recyclerSharedUsers = dialogView.findViewById(R.id.recyclerSharedUsers);
+        TextView tvUsersTitle = dialogView.findViewById(R.id.tvUsersTitle);
+
+        boolean isEditing = (goalToEdit != null);
+
+        List<User> sharedUsers = new ArrayList<>();
+        List<String> sharedUserIds = new ArrayList<>();
+        UserService userService = new UserService(getContext());
+
+        UserAdapter[] usersAdapter = new UserAdapter[1];
+        usersAdapter[0] = new UserAdapter(sharedUsers, user -> {
+            sharedUsers.remove(user);
+            sharedUserIds.remove(user.getUid());
+            usersAdapter[0].notifyDataSetChanged();
+        });
+
+        recyclerSharedUsers.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerSharedUsers.setAdapter(usersAdapter[0]);
+
+        if (isEditing) {
+            etTitle.setText(goalToEdit.getTitle());
+            etTargetAmount.setText(String.valueOf(goalToEdit.getTargetAmount()));
+            etDeadline.setText(goalToEdit.getDeadline());
+
+            if (goalToEdit.getSharedUserIds() != null) {
+                tvUsersTitle.setVisibility(View.VISIBLE);
+                recyclerSharedUsers.setVisibility(View.VISIBLE);
+
+                for (String uid : goalToEdit.getSharedUserIds()) {
+                    userService.getById(uid).get().addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            User u = snapshot.getValue(User.class);
+                            if (u != null) {
+                                sharedUsers.add(u);
+                                sharedUserIds.add(u.getUid());
+                                usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        btnAddUser.setOnClickListener(v -> {
+            String uid = etAddUserId.getText().toString().trim();
+            if (uid.isEmpty()) {
+                Toast.makeText(getContext(), "Introduce un UID válido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (sharedUserIds.contains(uid)) {
+                Toast.makeText(getContext(), "Ese usuario ya está agregado.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            userService.getById(uid).get().addOnSuccessListener(snapshot -> {
+                if (snapshot.exists()) {
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        sharedUsers.add(user);
+                        sharedUserIds.add(uid);
+                        usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
+                        etAddUserId.setText("");
+                        tvUsersTitle.setVisibility(View.VISIBLE);
+                        recyclerSharedUsers.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Usuario no encontrado.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        // -------------------------- DatePicker para la fecha --------------------------
+        etDeadline.setFocusable(false);
+        etDeadline.setClickable(true);
+        etDeadline.setOnClickListener(v -> {
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            int year = calendar.get(java.util.Calendar.YEAR);
+            int month = calendar.get(java.util.Calendar.MONTH);
+            int day = calendar.get(java.util.Calendar.DAY_OF_MONTH);
+
+            android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
+                    getContext(),
+                    (view, selectedYear, selectedMonth, selectedDay) -> {
+                        String formattedDate = String.format("%02d/%02d/%04d", selectedDay, selectedMonth + 1, selectedYear);
+                        etDeadline.setText(formattedDate);
+                    },
+                    year, month, day
+            );
+            datePickerDialog.show();
+        });
+        // ------------------------------------------------------------------------------
+
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle(isEditing ? "Editar meta" : "Nueva meta")
+                .setView(dialogView)
+                .setPositiveButton(isEditing ? "Actualizar" : "Guardar", (dialog, which) -> {
+                    String title = etTitle.getText().toString().trim();
+                    String targetStr = etTargetAmount.getText().toString().trim();
+                    String deadline = etDeadline.getText().toString().trim();
+
+                    if (title.isEmpty() || targetStr.isEmpty()) {
+                        showAlert("Campos incompletos", "Debes llenar todos los campos.");
+                        return;
+                    }
+
+                    double target = Double.parseDouble(targetStr);
+                    if (target <= 0) {
+                        showAlert("Cantidad inválida", "Debe ser mayor que 0.");
+                        return;
+                    }
+
+                    if (isEditing) {
+                        // Confirmación antes de actualizar
+                        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                                .setTitle("Confirmar actualización")
+                                .setMessage("¿Estás seguro de actualizar esta meta?")
+                                .setPositiveButton("Sí", (confirmDialog, confirmWhich) -> {
+                                    goalToEdit.setTitle(title);
+                                    goalToEdit.setTargetAmount(target);
+                                    goalToEdit.setDeadline(deadline);
+                                    goalToEdit.setSharedUserIds(sharedUserIds);
+                                    goalService.update(goalToEdit.getId(), goalToEdit);
+                                    showAlert("Actualizado", "Meta actualizada correctamente.");
+                                    loadGoals();
+                                })
+                                .setNegativeButton("Cancelar", null)
+                                .show();
+                    } else {
+                        Goal newGoal = new Goal();
+                        newGoal.setTitle(title);
+                        newGoal.setTargetAmount(target);
+                        newGoal.setCurrentAmount(0);
+                        newGoal.setUserId(currentUserId);
+                        newGoal.setDeadline(deadline);
+                        newGoal.setSharedUserIds(sharedUserIds);
+                        goalService.insert(newGoal);
+                        showAlert("Creado", "Meta creada correctamente.");
+                        loadGoals();
+                    }
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void onDeleteGoal(Goal goal) {
+        if (goal.getUserId().equals(currentUserId)) {
+            new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                    .setTitle("¿Eliminar meta?")
+                    .setMessage("Esta acción no se puede deshacer. ¿Deseas continuar?")
+                    .setPositiveButton("Sí", (dialog, which) -> {
+                        goalService.delete(goal.getId());
+                        showAlert("Eliminado", "Meta eliminada correctamente.");
+                        loadGoals();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        } else {
+            new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                    .setTitle("Quitar acceso")
+                    .setMessage("¿Deseas dejar de compartir esta meta?")
+                    .setPositiveButton("Sí", (dialog, which) -> {
+                        goalService.removeSharedUser(goal.getId(), currentUserId);
+                        showAlert("Actualizado", "Se ha dejado de compartir la meta.");
+                        loadGoals();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_goals, container, false);
+    private void showAlert(String title, String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
+
+    private void goToGoalMovements(Goal goal) {
+        if (goal == null || goal.getId() == null) {
+            showAlert("Error", "No se pudo obtener el ID de la meta.");
+            return;
+        }
+
+        Intent intent = new Intent(getContext(), GoalMovements.class);
+        intent.putExtra("goalId", goal.getId());
+        startActivity(intent);
+    }
+
 }

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    card_view:cardCornerRadius="8dp"
+    android:layout_marginBottom="8dp"
+    card_view:cardElevation="4dp"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Cabecera: título y estado -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvGoalTitle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Título de la meta"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvGoalStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Activo"
+                android:textColor="@android:color/white"
+                android:padding="4dp"
+                android:background="@color/green_primary" />
+        </LinearLayout>
+
+        <!-- Objetivo y progreso -->
+        <TextView
+            android:id="@+id/tvGoalTarget"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Meta: €0"
+            android:textSize="14sp"
+            android:paddingTop="4dp"/>
+        <TextView
+            android:id="@+id/tvGoalCurrent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Progreso: €0"
+            android:textSize="14sp"
+            android:paddingTop="2dp"/>
+
+        <!-- Barra de progreso -->
+        <ProgressBar
+            android:id="@+id/progressBarGoal"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="6dp"
+            android:progress="0"
+            android:progressTint="@color/green_primary"
+            android:backgroundTint="@color/gray_light"/>
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="6dp"
+            android:weightSum="3">
+
+            <Button
+                android:id="@+id/btnGoalAddProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Movimientos"
+                android:layout_weight="1"
+                android:backgroundTint="@color/blueAccent"
+                android:textColor="@android:color/white"/>
+
+            <Button
+                android:id="@+id/btnGoalEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Editar"
+                android:layout_weight="1"
+                android:backgroundTint="@color/green_primary"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp"/>
+
+            <Button
+                android:id="@+id/btnGoalDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eliminar"
+                android:layout_weight="1"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,14 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/goal_fragment_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.GoalsFragment">
+    android:padding="16dp"
+    android:background="@color/white">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:fillViewport="true">
 
-</FrameLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="24dp">
+
+            <!-- 🟢 HEADER -->
+            <TextView
+                android:id="@+id/tvGoalTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Metas"
+                android:textColor="@color/green_primary"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:drawableStart="@drawable/ic_goal"
+                android:drawablePadding="8dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btnAddGoal"
+                app:layout_constraintHorizontal_bias="0"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnAddGoal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nueva"
+                android:textAllCaps="false"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:backgroundTint="@color/green_primary"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:drawableStart="@drawable/ic_add_circle"
+                android:drawablePadding="6dp"
+                android:elevation="4dp"
+                android:layout_marginTop="4dp"
+                app:layout_constraintTop_toTopOf="@id/tvGoalTitle"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- 🧭 FILTROS (Opcional) -->
+            <LinearLayout
+                android:id="@+id/filter_container"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:elevation="3dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/tvGoalTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- Primera fila: título y estado de la meta (activo/completado) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="12dp">
+
+                    <EditText
+                        android:id="@+id/etTitleFilter"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:hint="Nombre de la meta"
+                        android:inputType="text"
+                        android:padding="12dp"
+                        android:background="@drawable/edit_text_background"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <Spinner
+                        android:id="@+id/spinnerGoalStatusFilter"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:entries="@array/goal_status_options"
+                        android:padding="10dp"
+                        android:background="@drawable/spinner_background"
+                        android:textAlignment="center" />
+                </LinearLayout>
+
+                <!-- Segunda fila: botones -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btnApplyGoalFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filtrar"
+                        android:textAllCaps="false"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/blueAccent"
+                        android:drawableStart="@drawable/ic_filter"
+                        android:drawablePadding="6dp"
+                        android:layout_marginEnd="8dp"
+                        android:elevation="3dp"/>
+
+                    <Button
+                        android:id="@+id/btnClearGoalFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Limpiar"
+                        android:textAllCaps="false"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/gray_dark"
+                        android:drawableStart="@drawable/ic_clear"
+                        android:drawablePadding="6dp"
+                        android:elevation="3dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 🧾 LISTA DE METAS -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvGoals"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintTop_toBottomOf="@id/filter_container"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:clipToPadding="false" />
+
+            <!-- ⚠️ VISTA VACÍA -->
+            <TextView
+                android:id="@+id/tvNoGoals"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="No hay metas creadas todavía."
+                android:gravity="center"
+                android:textColor="@color/gray_dark"
+                android:textSize="16sp"
+                android:padding="24dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/rvGoals"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

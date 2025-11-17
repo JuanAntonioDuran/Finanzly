@@ -10,21 +10,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.finanzly.R;
 import com.example.finanzly.adapters.MovementAdapter;
-import com.example.finanzly.models.Budget;
+import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Movement;
 import com.example.finanzly.models.User;
-import com.example.finanzly.services.BudgetService;
+import com.example.finanzly.services.GoalService;
 import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -40,13 +36,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-public class BudgetMovements extends AppCompatActivity {
+public class GoalMovements extends AppCompatActivity {
 
     private RecyclerView recyclerViewMovements;
     private MovementAdapter adapter;
     private List<Movement> movementList;
     private MovementService movementService;
-    private BudgetService budgetService;
+    private GoalService goalService;
     private UserService userService;
 
     private TextView tvEmptyState;
@@ -55,8 +51,8 @@ public class BudgetMovements extends AppCompatActivity {
     private TextView tvTitle;
     private ProgressBar progressTop;
 
-    private String budgetId;
-    private Budget currentBudget;
+    private String goalId;
+    private Goal currentGoal;
 
     private ImageButton btnBack;
     private FloatingActionButton fabAddMovement;
@@ -64,19 +60,12 @@ public class BudgetMovements extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_budget_movements);
+        setContentView(R.layout.activity_goal_movements);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-        // Inicialización
+        // Inicialización de vistas
         recyclerViewMovements = findViewById(R.id.recyclerViewMovements);
         tvEmptyState = findViewById(R.id.tvEmptyState);
-        tvSpent = findViewById(R.id.tvSpent);
+        tvSpent = findViewById(R.id.tvRemaining);
         tvPercent = findViewById(R.id.tvPercent);
         progressTop = findViewById(R.id.progressTop);
         tvTitle = findViewById(R.id.tvTitle);
@@ -84,8 +73,9 @@ public class BudgetMovements extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
         fabAddMovement = findViewById(R.id.fabAddMovement);
 
+        // Servicios
         movementService = new MovementService(this);
-        budgetService = new BudgetService(this);
+        goalService = new GoalService(this);
         userService = new UserService(this);
 
         movementList = new ArrayList<>();
@@ -93,31 +83,30 @@ public class BudgetMovements extends AppCompatActivity {
         recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewMovements.setAdapter(adapter);
 
+        // Botón de volver
         btnBack.setOnClickListener(v -> finish());
         fabAddMovement.setOnClickListener(v -> openMovementDialog(null));
 
-        // Recibir ID del presupuesto
-        budgetId = getIntent().getStringExtra("budgetId");
-        if (budgetId == null) {
-            Toast.makeText(this, "No se recibió budgetId", Toast.LENGTH_SHORT).show();
+        // Recibir ID del Goal
+        goalId = getIntent().getStringExtra("goalId");
+        if (goalId == null) {
+            Toast.makeText(this, "No se recibió goalId", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Cargar presupuesto
-        budgetService.getById(budgetId).addListenerForSingleValueEvent(new ValueEventListener() {
+        // Cargar goal
+        goalService.getById(goalId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    currentBudget = snapshot.getValue(Budget.class);
-
-                    if (currentBudget != null && currentBudget.getCategory() != null) {
-                        tvTitle.setText("Movimientos de \"" + currentBudget.getCategory() + "\"");
+                    currentGoal = snapshot.getValue(Goal.class);
+                    if (currentGoal != null) {
+                        tvTitle.setText("Movimientos de \"" + currentGoal.getTitle() + "\"");
+                        updateSpentText();
+                        updateProgressBar();
+                        loadMovements();
                     }
-
-                    updateSpentText();
-                    updateProgressBar();
-                    loadMovements();
                 }
             }
 
@@ -140,8 +129,8 @@ public class BudgetMovements extends AppCompatActivity {
 
     private void loadMovements() {
         movementService.getReference()
-                .orderByChild("linkedBudgetId")
-                .equalTo(budgetId)
+                .orderByChild("linkedGoalId")
+                .equalTo(goalId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot snapshot) {
@@ -150,7 +139,6 @@ public class BudgetMovements extends AppCompatActivity {
                             Movement movement = ds.getValue(Movement.class);
                             if (movement != null) {
                                 movementList.add(movement);
-
                                 userService.getById(movement.getUserId()).get()
                                         .addOnSuccessListener(userSnap -> {
                                             if (userSnap.exists()) {
@@ -164,8 +152,7 @@ public class BudgetMovements extends AppCompatActivity {
                         }
                         adapter.notifyDataSetChanged();
                         tvEmptyState.setVisibility(movementList.isEmpty() ? View.VISIBLE : View.GONE);
-
-                        recalculateBudgetSpent();
+                        recalculateGoalCurrentAmount();
                     }
 
                     @Override
@@ -183,6 +170,16 @@ public class BudgetMovements extends AppCompatActivity {
         EditText etDescription = dialogView.findViewById(R.id.etDescription);
         Button btnSave = dialogView.findViewById(R.id.btnSave);
         Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        Button btnType = dialogView.findViewById(R.id.btnType);
+
+        // 🔹 Desbloquear tipo solo en GoalMovements
+        btnType.setVisibility(View.VISIBLE);
+        final String[] type = {isNew ? "income" : m.getType()};
+        btnType.setText(type[0].equals("income") ? "Ingreso" : "Gasto");
+        btnType.setOnClickListener(v -> {
+            type[0] = type[0].equals("income") ? "expense" : "income";
+            btnType.setText(type[0].equals("income") ? "Ingreso" : "Gasto");
+        });
 
         if (!isNew) {
             etDate.setText(m.getDate());
@@ -220,44 +217,36 @@ public class BudgetMovements extends AppCompatActivity {
 
             double amount = Double.parseDouble(amountStr);
 
-            if (isNew) {
-                // Ajustar límite al crear
-                double maxAllowed = currentBudget.getLimit() - currentBudget.getSpent();
-                if (amount > maxAllowed) {
-                    amount = maxAllowed;
-                    Toast.makeText(this, "El gasto se ajustó al límite restante del presupuesto", Toast.LENGTH_LONG).show();
-                }
-            } else {
-                // Validar límite al editar
-                double currentSpentWithoutThis = currentBudget.getSpent() - m.getAmount();
-                double maxAllowed = currentBudget.getLimit() - currentSpentWithoutThis;
-                if (amount > maxAllowed) {
-                    Toast.makeText(this, "No se puede actualizar: el gasto excede el límite del presupuesto", Toast.LENGTH_LONG).show();
-                    return; // No permite guardar
-                }
+            // Validación: al editar no sobrepasar límites
+            double currentAmountWithoutThis = isNew ? currentGoal.getCurrentAmount() :
+                    currentGoal.getCurrentAmount() - (m.getType().equals("income") ? m.getAmount() : -m.getAmount());
+            double projected = currentAmountWithoutThis + (type[0].equals("income") ? amount : -amount);
+
+            if (projected < 0) {
+                Toast.makeText(this, "No se puede disminuir más de lo acumulado", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (projected > currentGoal.getTargetAmount()) {
+                Toast.makeText(this, "No se puede superar el objetivo", Toast.LENGTH_LONG).show();
+                return;
             }
 
             m.setId(isNew ? UUID.randomUUID().toString() : m.getId());
-            m.setType("expense");
+            m.setType(type[0]);
             m.setDate(date);
             m.setDescription(desc);
             m.setAmount(amount);
-            m.setLinkedBudgetId(budgetId);
+            m.setLinkedGoalId(goalId);
             m.setUserId(FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-            // Asignar categoría del presupuesto al movimiento
-            if (currentBudget != null) {
-                m.setCategory(currentBudget.getCategory());
-            }
 
             if (isNew) movementService.insert(m);
             else movementService.update(m.getId(), m);
 
-            recalculateBudgetSpent();
+            recalculateGoalCurrentAmount();
             updateProgressBar();
 
             dialog.dismiss();
-            Toast.makeText(this, isNew ? "Gasto creado" : "Gasto actualizado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, isNew ? "Movimiento creado" : "Movimiento actualizado", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();
@@ -265,36 +254,41 @@ public class BudgetMovements extends AppCompatActivity {
 
     private void deleteMovement(Movement movement) {
         new AlertDialog.Builder(this)
-                .setTitle("Eliminar gasto")
-                .setMessage("¿Seguro que quieres eliminar este gasto?")
+                .setTitle("Eliminar movimiento")
+                .setMessage("¿Seguro que quieres eliminar este movimiento?")
                 .setPositiveButton("Sí", (d, w) -> {
                     movementService.delete(movement.getId());
-                    recalculateBudgetSpent();
+                    recalculateGoalCurrentAmount();
                     updateProgressBar();
+                    Toast.makeText(this, "Movimiento eliminado", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
 
-    private void recalculateBudgetSpent() {
+    private void recalculateGoalCurrentAmount() {
         movementService.getReference()
-                .orderByChild("linkedBudgetId")
-                .equalTo(budgetId)
+                .orderByChild("linkedGoalId")
+                .equalTo(goalId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     double total = 0;
                     for (DataSnapshot ds : snapshot.getChildren()) {
                         Movement m = ds.getValue(Movement.class);
-                        if (m != null && m.getType().equals("expense")) {
-                            total += m.getAmount();
+                        if (m != null) {
+                            total += m.getType().equals("income") ? m.getAmount() : -m.getAmount();
                         }
                     }
 
-                    HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("spent", total);
-                    budgetService.updatePartial(budgetId, updates);
+                    // Limitar entre 0 y target
+                    if (total < 0) total = 0;
+                    if (total > currentGoal.getTargetAmount()) total = currentGoal.getTargetAmount();
 
-                    currentBudget.setSpent(total);
+                    HashMap<String, Object> updates = new HashMap<>();
+                    updates.put("currentAmount", total);
+                    goalService.updatePartial(goalId, updates);
+
+                    currentGoal.setCurrentAmount(total);
 
                     updateSpentText();
                     updateProgressBar();
@@ -302,22 +296,16 @@ public class BudgetMovements extends AppCompatActivity {
     }
 
     private void updateSpentText() {
-        if (currentBudget != null) {
-            double remaining = currentBudget.getLimit() - currentBudget.getSpent();
-            if (remaining <= 0) remaining = 0;
-            tvSpent.setText(" — Te quedan " + remaining + "€");
+        if (currentGoal != null) {
+            double remaining = currentGoal.getTargetAmount() - currentGoal.getCurrentAmount();
+            tvSpent.setText(" — Te faltan " + remaining + "€");
         }
     }
 
     private void updateProgressBar() {
-        if (currentBudget == null) return;
+        if (currentGoal == null) return;
 
-        double limit = currentBudget.getLimit();
-        double spent = currentBudget.getSpent();
-
-        if (limit <= 0) return;
-
-        double percent = (spent / limit) * 100;
+        double percent = (currentGoal.getCurrentAmount() / currentGoal.getTargetAmount()) * 100;
         if (percent > 100) percent = 100;
 
         progressTop.setProgress((int) percent);

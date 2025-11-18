@@ -10,6 +10,19 @@
         <item>Completada</item>
         <item>En progreso</item>
         <item>Fallida</item>
-
     </string-array>
+    <string-array name="movement_type_filter">
+        <item>Todos</item>
+        <item>Ingreso</item>
+        <item>Gasto</item>
+    </string-array>
+    <string-array name="movement_type">
+        <item>Ingreso</item>
+        <item>Gasto</item>
+    </string-array>
+    <string-array name="movement_target_type">
+        <item>Presupuesto</item>
+        <item>Meta</item>
+    </string-array>
+
 </resources>

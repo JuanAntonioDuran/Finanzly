@@ -4,14 +4,14 @@ import java.util.List;
 
 public class Goal {
 
-    private String id;                  // ID único (Firebase)
+     private String id;                  // ID único (Firebase)
     private String userId;              // ID del usuario propietario
     private List<String> sharedUserIds; // IDs de otros usuarios con acceso
     private String title;               // Nombre del objetivo ("Ahorro para vacaciones")
     private double targetAmount;        // Cantidad meta
     private double currentAmount;       // Progreso actual
     private String deadline;            // Fecha límite (opcional)
-    private String createdAt;           // Fecha de creación (opcional)
+    private String createdAt;          // Fecha de creación (opcional)
 
     // 🔹 Constructor vacío (Firebase lo necesita)
     public Goal() {

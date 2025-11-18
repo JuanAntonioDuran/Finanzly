@@ -1,9 +1,12 @@
 package com.example.finanzly.services;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.finanzly.models.Budget;
+import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Movement;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
@@ -115,6 +118,10 @@ public class MovementService {
                 })
                 .addOnFailureListener(e -> listener.onError(e.getMessage()));
     }
+
+
+
+
 
     /**
      * 🧩 Interfaz callback para cálculos asíncronos

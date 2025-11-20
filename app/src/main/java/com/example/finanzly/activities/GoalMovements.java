@@ -233,6 +233,7 @@ public class GoalMovements extends AppCompatActivity {
 
             m.setId(isNew ? UUID.randomUUID().toString() : m.getId());
             m.setType(type[0]);
+            m.setCategory(currentGoal.getTitle());
             m.setDate(date);
             m.setDescription(desc);
             m.setAmount(amount);

@@ -9,8 +9,10 @@ import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Movement;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -119,8 +121,37 @@ public class MovementService {
                 .addOnFailureListener(e -> listener.onError(e.getMessage()));
     }
 
+    public void deleteByGoalId(String goalId) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("movements");
+        ref.orderByChild("linkedGoalId").equalTo(goalId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot child : snapshot.getChildren()) {
+                            child.getRef().removeValue();
+                        }
+                    }
 
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+    }
 
+    public void deleteByBudgetId(String budgetId) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("movements");
+        ref.orderByChild("linkedBudgetId").equalTo(budgetId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot child : snapshot.getChildren()) {
+                            child.getRef().removeValue();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+    }
 
 
     /**

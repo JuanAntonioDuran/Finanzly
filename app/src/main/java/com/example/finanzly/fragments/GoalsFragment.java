@@ -23,6 +23,7 @@ import com.example.finanzly.adapters.UserAdapter;
 import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.GoalService;
+import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -103,8 +104,9 @@ public class GoalsFragment extends Fragment {
                 allGoals.clear();
                 for (DataSnapshot child : snapshot.getChildren()) {
                     Goal goal = child.getValue(Goal.class);
-                    if (goal != null && (goal.getUserId().equals(currentUserId)
-                            || (goal.getSharedUserIds() != null && goal.getSharedUserIds().contains(currentUserId)))) {
+                    if (goal != null && currentUserId != null &&
+                            (currentUserId.equals(goal.getUserId()) ||
+                                    (goal.getSharedUserIds() != null && goal.getSharedUserIds().contains(currentUserId)))) {
                         allGoals.add(goal);
                     }
                 }
@@ -117,6 +119,7 @@ public class GoalsFragment extends Fragment {
             }
         });
     }
+
 
     private void applyFilters() {
         String titleFilter = etTitleFilter.getText().toString().trim();
@@ -221,17 +224,25 @@ public class GoalsFragment extends Fragment {
         etDeadline.setClickable(true);
         etDeadline.setOnClickListener(v -> {
             java.util.Calendar calendar = java.util.Calendar.getInstance();
-            int year = calendar.get(java.util.Calendar.YEAR);
-            int month = calendar.get(java.util.Calendar.MONTH);
-            int day = calendar.get(java.util.Calendar.DAY_OF_MONTH);
+
+            try {
+                String[] parts = etDeadline.getText().toString().split("-");
+                if (parts.length == 3) {
+                    calendar.set(java.util.Calendar.YEAR, Integer.parseInt(parts[0]));
+                    calendar.set(java.util.Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
+                    calendar.set(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(parts[2]));
+                }
+            } catch (Exception ignored) {}
 
             android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
                     getContext(),
                     (view, selectedYear, selectedMonth, selectedDay) -> {
-                        String formattedDate = String.format("%02d/%02d/%04d", selectedDay, selectedMonth + 1, selectedYear);
+                        String formattedDate = String.format("%04d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
                         etDeadline.setText(formattedDate);
                     },
-                    year, month, day
+                    calendar.get(java.util.Calendar.YEAR),
+                    calendar.get(java.util.Calendar.MONTH),
+                    calendar.get(java.util.Calendar.DAY_OF_MONTH)
             );
             datePickerDialog.show();
         });
@@ -290,14 +301,27 @@ public class GoalsFragment extends Fragment {
     }
 
     private void onDeleteGoal(Goal goal) {
+        if (goal == null || goal.getId() == null) return; // ⚠ Validación extra
+
         if (goal.getUserId().equals(currentUserId)) {
             new androidx.appcompat.app.AlertDialog.Builder(getContext())
                     .setTitle("¿Eliminar meta?")
                     .setMessage("Esta acción no se puede deshacer. ¿Deseas continuar?")
                     .setPositiveButton("Sí", (dialog, which) -> {
+                        // Eliminar todos los movimientos asociados
+                        MovementService movementService = new MovementService(getContext());
+                        movementService.deleteByGoalId(goal.getId());
+
+                        // Eliminar la meta
                         goalService.delete(goal.getId());
-                        showAlert("Eliminado", "Meta eliminada correctamente.");
-                        loadGoals();
+
+                        // Limpiar listas locales
+                        allGoals.remove(goal);
+                        filteredGoals.remove(goal);
+
+                        adapter.notifyDataSetChanged(); // ⚡ refrescar RecyclerView
+
+                        showAlert("Eliminado", "Meta y movimientos asociados eliminados correctamente.");
                     })
                     .setNegativeButton("Cancelar", null)
                     .show();
@@ -307,13 +331,19 @@ public class GoalsFragment extends Fragment {
                     .setMessage("¿Deseas dejar de compartir esta meta?")
                     .setPositiveButton("Sí", (dialog, which) -> {
                         goalService.removeSharedUser(goal.getId(), currentUserId);
+
+                        allGoals.remove(goal);
+                        filteredGoals.remove(goal);
+                        adapter.notifyDataSetChanged(); // ⚡ refrescar RecyclerView
+
                         showAlert("Actualizado", "Se ha dejado de compartir la meta.");
-                        loadGoals();
                     })
                     .setNegativeButton("Cancelar", null)
                     .show();
         }
     }
+
+
 
     private void showAlert(String title, String message) {
         new androidx.appcompat.app.AlertDialog.Builder(getContext())
@@ -333,5 +363,4 @@ public class GoalsFragment extends Fragment {
         intent.putExtra("goalId", goal.getId());
         startActivity(intent);
     }
-
 }

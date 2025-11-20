@@ -105,7 +105,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cancelar"
-            android:backgroundTint="@color/gray_light"/>
+            android:backgroundTint="@color/red_error"/>
 
         <Button
             android:id="@+id/btnSave"

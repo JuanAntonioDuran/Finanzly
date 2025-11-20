@@ -24,6 +24,7 @@ import com.example.finanzly.adapters.UserAdapter;
 import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.BudgetService;
+import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -107,7 +108,7 @@ public class BudgetsFragment extends Fragment {
                 for (DataSnapshot child : snapshot.getChildren()) {
                     Budget budget = child.getValue(Budget.class);
                     if (budget != null) {
-                        if (budget.getUserId().equals(currentUserId) ||
+                        if ((budget.getUserId() != null && budget.getUserId().equals(currentUserId)) ||
                                 (budget.getSharedUserIds() != null && budget.getSharedUserIds().contains(currentUserId))) {
                             allBudgets.add(budget);
                         }
@@ -125,13 +126,15 @@ public class BudgetsFragment extends Fragment {
 
     private void applyFilters() {
         String categoryFilter = etCategoryFilter.getText().toString().trim();
-        String statusFilter = spinnerStatusFilter.getSelectedItem().toString();
+        String statusFilter = spinnerStatusFilter.getSelectedItem() != null
+                ? spinnerStatusFilter.getSelectedItem().toString()
+                : "";
 
         filteredBudgets.clear();
 
         for (Budget budget : allBudgets) {
             boolean matchesCategory = TextUtils.isEmpty(categoryFilter)
-                    || budget.getCategory().toLowerCase().contains(categoryFilter.toLowerCase());
+                    || (budget.getCategory() != null && budget.getCategory().toLowerCase().contains(categoryFilter.toLowerCase()));
 
             boolean matchesStatus = true;
 
@@ -156,10 +159,9 @@ public class BudgetsFragment extends Fragment {
         applyFilters();
     }
 
-    // -------------------------------------------------------------------------
-    // 🔥 AQUÍ ESTA TODA LA INTEGRACIÓN DEL BOTÓN ❌ Y ACTUALIZACIÓN EN FIREBASE
-    // -------------------------------------------------------------------------
     private void openBudgetDialog(Budget budgetToEdit) {
+        if (currentUserId == null) return;
+
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_budget_form, null);
 
         EditText etCategory = dialogView.findViewById(R.id.etCategory);
@@ -176,7 +178,6 @@ public class BudgetsFragment extends Fragment {
 
         UserService userService = new UserService(getContext());
 
-        // ⭐ FIX DEFINITIVO: Usar array para evitar error "might not have been initialized"
         UserAdapter[] usersAdapter = new UserAdapter[1];
 
         usersAdapter[0] = new UserAdapter(sharedUsers, user -> {
@@ -287,28 +288,29 @@ public class BudgetsFragment extends Fragment {
                 .show();
     }
 
-
-    private void showAlert(String title, String message) {
-        new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
-    }
-
     private void onDeleteBudget(Budget budget) {
-        if (budget.getUserId().equals(currentUserId)) {
+        if (budget == null || budget.getId() == null || currentUserId == null) return;
+
+        if (currentUserId.equals(budget.getUserId())) {
             new androidx.appcompat.app.AlertDialog.Builder(getContext())
                     .setTitle("¿Eliminar presupuesto?")
-                    .setMessage("Esta acción no se puede deshacer")
+                    .setMessage("Esta acción no se puede deshacer. También se eliminarán todos los movimientos asociados.")
                     .setPositiveButton("Sí", (dialog, which) -> {
+                        // Eliminar todos los movimientos asociados
+                        MovementService movementService = new MovementService(getContext());
+                        movementService.deleteByBudgetId(budget.getId());
+
+                        // Eliminar presupuesto
                         budgetService.delete(budget.getId());
+
+                        showAlert("Eliminado", "Presupuesto y movimientos asociados eliminados correctamente.");
                         loadBudgets();
                     })
                     .setNegativeButton("Cancelar", null)
                     .show();
         } else {
             budgetService.removeCollaborator(budget.getId(), currentUserId);
+            showAlert("Actualizado", "Se ha dejado de compartir el presupuesto.");
             loadBudgets();
         }
     }
@@ -322,5 +324,13 @@ public class BudgetsFragment extends Fragment {
         Intent intent = new Intent(getContext(), BudgetMovements.class);
         intent.putExtra("budgetId", budget.getId());
         startActivity(intent);
+    }
+
+    private void showAlert(String title, String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 }

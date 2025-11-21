@@ -1,14 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollViewUser"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.UserFragment">
+    android:padding="16dp"
+    android:background="@color/white">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-</FrameLayout>
+        <!-- Título -->
+        <TextView
+            android:id="@+id/tvUserTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mi Perfil"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/blue_primary"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="24dp"/>
+
+        <!-- UID -->
+        <TextView
+            android:id="@+id/tvUidLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UID:"
+            android:textStyle="bold"
+            android:textColor="@color/gray_dark"/>
+        <TextView
+            android:id="@+id/tvUid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="uid_aqui"
+            android:textColor="@color/gray_dark"
+            android:paddingBottom="16dp"/>
+
+        <!-- Nombre editable -->
+        <TextView
+            android:id="@+id/tvNameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre:"
+            android:textStyle="bold"
+            android:textColor="@color/gray_dark"/>
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre de usuario"
+            android:textColor="@color/gray_dark"
+            android:backgroundTint="@color/blue_light"
+            android:paddingBottom="16dp"/>
+
+        <!-- Email -->
+        <TextView
+            android:id="@+id/tvEmailLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Correo electrónico:"
+            android:textStyle="bold"
+            android:textColor="@color/gray_dark"/>
+        <TextView
+            android:id="@+id/tvEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="correo@ejemplo.com"
+            android:textColor="@color/gray_dark"
+            android:paddingBottom="16dp"/>
+
+        <!-- Fecha de creación -->
+        <TextView
+            android:id="@+id/tvCreatedAtLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fecha de creación:"
+            android:textStyle="bold"
+            android:textColor="@color/gray_dark"/>
+        <TextView
+            android:id="@+id/tvCreatedAt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="01/01/2023"
+            android:textColor="@color/gray_dark"
+            android:paddingBottom="24dp"/>
+
+        <!-- Botón actualizar nombre -->
+        <Button
+            android:id="@+id/btnUpdateName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Actualizar nombre"
+            android:backgroundTint="@color/green_success"
+            android:textColor="@color/white"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Botón cambiar contraseña -->
+        <Button
+            android:id="@+id/btnChangePassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cambiar contraseña"
+            android:backgroundTint="@color/blue_primary"
+            android:textColor="@color/white"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Botón cerrar sesión -->
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cerrar sesión"
+            android:backgroundTint="@color/red_error"
+            android:textColor="@color/white"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+    </LinearLayout>
+</ScrollView>

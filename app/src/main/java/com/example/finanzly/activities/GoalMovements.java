@@ -2,6 +2,8 @@ package com.example.finanzly.activities;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,6 +43,9 @@ public class GoalMovements extends AppCompatActivity {
     private RecyclerView recyclerViewMovements;
     private MovementAdapter adapter;
     private List<Movement> movementList;
+    private List<Movement> filteredList;
+    private HashMap<String, String> userIdToNameMap = new HashMap<>();
+
     private MovementService movementService;
     private GoalService goalService;
     private UserService userService;
@@ -50,6 +55,9 @@ public class GoalMovements extends AppCompatActivity {
     private TextView tvPercent;
     private TextView tvTitle;
     private ProgressBar progressTop;
+
+    private EditText etDateFilter;
+    private EditText etUserFilter;
 
     private String goalId;
     private Goal currentGoal;
@@ -70,6 +78,9 @@ public class GoalMovements extends AppCompatActivity {
         progressTop = findViewById(R.id.progressTop);
         tvTitle = findViewById(R.id.tvTitle);
 
+        etDateFilter = findViewById(R.id.etDateFilter);
+        etUserFilter = findViewById(R.id.etUserFilter);
+
         btnBack = findViewById(R.id.btnBack);
         fabAddMovement = findViewById(R.id.fabAddMovement);
 
@@ -79,7 +90,8 @@ public class GoalMovements extends AppCompatActivity {
         userService = new UserService(this);
 
         movementList = new ArrayList<>();
-        adapter = new MovementAdapter(this, movementList);
+        filteredList = new ArrayList<>();
+        adapter = new MovementAdapter(this, filteredList);
         recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewMovements.setAdapter(adapter);
 
@@ -109,22 +121,30 @@ public class GoalMovements extends AppCompatActivity {
                     }
                 }
             }
-
-            @Override
-            public void onCancelled(DatabaseError error) {}
+            @Override public void onCancelled(DatabaseError error) {}
         });
 
         adapter.setOnMovementActionListener(new MovementAdapter.OnMovementActionListener() {
-            @Override
-            public void onEdit(Movement movement) {
-                openMovementDialog(movement);
-            }
-
-            @Override
-            public void onDelete(Movement movement) {
-                deleteMovement(movement);
-            }
+            @Override public void onEdit(Movement movement) { openMovementDialog(movement); }
+            @Override public void onDelete(Movement movement) { deleteMovement(movement); }
         });
+
+        // Filtros: DatePicker y TextWatcher
+        etDateFilter.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            new DatePickerDialog(this, (vw, y, m, d) ->
+                    etDateFilter.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, m + 1, d)),
+                    c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
+            ).show();
+        });
+
+        TextWatcher filterWatcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) { applyFilters(); }
+        };
+        etDateFilter.addTextChangedListener(filterWatcher);
+        etUserFilter.addTextChangedListener(filterWatcher);
     }
 
     private void loadMovements() {
@@ -135,30 +155,91 @@ public class GoalMovements extends AppCompatActivity {
                     @Override
                     public void onDataChange(DataSnapshot snapshot) {
                         movementList.clear();
+                        userIdToNameMap.clear();
+
+                        List<Movement> allMovements = new ArrayList<>();
                         for (DataSnapshot ds : snapshot.getChildren()) {
-                            Movement movement = ds.getValue(Movement.class);
-                            if (movement != null) {
-                                movementList.add(movement);
-                                userService.getById(movement.getUserId()).get()
+                            Movement m = ds.getValue(Movement.class);
+                            if (m != null) allMovements.add(m);
+                        }
+
+                        if (allMovements.isEmpty()) {
+                            applyFilters();
+                            recalculateGoalCurrentAmount();
+                            return;
+                        }
+
+                        // Cargar todos los nombres de usuarios
+                        for (Movement m : allMovements) {
+                            if (!userIdToNameMap.containsKey(m.getUserId())) {
+                                userService.getById(m.getUserId()).get()
                                         .addOnSuccessListener(userSnap -> {
                                             if (userSnap.exists()) {
                                                 User u = userSnap.getValue(User.class);
                                                 if (u != null) {
-                                                    adapter.setUserNameForMovement(movement.getId(), u.getName());
+                                                    userIdToNameMap.put(m.getUserId(), u.getName());
                                                 }
                                             }
+                                            movementList.add(m);
+                                            if (movementList.size() == allMovements.size()) {
+                                                // Asignar nombres al adapter
+                                                for (Movement mv : movementList) {
+                                                    String name = userIdToNameMap.get(mv.getUserId());
+                                                    adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+                                                }
+                                                applyFilters();
+                                                recalculateGoalCurrentAmount();
+                                            }
                                         });
+                            } else {
+                                movementList.add(m);
+                                if (movementList.size() == allMovements.size()) {
+                                    for (Movement mv : movementList) {
+                                        String name = userIdToNameMap.get(mv.getUserId());
+                                        adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+                                    }
+                                    applyFilters();
+                                    recalculateGoalCurrentAmount();
+                                }
                             }
                         }
-                        adapter.notifyDataSetChanged();
-                        tvEmptyState.setVisibility(movementList.isEmpty() ? View.VISIBLE : View.GONE);
-                        recalculateGoalCurrentAmount();
                     }
-
-                    @Override
-                    public void onCancelled(DatabaseError error) {}
+                    @Override public void onCancelled(DatabaseError error) {}
                 });
     }
+
+    private void applyFilters() {
+        String filterDate = etDateFilter.getText().toString().trim();
+        String filterUser = etUserFilter.getText().toString().trim().toLowerCase();
+
+        filteredList.clear();
+
+        for (Movement m : movementList) {
+            boolean matches = true;
+
+            // Filtrar por fecha
+            if (!filterDate.isEmpty() && !m.getDate().equals(filterDate)) matches = false;
+
+            // Filtrar por usuario
+            if (!filterUser.isEmpty()) {
+                String name = userIdToNameMap.get(m.getUserId());
+                if (name == null || !name.toLowerCase().contains(filterUser)) matches = false;
+            }
+
+            if (matches) filteredList.add(m);
+        }
+
+        // Actualizar nombres en el adapter antes de mostrar
+        for (Movement mv : filteredList) {
+            String name = userIdToNameMap.get(mv.getUserId());
+            adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+        }
+
+        adapter.notifyDataSetChanged();
+        tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    // ================= CREATE / EDIT =================
 
     private void openMovementDialog(Movement movement) {
         boolean isNew = movement == null;
@@ -172,7 +253,6 @@ public class GoalMovements extends AppCompatActivity {
         Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         Button btnType = dialogView.findViewById(R.id.btnType);
 
-        // 🔹 Desbloquear tipo solo en GoalMovements
         btnType.setVisibility(View.VISIBLE);
         final String[] type = {isNew ? "income" : m.getType()};
         btnType.setText(type[0].equals("income") ? "Ingreso" : "Gasto");
@@ -189,14 +269,10 @@ public class GoalMovements extends AppCompatActivity {
 
         etDate.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
-            DatePickerDialog picker = new DatePickerDialog(
-                    this,
-                    (view, y, mo, d) -> etDate.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, mo + 1, d)),
-                    c.get(Calendar.YEAR),
-                    c.get(Calendar.MONTH),
-                    c.get(Calendar.DAY_OF_MONTH)
-            );
-            picker.show();
+            new DatePickerDialog(this, (view, y, mo, d) ->
+                    etDate.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, mo + 1, d)),
+                    c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
+            ).show();
         });
 
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -217,17 +293,13 @@ public class GoalMovements extends AppCompatActivity {
 
             double amount = Double.parseDouble(amountStr);
 
-            // Validación: al editar no sobrepasar límites
             double currentAmountWithoutThis = isNew ? currentGoal.getCurrentAmount() :
                     currentGoal.getCurrentAmount() - (m.getType().equals("income") ? m.getAmount() : -m.getAmount());
             double projected = currentAmountWithoutThis + (type[0].equals("income") ? amount : -amount);
 
-            if (projected < 0) {
-                Toast.makeText(this, "No se puede disminuir más de lo acumulado", Toast.LENGTH_LONG).show();
-                return;
-            }
-            if (projected > currentGoal.getTargetAmount()) {
-                Toast.makeText(this, "No se puede superar el objetivo", Toast.LENGTH_LONG).show();
+            if (projected < 0 || projected > currentGoal.getTargetAmount()) {
+                Toast.makeText(this, projected < 0 ? "No se puede disminuir más de lo acumulado" :
+                        "No se puede superar el objetivo", Toast.LENGTH_LONG).show();
                 return;
             }
 
@@ -245,7 +317,6 @@ public class GoalMovements extends AppCompatActivity {
 
             recalculateGoalCurrentAmount();
             updateProgressBar();
-
             dialog.dismiss();
             Toast.makeText(this, isNew ? "Movimiento creado" : "Movimiento actualizado", Toast.LENGTH_SHORT).show();
         });
@@ -276,12 +347,8 @@ public class GoalMovements extends AppCompatActivity {
                     double total = 0;
                     for (DataSnapshot ds : snapshot.getChildren()) {
                         Movement m = ds.getValue(Movement.class);
-                        if (m != null) {
-                            total += m.getType().equals("income") ? m.getAmount() : -m.getAmount();
-                        }
+                        if (m != null) total += m.getType().equals("income") ? m.getAmount() : -m.getAmount();
                     }
-
-                    // Limitar entre 0 y target
                     if (total < 0) total = 0;
                     if (total > currentGoal.getTargetAmount()) total = currentGoal.getTargetAmount();
 
@@ -290,7 +357,6 @@ public class GoalMovements extends AppCompatActivity {
                     goalService.updatePartial(goalId, updates);
 
                     currentGoal.setCurrentAmount(total);
-
                     updateSpentText();
                     updateProgressBar();
                 });

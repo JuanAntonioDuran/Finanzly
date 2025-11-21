@@ -20,11 +20,14 @@ import com.example.finanzly.adapters.MovementAdapter;
 import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Movement;
+import com.example.finanzly.models.User;
+import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
 public class MovementsFragment extends Fragment {
@@ -36,7 +39,7 @@ public class MovementsFragment extends Fragment {
     private TextView tvEmptyState;
     private EditText etCategoryFilter;
     private EditText etDateFilter;
-
+    private UserService userService;
     private List<Movement> movementList = new ArrayList<>();
     private List<Movement> filteredList = new ArrayList<>();
 
@@ -57,6 +60,7 @@ public class MovementsFragment extends Fragment {
         movementsRef = FirebaseDatabase.getInstance().getReference("movements");
         budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
         goalsRef = FirebaseDatabase.getInstance().getReference("goals");
+        userService = new UserService(requireContext());
 
         // Views
         recyclerView = view.findViewById(R.id.recyclerViewMovements);
@@ -136,25 +140,60 @@ public class MovementsFragment extends Fragment {
         return view;
     }
 
-    // -------------------------------------------------------------
-    // CARGAR MOVIMIENTOS
-    // -------------------------------------------------------------
+    private HashMap<String, String> userIdToNameMap = new HashMap<>();
+
     private void loadMovements() {
         movementsRef.orderByChild("userId").equalTo(uid)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         movementList.clear();
+                        userIdToNameMap.clear();
 
+                        List<Movement> allMovements = new ArrayList<>();
                         for (DataSnapshot child : snapshot.getChildren()) {
                             Movement m = child.getValue(Movement.class);
                             if (m != null) {
                                 m.setId(child.getKey());
-                                movementList.add(m);
+                                allMovements.add(m);
                             }
                         }
 
-                        if (isAdded()) applyFilter();
+                        if (allMovements.isEmpty()) {
+                            if (isAdded()) applyFilter();
+                            return;
+                        }
+
+                        // Cargar nombres de usuarios de forma asincrónica
+                        for (Movement m : allMovements) {
+                            if (!userIdToNameMap.containsKey(m.getUserId())) {
+                                userService.getById(m.getUserId()).get()
+                                        .addOnSuccessListener(userSnap -> {
+                                            if (userSnap.exists()) {
+                                                User u = userSnap.getValue(User.class);
+                                                if (u != null) userIdToNameMap.put(m.getUserId(), u.getName());
+                                            }
+                                            movementList.add(m);
+                                            if (movementList.size() == allMovements.size()) {
+                                                // Asignar nombres en el adapter antes de mostrar
+                                                for (Movement mv : movementList) {
+                                                    String name = userIdToNameMap.get(mv.getUserId());
+                                                    adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+                                                }
+                                                if (isAdded()) applyFilter();
+                                            }
+                                        });
+                            } else {
+                                movementList.add(m);
+                                if (movementList.size() == allMovements.size()) {
+                                    for (Movement mv : movementList) {
+                                        String name = userIdToNameMap.get(mv.getUserId());
+                                        adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+                                    }
+                                    if (isAdded()) applyFilter();
+                                }
+                            }
+                        }
                     }
 
                     @Override
@@ -162,9 +201,6 @@ public class MovementsFragment extends Fragment {
                 });
     }
 
-    // -------------------------------------------------------------
-    // FILTROS
-    // -------------------------------------------------------------
     private void applyFilter() {
         if (!isAdded()) return;
 
@@ -194,9 +230,16 @@ public class MovementsFragment extends Fragment {
             }
         }
 
+        // Asignar nombres a los movimientos filtrados antes de mostrar
+        for (Movement mv : filteredList) {
+            String name = userIdToNameMap.get(mv.getUserId());
+            adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+        }
+
         adapter.notifyDataSetChanged();
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
+
 
 
     private void clearFilter() {

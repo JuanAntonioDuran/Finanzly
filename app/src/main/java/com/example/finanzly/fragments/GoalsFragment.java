@@ -1,5 +1,6 @@
 package com.example.finanzly.fragments;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -28,6 +29,7 @@ import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -82,6 +84,42 @@ public class GoalsFragment extends Fragment {
             public void onDelete(Goal goal) {
                 onDeleteGoal(goal);
             }
+
+            @Override
+            public void onLeave(Goal goal) {
+                if (getContext() == null) return;
+
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Salir de la meta")
+                        .setMessage("¿Estás seguro que deseas salir de la meta \"" + goal.getTitle() + "\"? Ya no podrás acceder a ella.")
+                        .setPositiveButton("Sí, salir", (dialog, which) -> {
+
+                            String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                            if (goal.getSharedUserIds() == null || !goal.getSharedUserIds().contains(currentUserId)) {
+                                return;
+                            }
+
+                            // Quitar usuario de la lista
+                            List<String> updatedList = new ArrayList<>(goal.getSharedUserIds());
+                            updatedList.remove(currentUserId);
+
+                            // Actualizar en Realtime Database
+                            FirebaseDatabase.getInstance().getReference("goals")
+                                    .child(goal.getId())
+                                    .child("sharedUserIds")
+                                    .setValue(updatedList)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(getContext(), "Has salido de la meta", Toast.LENGTH_SHORT).show();
+                                        loadGoals(); // refrescar lista
+                                    })
+                                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Error al salir de la meta", Toast.LENGTH_SHORT).show());
+
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            }
+
         });
 
         rvGoals.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -256,14 +294,43 @@ public class GoalsFragment extends Fragment {
                     String targetStr = etTargetAmount.getText().toString().trim();
                     String deadline = etDeadline.getText().toString().trim();
 
-                    if (title.isEmpty() || targetStr.isEmpty()) {
+                    if (title.isEmpty() || targetStr.isEmpty() || deadline.isEmpty()) {
                         showAlert("Campos incompletos", "Debes llenar todos los campos.");
                         return;
                     }
 
-                    double target = Double.parseDouble(targetStr);
+                    if (title.length() < 3) {
+                        showAlert("Título inválido", "El título debe tener al menos 3 caracteres.");
+                        return;
+                    }
+
+                    double target;
+                    try {
+                        target = Double.parseDouble(targetStr);
+                    } catch (NumberFormatException e) {
+                        showAlert("Cantidad inválida", "Introduce un número válido.");
+                        return;
+                    }
+
                     if (target <= 0) {
                         showAlert("Cantidad inválida", "Debe ser mayor que 0.");
+                        return;
+                    }
+
+                    // Validación de fecha
+                    try {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                        sdf.setLenient(false);
+                        java.util.Date selectedDate = sdf.parse(deadline);
+                        java.util.Date today = new java.util.Date();
+
+                        // Si la fecha es anterior a hoy
+                        if (selectedDate.before(today)) {
+                            showAlert("Fecha inválida", "La fecha de la meta no puede ser anterior a hoy.");
+                            return;
+                        }
+                    } catch (Exception e) {
+                        showAlert("Fecha inválida", "Formato de fecha incorrecto. Use yyyy-MM-dd.");
                         return;
                     }
 
@@ -299,6 +366,7 @@ public class GoalsFragment extends Fragment {
                 .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
                 .show();
     }
+
 
     private void onDeleteGoal(Goal goal) {
         if (goal == null || goal.getId() == null) return; // ⚠ Validación extra

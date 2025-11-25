@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,7 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.finanzly.R;
 import com.example.finanzly.models.Goal;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder> {
@@ -27,6 +30,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         void onAddProgress(Goal goal);
         void onEdit(Goal goal);
         void onDelete(Goal goal);
+        void onLeave(Goal goal);
     }
 
     public GoalAdapter(List<Goal> goals, Context context) {
@@ -67,10 +71,20 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.progressBar.setProgress(Math.min(progress, 100));
 
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        // Mostrar botones según permisos (propietario o compartido)
         boolean isOwner = goal.getUserId().equals(currentUserId);
-        holder.btnAddProgress.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+
+        // --- Lógica de visibilidad según propietario ---
+        if (isOwner) {
+            holder.btnAddProgress.setVisibility(View.VISIBLE);
+            holder.btnEdit.setVisibility(View.VISIBLE);
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnLeave.setVisibility(View.GONE);
+        } else {
+            holder.btnAddProgress.setVisibility(View.GONE);
+            holder.btnEdit.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.GONE);
+            holder.btnLeave.setVisibility(View.VISIBLE);
+        }
 
         // Click listeners
         holder.btnAddProgress.setOnClickListener(v -> {
@@ -84,6 +98,10 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(goal);
         });
+
+        holder.btnLeave.setOnClickListener(v -> {
+            if (listener != null) listener.onLeave(goal);
+        });
     }
 
     @Override
@@ -95,7 +113,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
         TextView tvTitle, tvTarget, tvCurrent, tvStatus;
         ProgressBar progressBar;
-        Button btnAddProgress, btnEdit, btnDelete;
+        Button btnAddProgress, btnEdit, btnDelete, btnLeave;
 
         public GoalViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -107,6 +125,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
             btnAddProgress = itemView.findViewById(R.id.btnGoalAddProgress);
             btnEdit = itemView.findViewById(R.id.btnGoalEdit);
             btnDelete = itemView.findViewById(R.id.btnGoalDelete);
+            btnLeave = itemView.findViewById(R.id.btnItemLeft);
         }
     }
 }

@@ -22,13 +22,13 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     private List<Budget> budgets;
     private Context context;
 
-    // Click listeners opcionales
     private OnBudgetClickListener listener;
 
     public interface OnBudgetClickListener {
         void onEdit(Budget budget);
         void onDelete(Budget budget);
         void onViewMovements(Budget budget);
+        void onLeave(Budget budget);
     }
 
     public BudgetAdapter(List<Budget> budgets, Context context) {
@@ -55,7 +55,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         holder.tvLimit.setText("Límite: €" + budget.getLimit());
         holder.tvSpent.setText("Gastado: €" + budget.getSpent());
 
-        // Estado del presupuesto
         if (budget.getSpent() < budget.getLimit()) {
             holder.tvStatus.setText("Activo");
             holder.tvStatus.setBackgroundResource(R.color.green_primary);
@@ -64,21 +63,26 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             holder.tvStatus.setBackgroundResource(R.color.red_error);
         }
 
-        // Barra de progreso
         int progress = (int) ((budget.getSpent() / budget.getLimit()) * 100);
         holder.progressBar.setProgress(Math.min(progress, 100));
 
-        // UID del usuario actual
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        boolean isOwner = budget.getUserId().equals(currentUserId);
 
-        // 🔐 Solo el dueño del presupuesto puede ver "Movimientos"
-        if (budget.getUserId().equals(currentUserId)) {
+        // --- 🔐 Lógica de visibilidad según el dueño del presupuesto ---
+        if (isOwner) {
+            holder.btnEdit.setVisibility(View.VISIBLE);
+            holder.btnDelete.setVisibility(View.VISIBLE);
             holder.btnViewMovements.setVisibility(View.VISIBLE);
+            holder.btnLeave.setVisibility(View.GONE);
         } else {
+            holder.btnEdit.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.GONE);
             holder.btnViewMovements.setVisibility(View.GONE);
+            holder.btnLeave.setVisibility(View.VISIBLE);
         }
 
-        // Listeners
+        // Botones del dueño
         holder.btnEdit.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(budget);
         });
@@ -88,9 +92,12 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         });
 
         holder.btnViewMovements.setOnClickListener(v -> {
-            if (listener != null && budget.getUserId().equals(currentUserId)) {
-                listener.onViewMovements(budget);
-            }
+            if (listener != null && isOwner) listener.onViewMovements(budget);
+        });
+
+        // Botón salir para quienes NO son dueños
+        holder.btnLeave.setOnClickListener(v -> {
+            if (listener != null) listener.onLeave(budget);
         });
     }
 
@@ -103,18 +110,22 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
         TextView tvCategory, tvLimit, tvSpent, tvStatus;
         ProgressBar progressBar;
-        Button btnEdit, btnDelete, btnViewMovements;
+        Button btnEdit, btnDelete, btnViewMovements, btnLeave;
 
         public BudgetViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvCategory = itemView.findViewById(R.id.tvItemCategory);
             tvLimit = itemView.findViewById(R.id.tvItemLimit);
             tvSpent = itemView.findViewById(R.id.tvItemSpent);
             tvStatus = itemView.findViewById(R.id.tvItemStatus);
+
             progressBar = itemView.findViewById(R.id.progressBarBudget);
+
             btnEdit = itemView.findViewById(R.id.btnItemEdit);
             btnDelete = itemView.findViewById(R.id.btnItemDelete);
             btnViewMovements = itemView.findViewById(R.id.btnItemViewMovements);
+            btnLeave = itemView.findViewById(R.id.btnItemLeft);
         }
     }
 }

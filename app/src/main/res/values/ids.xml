@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ID fijo para los checkboxes creados dinámicamente -->
+    <item name="checkbox_user_dynamic" type="id"/>
+</resources>

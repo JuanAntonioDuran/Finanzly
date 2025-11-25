@@ -40,9 +40,14 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+
+
+    implementation("com.google.firebase:firebase-messaging")
 
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
 

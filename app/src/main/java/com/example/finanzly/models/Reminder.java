@@ -1,43 +1,44 @@
+// Reminder.java
 package com.example.finanzly.models;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class Reminder {
+    private String id;
+    private String userId;
+    private String title;
+    private String description;
+    private String date; // YYYY-MM-DD
+    private String time; // HH:mm
+    private String type; // 'pago' | 'meta' | 'presupuesto' | 'otro'
+    private boolean isCompleted;
+    private Boolean isExpired;
+    private String linkedGoalId;
+    private String linkedBudgetId;
+    private String movementType; // 'income' | 'expense' | null
+    private List<String> sharedUserIds;
+    private Map<String, Boolean> sharedUsersStatus;
+    private String createdAt;
+    private String updatedAt;
 
-    private String id;                 // ID único (Firebase)
-    private String userId;             // ID del creador del recordatorio
-    private String title;              // Título del recordatorio
-    private String description;        // Descripción opcional
-    private String date;               // Fecha (YYYY-MM-DD)
-    private String time;               // Hora (HH:mm)
-
-    // 🔹 Tipo general del recordatorio: "pago", "meta", "presupuesto" o "otro"
-    private String type;
-
-    // 🔹 Estado general
-    private boolean isCompleted;       // Si el creador lo completó
-    private Boolean isExpired;         // Si la fecha límite ya pasó (opcional)
-
-    // 🔗 Enlaces opcionales
-    private String linkedGoalId;       // Enlace a una meta (opcional)
-    private String linkedBudgetId;     // Enlace a un presupuesto (opcional)
-
-    // 💰 Integración con movimientos
-    private String movementType;       // "income", "expense" o null (opcional)
-
-    // 👥 Usuarios compartidos
-    private List<String> sharedUserIds;       // IDs de usuarios que comparten el recordatorio
-    private Map<String, Boolean> sharedUsersStatus;  // Estado de cada usuario (quién lo completó)
-
-    // 🕒 Control temporal
-    private String createdAt;          // Fecha de creación (opcional)
-    private String updatedAt;          // Última actualización (opcional)
-
-    // 🔹 Constructor vacío requerido por Firebase
     public Reminder() {}
 
-    // 🔹 Getters y Setters
+    // Constructor simplificado
+    public Reminder(String id, String userId, String title, String description,
+                    String date, String time, String type) {
+        this.id = id;
+        this.userId = userId;
+        this.title = title;
+        this.description = description;
+        this.date = date;
+        this.time = time;
+        this.type = type;
+        this.isCompleted = false;
+        this.isExpired = false;
+    }
+
+    // Getters & Setters (genera con tu IDE si quieres)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -62,8 +63,8 @@ public class Reminder {
     public boolean isCompleted() { return isCompleted; }
     public void setCompleted(boolean completed) { isCompleted = completed; }
 
-    public Boolean getIsExpired() { return isExpired; }
-    public void setIsExpired(Boolean isExpired) { this.isExpired = isExpired; }
+    public Boolean getExpired() { return isExpired; }
+    public void setExpired(Boolean expired) { isExpired = expired; }
 
     public String getLinkedGoalId() { return linkedGoalId; }
     public void setLinkedGoalId(String linkedGoalId) { this.linkedGoalId = linkedGoalId; }

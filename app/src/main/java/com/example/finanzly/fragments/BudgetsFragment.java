@@ -1,5 +1,6 @@
 package com.example.finanzly.fragments;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -29,6 +30,7 @@ import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -85,6 +87,43 @@ public class BudgetsFragment extends Fragment {
             public void onViewMovements(Budget budget) {
                 goToMovements(budget);
             }
+            @Override
+            public void onLeave(Budget budget) {
+                if (getContext() == null) return;
+
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Salir del presupuesto")
+                        .setMessage("¿Estás seguro que deseas salir del presupuesto \"" + budget.getCategory() + "\"? Ya no podrás acceder a él.")
+                        .setPositiveButton("Sí, salir", (dialog, which) -> {
+
+                            String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                            if (budget.getSharedUserIds() == null || !budget.getSharedUserIds().contains(currentUserId)) {
+                                return;
+                            }
+
+                            // Quitar usuario de la lista
+                            List<String> updatedList = new ArrayList<>(budget.getSharedUserIds());
+                            updatedList.remove(currentUserId);
+
+                            // Actualizar en Realtime Database
+                            FirebaseDatabase.getInstance().getReference("budgets")
+                                    .child(budget.getId())
+                                    .child("sharedUserIds")
+                                    .setValue(updatedList)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(getContext(), "Has salido del presupuesto", Toast.LENGTH_SHORT).show();
+                                        loadBudgets(); // refrescar lista
+                                    })
+                                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Error al salir del presupuesto", Toast.LENGTH_SHORT).show());
+
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            }
+
+
+
         });
 
         rvBudgets.setLayoutManager(new LinearLayoutManager(getContext()));

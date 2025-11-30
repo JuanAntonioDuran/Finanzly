@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:cardCornerRadius="12dp">
+    android:background="@color/white">
 
     <LinearLayout
         android:orientation="vertical"
@@ -16,76 +17,87 @@
         <!-- Título -->
         <TextView
             android:id="@+id/txtReminderTitle"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Título del recordatorio"
+            android:textColor="@color/black"
             android:textStyle="bold"
-            android:textSize="18sp"
-            android:textColor="@android:color/black" />
+            android:textSize="16sp" />
 
         <!-- Descripción -->
         <TextView
             android:id="@+id/txtReminderDescription"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Descripción del recordatorio"
+            android:textColor="@color/gray_dark"
             android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp" />
 
         <!-- Fecha y Hora -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/txtReminderDate"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:layout_marginTop="10dp">
+            android:text="Fecha"
+            android:textColor="@color/gray_dark"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
 
-            <TextView
-                android:id="@+id/txtReminderDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="@android:color/black" />
+        <TextView
+            android:id="@+id/txtReminderTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hora"
+            android:textColor="@color/gray_dark"
+            android:textSize="13sp"
+            android:layout_marginTop="2dp" />
 
-            <TextView
-                android:id="@+id/txtReminderTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="@android:color/black"
-                android:layout_marginStart="12dp" />
-
-            <TextView
-                android:id="@+id/txtSharedCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:layout_marginStart="12dp"
-                android:visibility="gone"/>
-        </LinearLayout>
+        <TextView
+            android:id="@+id/txtSharedCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Compartido con X usuarios"
+            android:textColor="@color/gray_dark"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"
+            android:visibility="gone"/>
 
         <!-- Botones -->
         <LinearLayout
             android:orientation="horizontal"
-            android:gravity="end"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp">
 
-            <ImageButton
+            <Button
                 android:id="@+id/btnEditReminder"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@android:color/transparent"
-                android:src="@drawable/ic_edit"
-                app:tint="@android:color/black" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Editar"
+                android:textAllCaps="false"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/blue_primary"
+                android:textColor="@color/white"/>
 
-            <ImageButton
+            <Button
                 android:id="@+id/btnDeleteReminder"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@android:color/transparent"
-                android:src="@drawable/ic_cross"
-                app:tint="@android:color/holo_red_dark" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Borrar"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/red_error"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/btnCompleteReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Completar"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/green_light"
+                android:textColor="@color/white"/>
         </LinearLayout>
+
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+</androidx.cardview.widget.CardView>

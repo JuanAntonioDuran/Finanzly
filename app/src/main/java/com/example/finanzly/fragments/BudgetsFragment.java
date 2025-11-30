@@ -33,8 +33,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class BudgetsFragment extends Fragment {
 
@@ -301,20 +304,28 @@ public class BudgetsFragment extends Fragment {
                     }
 
                     if (isEditing) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // Para guardar en UTC
+                        String currentDate = sdf.format(new Date());
                         budgetToEdit.setCategory(category);
                         budgetToEdit.setLimit(limit);
                         budgetToEdit.setSharedUserIds(sharedUserIds);
-
+                        budgetToEdit.setUpdatedAt(currentDate);
                         budgetService.update(budgetToEdit.getId(), budgetToEdit);
 
                         showAlert("Actualizado", "Presupuesto actualizado correctamente.");
                     } else {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // Para guardar en UTC
+                        String currentDate = sdf.format(new Date());
                         Budget newBudget = new Budget();
                         newBudget.setCategory(category);
                         newBudget.setLimit(limit);
                         newBudget.setSpent(0);
                         newBudget.setUserId(currentUserId);
                         newBudget.setSharedUserIds(sharedUserIds);
+                        newBudget.setCreatedAt(currentDate);
+
 
                         budgetService.insert(newBudget);
 

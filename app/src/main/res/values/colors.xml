@@ -20,4 +20,5 @@
     <!-- Rojos / alertas (opcional) -->
     <color name="red_error">#DC3545</color>
     <color name="red_light">#FF6B6B</color>
+    <color name="yellow">#FBDA2E</color>
 </resources>

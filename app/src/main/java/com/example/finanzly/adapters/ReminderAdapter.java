@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -27,9 +28,13 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
 
     public interface OnReminderActionListener {
         void onEdit(Reminder reminder);
+
         void onDelete(Reminder reminder);
+
         void onToggleComplete(Reminder reminder);
+
         void onAddUsers(Reminder reminder);
+
         void onLeave(Reminder reminder);
     }
 
@@ -99,26 +104,13 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
 
         // ---- EXPIRADO / COMPLETADO ----
         boolean expired = computeExpired(r);
-        r.setExpired(expired);
+
 
         int colorBlack = ContextCompat.getColor(context, android.R.color.black);
         int colorGray = ContextCompat.getColor(context, android.R.color.darker_gray);
         int colorRed = ContextCompat.getColor(context, android.R.color.holo_red_dark);
         int colorGreen = ContextCompat.getColor(context, android.R.color.holo_green_dark);
 
-        if (r.isCompleted()) {
-            holder.txtTitle.setTextColor(colorGreen);
-            holder.txtDescription.setTextColor(colorGreen);
-            holder.btnEdit.setColorFilter(colorGreen);
-        } else if (expired) {
-            holder.txtTitle.setTextColor(colorRed);
-            holder.txtDescription.setTextColor(colorRed);
-            holder.btnEdit.setColorFilter(colorRed);
-        } else {
-            holder.txtTitle.setTextColor(colorBlack);
-            holder.txtDescription.setTextColor(colorGray);
-            holder.btnEdit.clearColorFilter();
-        }
 
         // ---- LISTENERS ----
         holder.btnEdit.setOnClickListener(v -> {
@@ -148,15 +140,18 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
 
         try {
             Date target = isoDateTime.parse(r.getDate() + "T" + r.getTime());
-            return target != null && target.before(new Date()) && !r.isCompleted();
+
         } catch (ParseException e) {
             return false;
         }
+        return false;
     }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView txtTitle, txtDescription, txtDate, txtTime, txtSharedCount;
-        ImageButton btnEdit, btnDelete;
+        Button btnEdit, btnDelete;
+
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -165,9 +160,11 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
             txtDate = itemView.findViewById(R.id.txtReminderDate);
             txtTime = itemView.findViewById(R.id.txtReminderTime);
             txtSharedCount = itemView.findViewById(R.id.txtSharedCount);
+
             btnEdit = itemView.findViewById(R.id.btnEditReminder);
             btnDelete = itemView.findViewById(R.id.btnDeleteReminder);
         }
+
     }
 
     public void updateList(List<Reminder> newList) {

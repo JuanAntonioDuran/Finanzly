@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,10 +14,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.finanzly.R;
 import com.example.finanzly.models.Goal;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder> {
 
@@ -57,10 +58,28 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.tvTarget.setText("Meta: €" + goal.getTargetAmount());
         holder.tvCurrent.setText("Progreso: €" + goal.getCurrentAmount());
 
-        // Estado
+        // Estado basado en fecha límite
+        boolean isFailed = false;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // se puede ajustar si quieres hora local
+            Date goalDate = sdf.parse(goal.getDeadline());
+            Date today = sdf.parse(sdf.format(new Date())); // fecha actual sin hora
+
+            if (today.after(goalDate) && goal.getCurrentAmount() < goal.getTargetAmount()) {
+                isFailed = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Estado del objetivo
         if (goal.getCurrentAmount() >= goal.getTargetAmount()) {
             holder.tvStatus.setText("Completada");
             holder.tvStatus.setBackgroundResource(R.color.green_primary);
+        } else if (isFailed) {
+            holder.tvStatus.setText("Fallido");
+            holder.tvStatus.setBackgroundResource(R.color.red_error); // definir color rojo en colors.xml
         } else {
             holder.tvStatus.setText("Activo");
             holder.tvStatus.setBackgroundResource(R.color.blueAccent);

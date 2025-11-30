@@ -46,7 +46,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     private String currentUserId;
 
     // UI (fragment_reminders.xml should contener estas vistas)
-    private Button btnNewReminder;
+
     private EditText edtSearch;
     private Spinner spinnerFilterType;
     private Spinner spinnerFilterStatus;
@@ -103,7 +103,6 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         // -----------------------------
         // UI bindings
         // -----------------------------
-        btnNewReminder = root.findViewById(R.id.btnAddReminder);
         edtSearch = root.findViewById(R.id.edtFilterSearch);
         spinnerFilterType = root.findViewById(R.id.spinnerFilterType);
         spinnerFilterStatus = root.findViewById(R.id.spinnerFilterStatus);
@@ -117,7 +116,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         // -----------------------------
         // Botones
         // -----------------------------
-        btnNewReminder.setOnClickListener(v -> openCreateEditDialog(null));
+
 
         btnApplyFilters.setOnClickListener(v -> applyFilters());
 
@@ -158,11 +157,8 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // -----------------------------
-        // Cargar datos auxiliares antes de los reminders
-        // -----------------------------
-        loadGoals();
-        loadBudgets();
+
+
         loadUsers();
         loadReminders();
 
@@ -173,80 +169,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
 
 
-    // --------------------------------------
-    // LOADERS: goals, budgets, users, reminders
-    // --------------------------------------
-    private void loadGoals() {
-        goalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                goalsMap.clear();
-                for (DataSnapshot ds : snapshot.getChildren()) {
-                    Map<String, Object> goal = (Map<String, Object>) ds.getValue();
-                    if (goal == null) continue;
 
-                    boolean include = false;
-
-                    // Es dueño
-                    Object uidObj = goal.get("userId");
-                    if (uidObj != null && uidObj.toString().equals(currentUserId)) {
-                        include = true;
-                    }
-
-                    // Es compartida con él
-                    Object sharedObj = goal.get("sharedUserIds");
-                    if (!include && sharedObj instanceof List) {
-                        List<String> sharedList = (List<String>) sharedObj;
-                        if (sharedList.contains(currentUserId)) {
-                            include = true;
-                        }
-                    }
-
-                    if (include) {
-                        goalsMap.put(ds.getKey(), goal);
-                    }
-                }
-            }
-
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-
-    private void loadBudgets() {
-        budgetsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                budgetsMap.clear();
-                for (DataSnapshot ds : snapshot.getChildren()) {
-                    Map<String, Object> budget = (Map<String, Object>) ds.getValue();
-                    if (budget == null) continue;
-
-                    boolean include = false;
-
-                    // Dueño del presupuesto
-                    Object uidObj = budget.get("userId");
-                    if (uidObj != null && uidObj.toString().equals(currentUserId)) {
-                        include = true;
-                    }
-
-                    // Compartido al usuario
-                    Object sharedObj = budget.get("sharedUserIds");
-                    if (!include && sharedObj instanceof List) {
-                        List<String> sharedList = (List<String>) sharedObj;
-                        if (sharedList.contains(currentUserId)) {
-                            include = true;
-                        }
-                    }
-
-                    if (include) {
-                        budgetsMap.put(ds.getKey(), budget);
-                    }
-                }
-            }
-
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
 
 
     private void loadUsers() {
@@ -261,58 +184,117 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         });
     }
 
+
     private void loadReminders() {
         remindersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
                 reminderList.clear();
+                sharedUsersMap.clear();
 
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     Reminder r = ds.getValue(Reminder.class);
                     if (r == null) continue;
 
-                    // Seguridad: evitar nulos
-                    String creator = r.getUserId();
-                    List<String> shared = r.getSharedUserIds();
-                    if (shared == null) shared = new ArrayList<>();
+                    // --- asegurar ID
+                    if (r.getId() == null) r.setId(ds.getKey());
 
+                    // --- normalizar sharedUserIds
+                    List<String> shared = r.getSharedUserIds();
+                    if (shared == null || shared.isEmpty()) {
+                        shared = new ArrayList<>();
+                        DataSnapshot sharedSnap = ds.child("sharedUserIds");
+                        if (sharedSnap.exists()) {
+                            Object val = sharedSnap.getValue();
+                            if (val instanceof List) {
+                                List<?> raw = (List<?>) val;
+                                for (Object o : raw) if (o != null) shared.add(o.toString());
+                            } else {
+                                for (DataSnapshot child : sharedSnap.getChildren()) {
+                                    Object v = child.getValue();
+                                    if (v != null) shared.add(v.toString());
+                                }
+                            }
+                        }
+                        r.setSharedUserIds(shared);
+                    }
+
+                    // --- seguridad: solo si es creador o compartido
+                    String creator = r.getUserId() != null ? r.getUserId() : "";
                     boolean accepted = currentUserId != null &&
                             (currentUserId.equals(creator) || shared.contains(currentUserId));
 
-                    if (accepted) {
-                        reminderList.add(r);
+                    if (!accepted) continue;
 
-                        // Log para depuración
-                        System.out.println("Reminder cargado: ID=" + r.getId()
-                                + " Title=" + r.getTitle()
-                                + " User=" + r.getUserId()
-                                + " Shared=" + r.getSharedUserIds());
+                    // --- marcar expirado
+                    r.setExpired(computeExpired(r));
 
-                        loadSharedUserNames(r);
+                    // --- añadir a la lista
+                    reminderList.add(r);
+
+                    // --- cargar nombres de usuarios compartidos
+                    List<String> names = new ArrayList<>();
+                    for (String uid : shared) {
+                        Map<String, Object> userData = usersMap.get(uid);
+                        if (userData != null && userData.get("name") != null)
+                            names.add((String) userData.get("name"));
+                        else
+                            names.add("Usuario");
                     }
+                    if (!names.contains(creator) && !creator.isEmpty()) names.add("Tú");
+                    sharedUsersMap.put(r.getId(), names);
                 }
 
-                // Ordenar
-                reminderList.sort((a, b) -> {
-                    String ad = a.getDate() != null ? a.getDate() : "9999-12-31";
-                    String at = a.getTime() != null ? a.getTime() : "23:59";
-                    String bd = b.getDate() != null ? b.getDate() : "9999-12-31";
-                    String bt = b.getTime() != null ? b.getTime() : "23:59";
-                    return (ad + " " + at).compareTo(bd + " " + bt);
-                });
-
+                // --- actualizar UI UNA SOLA VEZ
                 applyFilters();
                 updatePendingAlert();
-
-                // Log final
-                System.out.println("Total reminders cargados para usuario " + currentUserId + ": " + reminderList.size());
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
+
+    private void applyFilters() {
+        filteredList.clear();
+
+        for (Reminder r : reminderList) {
+            // Filtro búsqueda
+            if (!TextUtils.isEmpty(filterSearch) &&
+                    (r.getTitle() == null || !r.getTitle().toLowerCase().contains(filterSearch.toLowerCase()))) {
+                continue;
+            }
+
+            // Filtro tipo
+            if (!TextUtils.isEmpty(filterType) && !"ninguno".equals(filterType)) {
+                if (r.getType() == null || !r.getType().equals(filterType)) continue;
+            }
+
+            // Filtro estado
+            if (!TextUtils.isEmpty(filterStatus) && !"ninguno".equals(filterStatus)) {
+                switch (filterStatus) {
+                    case "completed":
+                        if (!r.isCompleted()) continue;
+                        break;
+                    case "pending":
+                        if (r.isCompleted() || r.isExpired()) continue;
+                        break;
+                    case "expired":
+                        if (!r.isExpired()) continue;
+                        break;
+                }
+            }
+
+            filteredList.add(r);
+        }
+
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> adapter.updateList(filteredList));
+        }
+    }
+
+
 
 
 
@@ -354,45 +336,9 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     // --------------------------------------
     // FILTRADO
     // --------------------------------------
-    private void applyFilters() {
-        filteredList.clear();
-        String s = filterSearch == null ? "" : filterSearch.toLowerCase(Locale.getDefault()).trim();
 
-        for (Reminder r : reminderList) {
-            // text search
-            boolean matchesText = (r.getTitle() != null && r.getTitle().toLowerCase(Locale.getDefault()).contains(s))
-                    || (r.getDescription() != null && r.getDescription().toLowerCase(Locale.getDefault()).contains(s));
 
-            // type filter
-            boolean matchesType = TextUtils.isEmpty(filterType) ||
-                    ("meta".equals(filterType) && r.getLinkedGoalId() != null) ||
-                    ("presupuesto".equals(filterType) && r.getLinkedBudgetId() != null) ||
-                    ("otro".equals(filterType) && r.getLinkedGoalId() == null && r.getLinkedBudgetId() == null);
 
-            // status filter
-            boolean expired = computeExpired(r);
-            r.setExpired(expired);
-            boolean matchesStatus = TextUtils.isEmpty(filterStatus) ||
-                    ("completed".equals(filterStatus) && r.isCompleted()) ||
-                    ("pending".equals(filterStatus) && !r.isCompleted() && !expired) ||
-                    ("expired".equals(filterStatus) && expired);
-
-            if (matchesText && matchesType && matchesStatus) {
-                filteredList.add(r);
-            }
-        }
-
-        // Depuración
-        System.out.println("Filtered reminders: " + filteredList.size());
-        for (Reminder r : filteredList) {
-            System.out.println("Reminder visible: " + r.getId() + " - " + r.getTitle());
-        }
-
-        // Actualizar adapter en UI thread
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(() -> adapter.updateList(filteredList));
-        }
-    }
 
 
     private boolean computeExpired(Reminder r) {
@@ -787,92 +733,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
 
 
-    // --------------------------------------
-    // DIALOG: Añadir usuarios a reminder (modal separado)
-    // --------------------------------------
-    private void openAddUsersDialog(Reminder reminder) {
-        if (reminder == null) return;
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_users, null);
-        builder.setView(view);
 
-        LinearLayout container = view.findViewById(R.id.llUsersList); // en dialog_add_users.xml
-        Button btnCancel = view.findViewById(R.id.btnCancelAddUsers);
-        Button btnSave = view.findViewById(R.id.btnSaveAddUsers);
-
-        // Build available users list from linked goal/budget
-        List<String> availableUids = new ArrayList<>();
-        if (reminder.getLinkedGoalId() != null && goalsMap.containsKey(reminder.getLinkedGoalId())) {
-            Object su = goalsMap.get(reminder.getLinkedGoalId()).get("sharedUserIds");
-            if (su instanceof List) availableUids.addAll((List<String>) su);
-        } else if (reminder.getLinkedBudgetId() != null && budgetsMap.containsKey(reminder.getLinkedBudgetId())) {
-            Object su = budgetsMap.get(reminder.getLinkedBudgetId()).get("sharedUserIds");
-            if (su instanceof List) availableUids.addAll((List<String>) su);
-        }
-
-        // Add checkboxes
-        container.removeAllViews();
-        for (String uid : availableUids) {
-            LinearLayout row = new LinearLayout(requireContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setPadding(8,8,8,8);
-
-            CheckBox cb = new CheckBox(requireContext());
-            cb.setTag(uid);
-            cb.setChecked(reminder.getSharedUserIds() != null && reminder.getSharedUserIds().contains(uid));
-
-            TextView tv = new TextView(requireContext());
-            tv.setText(" " + (usersMap.containsKey(uid) && usersMap.get(uid).get("name") != null ? usersMap.get(uid).get("name").toString() : "Usuario"));
-            tv.setTextSize(15f);
-
-            row.addView(cb);
-            row.addView(tv);
-            container.addView(row);
-        }
-
-        AlertDialog dialog = builder.create();
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        btnSave.setOnClickListener(v -> {
-            // gather selected uids
-            List<String> selected = new ArrayList<>();
-            int cc = container.getChildCount();
-            for (int i = 0; i < cc; i++) {
-                View row = container.getChildAt(i);
-                if (row instanceof LinearLayout) {
-                    CheckBox cb = (CheckBox) ((LinearLayout) row).getChildAt(0);
-                    String uid = (String) cb.getTag();
-                    if (cb.isChecked()) selected.add(uid);
-                }
-            }
-            // ensure creator present
-            if (!selected.contains(reminder.getUserId())) selected.add(0, reminder.getUserId());
-
-            // build status map (preserve existing statuses)
-            Map<String, Boolean> updatedStatus = new HashMap<>();
-            Map<String, Boolean> prev = reminder.getSharedUsersStatus() != null ? reminder.getSharedUsersStatus() : new HashMap<>();
-            for (String uid : selected) updatedStatus.put(uid, prev.containsKey(uid) ? prev.get(uid) : false);
-
-            // push to firebase
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("sharedUserIds", selected);
-            updates.put("sharedUsersStatus", updatedStatus);
-            updates.put("updatedAt", new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date()));
-
-            remindersRef.child(reminder.getId()).updateChildren(updates);
-
-            // update local object quickly
-            reminder.setSharedUserIds(selected);
-            reminder.setSharedUsersStatus(updatedStatus);
-            loadSharedUserNames(reminder);
-
-            Toast.makeText(requireContext(), "Usuarios actualizados", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
 
     // --------------------------------------
     // Toggle Completed (si eres creator togglea todos, si eres compartido togglea solo tu estado)
@@ -961,7 +822,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     public void onToggleComplete(Reminder reminder) { toggleCompleted(reminder); }
 
     @Override
-    public void onAddUsers(Reminder reminder) { openAddUsersDialog(reminder); }
+    public void onAddUsers(Reminder reminder) {  }
 
     @Override
     public void onLeave(Reminder reminder) { leaveReminder(reminder); }

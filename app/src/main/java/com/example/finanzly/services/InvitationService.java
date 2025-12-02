@@ -94,4 +94,23 @@ public class InvitationService {
                 .addOnSuccessListener(successListener)
                 .addOnFailureListener(failureListener);
     }
+
+
+    public void getInvitationsSentByUser(String userId,
+                                         OnSuccessListener<Iterable<Invitation>> successListener,
+                                         OnFailureListener failureListener) {
+        invitationsRef.orderByChild("fromUserId")
+                .equalTo(userId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<Invitation> list = new ArrayList<>();
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        Invitation inv = child.getValue(Invitation.class);
+                        list.add(inv);
+                    }
+                    successListener.onSuccess(list);
+                })
+                .addOnFailureListener(failureListener);
+    }
+
 }

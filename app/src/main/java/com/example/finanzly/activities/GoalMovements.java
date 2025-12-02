@@ -61,6 +61,8 @@ public class GoalMovements extends AppCompatActivity {
 
     private String goalId;
     private Goal currentGoal;
+    private String uid;
+
 
     private ImageButton btnBack;
     private FloatingActionButton fabAddMovement;
@@ -77,7 +79,7 @@ public class GoalMovements extends AppCompatActivity {
         tvPercent = findViewById(R.id.tvPercent);
         progressTop = findViewById(R.id.progressTop);
         tvTitle = findViewById(R.id.tvTitle);
-
+        uid = FirebaseAuth.getInstance().getUid();
         etDateFilter = findViewById(R.id.etDateFilter);
         etUserFilter = findViewById(R.id.etUserFilter);
 
@@ -91,7 +93,12 @@ public class GoalMovements extends AppCompatActivity {
 
         movementList = new ArrayList<>();
         filteredList = new ArrayList<>();
-        adapter = new MovementAdapter(this, filteredList);
+        adapter = new MovementAdapter(
+                this,                    // Context
+                filteredList,            // Lista de movimientos
+                uid,                     // UID del usuario actual
+                currentGoal.getUserId() // UID del creador del presupuesto
+        );
         recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewMovements.setAdapter(adapter);
 

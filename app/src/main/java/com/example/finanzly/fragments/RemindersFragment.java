@@ -228,7 +228,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     if (!accepted) continue;
 
                     // --- marcar expirado
-                    r.setExpired(computeExpired(r));
+                    r.setIsExpired(computeExpired(r));
 
                     // --- añadir a la lista
                     reminderList.add(r);
@@ -275,13 +275,13 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
             if (!TextUtils.isEmpty(filterStatus) && !"ninguno".equals(filterStatus)) {
                 switch (filterStatus) {
                     case "completed":
-                        if (!r.isCompleted()) continue;
+                        if (!r.getIsCompleted()) continue;
                         break;
                     case "pending":
-                        if (r.isCompleted() || r.isExpired()) continue;
+                        if (r.getIsCompleted() || r.getIsExpired()) continue;
                         break;
                     case "expired":
-                        if (!r.isExpired()) continue;
+                        if (!r.getIsExpired()) continue;
                         break;
                 }
             }
@@ -347,7 +347,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         try {
             Date target = dateIso.parse(dt);
             if (target == null) return false;
-            return target.before(new Date()) && !r.isCompleted();
+            return target.before(new Date()) && !r.getIsCompleted();
         } catch (ParseException e) {
             e.printStackTrace();
             return false;
@@ -360,7 +360,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     private void updatePendingAlert() {
         int pendingCount = 0;
         for (Reminder r : reminderList) {
-            if (!r.isCompleted() && r.getDate() != null && r.getTime() != null) {
+            if (!r.getIsCompleted() && r.getDate() != null && r.getTime() != null) {
                 if (!computeExpired(r)) {
                     // pending if date/time <= now
                     try {
@@ -379,259 +379,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         }
     }
 
-    // --------------------------------------
-// DIALOG: Crear / Editar (igual al Angular)
-// --------------------------------------
-    private void openCreateEditDialog(Reminder existing) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_edit_reminder, null);
-        builder.setView(view);
-
-        EditText edtTitle = view.findViewById(R.id.edtReminderTitle);
-        EditText edtDesc = view.findViewById(R.id.edtReminderDescription);
-        EditText edtDate = view.findViewById(R.id.edtReminderDate);
-        EditText edtTime = view.findViewById(R.id.edtReminderTime);
-        Spinner spinnerGoal = view.findViewById(R.id.spinnerLinkedGoal);
-        Spinner spinnerBudget = view.findViewById(R.id.spinnerLinkedBudget);
-        Button btnToggleUsers = view.findViewById(R.id.btnToggleUsers);
-        LinearLayout usersContainer = view.findViewById(R.id.usersContainer);
-        Button btnCancel = view.findViewById(R.id.btnCancelReminder);
-        Button btnSave = view.findViewById(R.id.btnSaveReminder);
-
-        // -----------------------------
-        // SPINNER GOALS
-        // -----------------------------
-        final List<String> goalIds = new ArrayList<>();
-        final List<String> goalTitles = new ArrayList<>();
-
-        goalIds.add(null);
-        goalTitles.add("Ninguna");
-
-        for (Map.Entry<String, Map<String, Object>> e : goalsMap.entrySet()) {
-            goalIds.add(e.getKey());
-            Object t = e.getValue().get("title");
-            goalTitles.add(t != null ? t.toString() : "Meta");
-        }
-
-        ArrayAdapter<String> goalAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                goalTitles
-        );
-        goalAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerGoal.setAdapter(goalAdapter);
-        spinnerGoal.setTag(goalIds);
-
-        // -----------------------------
-        // SPINNER BUDGETS
-        // -----------------------------
-        final List<String> budgetIds = new ArrayList<>();
-        final List<String> budgetTitles = new ArrayList<>();
-
-        budgetIds.add(null);
-        budgetTitles.add("Ninguno");
-
-        for (Map.Entry<String, Map<String, Object>> e : budgetsMap.entrySet()) {
-            budgetIds.add(e.getKey());
-            Object cat = e.getValue().get("category");
-            budgetTitles.add(cat != null ? cat.toString() : "Presupuesto");
-        }
-
-        ArrayAdapter<String> budgetAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                budgetTitles
-        );
-        budgetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerBudget.setAdapter(budgetAdapter);
-        spinnerBudget.setTag(budgetIds);
-
-        // -----------------------------
-        // Si EDITAMOS
-        // -----------------------------
-        final Reminder working = existing != null ? existing : new Reminder();
-
-        if (existing != null) {
-            edtTitle.setText(existing.getTitle());
-            edtDesc.setText(existing.getDescription());
-            edtDate.setText(existing.getDate());
-            edtTime.setText(existing.getTime());
-
-            // Seleccionar goal
-            if (existing.getLinkedGoalId() != null) {
-                int idx = goalIds.indexOf(existing.getLinkedGoalId());
-                spinnerGoal.setSelection(Math.max(idx, 0));
-            } else spinnerGoal.setSelection(0);
-
-            // Seleccionar budget
-            if (existing.getLinkedBudgetId() != null) {
-                int idx = budgetIds.indexOf(existing.getLinkedBudgetId());
-                spinnerBudget.setSelection(Math.max(idx, 0));
-            } else spinnerBudget.setSelection(0);
-        }
-
-        // -----------------------------
-        // DATEPICKER / TIMEPICKER
-        // -----------------------------
-        final Calendar c = Calendar.getInstance();
-
-        edtDate.setOnClickListener(v -> {
-            DatePickerDialog dp = new DatePickerDialog(
-                    requireContext(),
-                    (view1, year, month, dayOfMonth) -> {
-                        edtDate.setText(String.format(Locale.getDefault(),
-                                "%04d-%02d-%02d", year, month + 1, dayOfMonth));
-                    },
-                    c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
-            );
-            dp.show();
-        });
-
-        edtTime.setOnClickListener(v -> {
-            TimePickerDialog tp = new TimePickerDialog(
-                    requireContext(),
-                    (view12, hourOfDay, minute) ->
-                            edtTime.setText(String.format(Locale.getDefault(),
-                                    "%02d:%02d", hourOfDay, minute)),
-                    c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true
-            );
-            tp.show();
-        });
-
-        // -----------------------------
-        // ACTUALIZAR LISTA DE USUARIOS AL CAMBIAR SPINNER
-        // -----------------------------
-        AdapterView.OnItemSelectedListener updateUsersListener = new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (usersContainer.getVisibility() == View.VISIBLE) {
-                    populateLinkedUsersCheckboxes(usersContainer, spinnerGoal, spinnerBudget, working);
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        };
-
-        spinnerGoal.setOnItemSelectedListener(updateUsersListener);
-        spinnerBudget.setOnItemSelectedListener(updateUsersListener);
-
-        // -----------------------------
-        // BOTÓN PARA MOSTRAR/OCULTAR USUARIOS
-        // -----------------------------
-        btnToggleUsers.setOnClickListener(v -> {
-            if (usersContainer.getVisibility() == View.GONE) {
-                usersContainer.setVisibility(View.VISIBLE);
-                populateLinkedUsersCheckboxes(usersContainer, spinnerGoal, spinnerBudget, working);
-                btnToggleUsers.setText("Ocultar usuarios vinculados");
-            } else {
-                usersContainer.setVisibility(View.GONE);
-                btnToggleUsers.setText("Mostrar usuarios vinculados");
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-
-        // -----------------------------
-        // CANCELAR
-        // -----------------------------
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        // -----------------------------
-        // GUARDAR
-        // -----------------------------
-        btnSave.setOnClickListener(v -> {
-
-            String title = edtTitle.getText().toString().trim();
-            String desc = edtDesc.getText().toString().trim();
-            String date = edtDate.getText().toString().trim();
-            String time = edtTime.getText().toString().trim();
-
-            if (TextUtils.isEmpty(title) || TextUtils.isEmpty(date) || TextUtils.isEmpty(time)) {
-                Toast.makeText(requireContext(),
-                        "Completa título, fecha y hora", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // -----------------------------
-            // RECOGER USUARIOS SELECCIONADOS
-            // -----------------------------
-            List<String> selectedUserIds = new ArrayList<>();
-            Map<String, Boolean> statusMap = new HashMap<>();
-
-            if (usersContainer.getVisibility() == View.VISIBLE) {
-                int childCount = usersContainer.getChildCount();
-                for (int i = 0; i < childCount; i++) {
-                    View child = usersContainer.getChildAt(i);
-                    if (child instanceof LinearLayout) {
-                        CheckBox cb = child.findViewById(R.id.checkbox_user_dynamic);
-                        if (cb == null) continue; // seguridad extra
-
-                        String uid = (String) cb.getTag();
-                        if (cb.isChecked()) selectedUserIds.add(uid);
-
-                        boolean prev = false;
-                        if (working.getSharedUsersStatus() != null &&
-                                working.getSharedUsersStatus().containsKey(uid))
-                            prev = working.getSharedUsersStatus().get(uid);
-
-                        statusMap.put(uid, prev);
-                    }
-                }
-            }
-
-            // 🔥 AÑADIR AL CREADOR SIEMPRE
-            if (!selectedUserIds.contains(currentUserId))
-                selectedUserIds.add(0, currentUserId);
-
-            for (String uid : selectedUserIds)
-                statusMap.putIfAbsent(uid, false);
-
-            // -----------------------------
-            // GUARDAR DATOS
-            // -----------------------------
-            if (existing == null) {
-                String newId = remindersRef.push().getKey();
-                working.setId(newId);
-                working.setCreatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm",
-                        Locale.getDefault()).format(new Date()));
-            }
-
-            working.setUserId(currentUserId);
-            working.setTitle(title);
-            working.setDescription(desc);
-            working.setDate(date);
-            working.setTime(time);
-
-            // GOAL/BUDGET SELECCIONADOS
-            int gpos = spinnerGoal.getSelectedItemPosition();
-            working.setLinkedGoalId(gpos > 0 ? goalIds.get(gpos) : null);
-
-            int bpos = spinnerBudget.getSelectedItemPosition();
-            working.setLinkedBudgetId(bpos > 0 ? budgetIds.get(bpos) : null);
-
-            // TIPO
-            if (working.getLinkedGoalId() != null) working.setType("meta");
-            else if (working.getLinkedBudgetId() != null) working.setType("presupuesto");
-            else working.setType("otro");
-
-            working.setSharedUserIds(selectedUserIds);
-            working.setSharedUsersStatus(statusMap);
-            working.setCompleted(false);
-            working.setExpired(false);
-            working.setUpdatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm",
-                    Locale.getDefault()).format(new Date()));
-
-            // FIREBASE
-            remindersRef.child(working.getId()).setValue(working);
-
-            Toast.makeText(requireContext(),
-                    existing != null ? "Recordatorio actualizado" : "Recordatorio creado",
-                    Toast.LENGTH_SHORT).show();
-
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
 
 
 
@@ -759,7 +507,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
         // actualizar localmente
         reminder.setSharedUsersStatus(status);
-        reminder.setCompleted(allCompleted);
+        reminder.setIsCompleted(allCompleted);
         applyFilters();
         updatePendingAlert();
     }
@@ -813,7 +561,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     // Si tu adapter usa otra interfaz, ajusta.
     // --------------------------------------
     @Override
-    public void onEdit(Reminder reminder) { openCreateEditDialog(reminder); }
+    public void onEdit(Reminder reminder) {  }
 
     @Override
     public void onDelete(Reminder reminder) { confirmDelete(reminder); }

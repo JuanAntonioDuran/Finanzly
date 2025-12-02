@@ -22,8 +22,15 @@
         android:title="Recordatorios" />
 
     <item
+        android:id="@+id/nav_invite"
+        android:icon="@drawable/ic_invite"
+        android:title="Invitaciones" />
+
+
+    <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/ic_user"
         android:title="Perfil" />
+
 
 </menu>

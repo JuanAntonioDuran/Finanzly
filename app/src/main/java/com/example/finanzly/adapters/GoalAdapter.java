@@ -16,7 +16,6 @@ import com.example.finanzly.models.Goal;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -29,9 +28,9 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
     public interface OnGoalClickListener {
         void onAddProgress(Goal goal);
-        void onEdit(Goal goal);
         void onDelete(Goal goal);
         void onLeave(Goal goal);
+        void onViewMovements(Goal goal);
     }
 
     public GoalAdapter(List<Goal> goals, Context context) {
@@ -62,9 +61,9 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         boolean isFailed = false;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // se puede ajustar si quieres hora local
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
             Date goalDate = sdf.parse(goal.getDeadline());
-            Date today = sdf.parse(sdf.format(new Date())); // fecha actual sin hora
+            Date today = sdf.parse(sdf.format(new Date()));
 
             if (today.after(goalDate) && goal.getCurrentAmount() < goal.getTargetAmount()) {
                 isFailed = true;
@@ -79,7 +78,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
             holder.tvStatus.setBackgroundResource(R.color.green_primary);
         } else if (isFailed) {
             holder.tvStatus.setText("Fallido");
-            holder.tvStatus.setBackgroundResource(R.color.red_error); // definir color rojo en colors.xml
+            holder.tvStatus.setBackgroundResource(R.color.red_error);
         } else {
             holder.tvStatus.setText("Activo");
             holder.tvStatus.setBackgroundResource(R.color.blueAccent);
@@ -92,26 +91,14 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isOwner = goal.getUserId().equals(currentUserId);
 
-        // --- Lógica de visibilidad según propietario ---
-        if (isOwner) {
-            holder.btnAddProgress.setVisibility(View.VISIBLE);
-            holder.btnEdit.setVisibility(View.VISIBLE);
-            holder.btnDelete.setVisibility(View.VISIBLE);
-            holder.btnLeave.setVisibility(View.GONE);
-        } else {
-            holder.btnAddProgress.setVisibility(View.GONE);
-            holder.btnEdit.setVisibility(View.GONE);
-            holder.btnDelete.setVisibility(View.GONE);
-            holder.btnLeave.setVisibility(View.VISIBLE);
-        }
+        // Visibilidad de botones
+        holder.btnAddProgress.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        holder.btnLeave.setVisibility(!isOwner ? View.VISIBLE : View.GONE);
 
         // Click listeners
         holder.btnAddProgress.setOnClickListener(v -> {
             if (listener != null) listener.onAddProgress(goal);
-        });
-
-        holder.btnEdit.setOnClickListener(v -> {
-            if (listener != null) listener.onEdit(goal);
         });
 
         holder.btnDelete.setOnClickListener(v -> {
@@ -120,6 +107,11 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
         holder.btnLeave.setOnClickListener(v -> {
             if (listener != null) listener.onLeave(goal);
+        });
+
+        // Todos pueden acceder a los movimientos haciendo clic en el item
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onViewMovements(goal);
         });
     }
 
@@ -132,7 +124,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
         TextView tvTitle, tvTarget, tvCurrent, tvStatus;
         ProgressBar progressBar;
-        Button btnAddProgress, btnEdit, btnDelete, btnLeave;
+        Button btnAddProgress, btnDelete, btnLeave;
 
         public GoalViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -142,7 +134,6 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
             tvStatus = itemView.findViewById(R.id.tvGoalStatus);
             progressBar = itemView.findViewById(R.id.progressBarGoal);
             btnAddProgress = itemView.findViewById(R.id.btnGoalAddProgress);
-            btnEdit = itemView.findViewById(R.id.btnGoalEdit);
             btnDelete = itemView.findViewById(R.id.btnGoalDelete);
             btnLeave = itemView.findViewById(R.id.btnItemLeft);
         }

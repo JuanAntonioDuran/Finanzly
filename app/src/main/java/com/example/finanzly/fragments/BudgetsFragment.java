@@ -22,6 +22,7 @@ import com.example.finanzly.R;
 import com.example.finanzly.activities.BudgetMovements;
 import com.example.finanzly.adapters.BudgetAdapter;
 import com.example.finanzly.adapters.UserAdapter;
+import com.example.finanzly.dialogs.BudgetDialog;
 import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.BudgetService;
@@ -76,10 +77,7 @@ public class BudgetsFragment extends Fragment {
 
         adapter = new BudgetAdapter(filteredBudgets, getContext());
         adapter.setOnBudgetClickListener(new BudgetAdapter.OnBudgetClickListener() {
-            @Override
-            public void onEdit(Budget budget) {
-                openBudgetDialog(budget);
-            }
+
 
             @Override
             public void onDelete(Budget budget) {
@@ -204,139 +202,17 @@ public class BudgetsFragment extends Fragment {
     private void openBudgetDialog(Budget budgetToEdit) {
         if (currentUserId == null) return;
 
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_budget_form, null);
+        BudgetDialog dialog = new BudgetDialog(
+                getContext(),
+                currentUserId,
+                budgetService,
+                new UserService(getContext()),
+                () -> loadBudgets() // Este código se ejecuta al guardar o actualizar
+        );
 
-        EditText etCategory = dialogView.findViewById(R.id.etCategory);
-        EditText etLimit = dialogView.findViewById(R.id.etLimit);
-        EditText etAddUserId = dialogView.findViewById(R.id.etAddUserId);
-        Button btnAddUser = dialogView.findViewById(R.id.btnAddUser);
-        RecyclerView recyclerSharedUsers = dialogView.findViewById(R.id.recyclerSharedUsers);
-        TextView tvUsersTitle = dialogView.findViewById(R.id.tvUsersTitle);
-
-        boolean isEditing = (budgetToEdit != null);
-
-        List<User> sharedUsers = new ArrayList<>();
-        List<String> sharedUserIds = new ArrayList<>();
-
-        UserService userService = new UserService(getContext());
-
-        UserAdapter[] usersAdapter = new UserAdapter[1];
-
-        usersAdapter[0] = new UserAdapter(sharedUsers, user -> {
-            sharedUsers.remove(user);
-            sharedUserIds.remove(user.getUid());
-            usersAdapter[0].notifyDataSetChanged();
-        });
-
-        recyclerSharedUsers.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerSharedUsers.setAdapter(usersAdapter[0]);
-
-        if (isEditing) {
-            etCategory.setText(budgetToEdit.getCategory());
-            etLimit.setText(String.valueOf(budgetToEdit.getLimit()));
-
-            if (budgetToEdit.getSharedUserIds() != null) {
-                tvUsersTitle.setVisibility(View.VISIBLE);
-                recyclerSharedUsers.setVisibility(View.VISIBLE);
-
-                for (String uid : budgetToEdit.getSharedUserIds()) {
-                    userService.getById(uid).get().addOnSuccessListener(snapshot -> {
-                        if (snapshot.exists()) {
-                            User u = snapshot.getValue(User.class);
-                            if (u != null) {
-                                sharedUsers.add(u);
-                                sharedUserIds.add(u.getUid());
-                                usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        btnAddUser.setOnClickListener(v -> {
-            String uid = etAddUserId.getText().toString().trim();
-
-            if (uid.isEmpty()) {
-                Toast.makeText(getContext(), "Introduce un UID válido", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (sharedUserIds.contains(uid)) {
-                Toast.makeText(getContext(), "Ese usuario ya está agregado.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            userService.getById(uid).get().addOnSuccessListener(snapshot -> {
-                if (snapshot.exists()) {
-                    User user = snapshot.getValue(User.class);
-                    if (user != null) {
-                        sharedUsers.add(user);
-                        sharedUserIds.add(uid);
-                        usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
-
-                        etAddUserId.setText("");
-                        tvUsersTitle.setVisibility(View.VISIBLE);
-                        recyclerSharedUsers.setVisibility(View.VISIBLE);
-                    }
-                } else {
-                    Toast.makeText(getContext(), "Usuario no encontrado.", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setTitle(isEditing ? "Editar presupuesto" : "Nuevo presupuesto")
-                .setView(dialogView)
-                .setPositiveButton(isEditing ? "Actualizar" : "Guardar", (dialog, which) -> {
-                    String category = etCategory.getText().toString().trim();
-                    String limitStr = etLimit.getText().toString().trim();
-
-                    if (category.isEmpty() || limitStr.isEmpty()) {
-                        showAlert("Campos incompletos", "Debes llenar todos los campos.");
-                        return;
-                    }
-
-                    double limit = Double.parseDouble(limitStr);
-                    if (limit <= 0) {
-                        showAlert("Límite inválido", "Debe ser mayor que 0.");
-                        return;
-                    }
-
-                    if (isEditing) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // Para guardar en UTC
-                        String currentDate = sdf.format(new Date());
-                        budgetToEdit.setCategory(category);
-                        budgetToEdit.setLimit(limit);
-                        budgetToEdit.setSharedUserIds(sharedUserIds);
-                        budgetToEdit.setUpdatedAt(currentDate);
-                        budgetService.update(budgetToEdit.getId(), budgetToEdit);
-
-                        showAlert("Actualizado", "Presupuesto actualizado correctamente.");
-                    } else {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // Para guardar en UTC
-                        String currentDate = sdf.format(new Date());
-                        Budget newBudget = new Budget();
-                        newBudget.setCategory(category);
-                        newBudget.setLimit(limit);
-                        newBudget.setSpent(0);
-                        newBudget.setUserId(currentUserId);
-                        newBudget.setSharedUserIds(sharedUserIds);
-                        newBudget.setCreatedAt(currentDate);
-
-
-                        budgetService.insert(newBudget);
-
-                        showAlert("Creado", "Presupuesto creado correctamente.");
-                    }
-
-                    loadBudgets();
-                })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
-                .show();
+        dialog.show(budgetToEdit);
     }
+
 
     private void onDeleteBudget(Budget budget) {
         if (budget == null || budget.getId() == null || currentUserId == null) return;

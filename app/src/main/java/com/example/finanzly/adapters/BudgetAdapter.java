@@ -21,11 +21,9 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
     private List<Budget> budgets;
     private Context context;
-
     private OnBudgetClickListener listener;
 
     public interface OnBudgetClickListener {
-        void onEdit(Budget budget);
         void onDelete(Budget budget);
         void onViewMovements(Budget budget);
         void onLeave(Budget budget);
@@ -69,33 +67,22 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isOwner = budget.getUserId().equals(currentUserId);
 
-        // --- 🔐 Lógica de visibilidad según el dueño del presupuesto ---
-        if (isOwner) {
-            holder.btnEdit.setVisibility(View.VISIBLE);
-            holder.btnDelete.setVisibility(View.VISIBLE);
-            holder.btnViewMovements.setVisibility(View.VISIBLE);
-            holder.btnLeave.setVisibility(View.GONE);
-        } else {
-            holder.btnEdit.setVisibility(View.GONE);
-            holder.btnDelete.setVisibility(View.GONE);
-            holder.btnViewMovements.setVisibility(View.GONE);
-            holder.btnLeave.setVisibility(View.VISIBLE);
-        }
+        // --- 🔐 Visibilidad de botones ---
+        holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        holder.btnLeave.setVisibility(isOwner ? View.GONE : View.VISIBLE);
 
-        // Botones del dueño
-        holder.btnEdit.setOnClickListener(v -> {
-            if (listener != null) listener.onEdit(budget);
-        });
+        // Siempre visible para todos
+        holder.btnViewMovements.setVisibility(View.VISIBLE);
 
+        // Click listeners
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(budget);
         });
 
         holder.btnViewMovements.setOnClickListener(v -> {
-            if (listener != null && isOwner) listener.onViewMovements(budget);
+            if (listener != null) listener.onViewMovements(budget);
         });
 
-        // Botón salir para quienes NO son dueños
         holder.btnLeave.setOnClickListener(v -> {
             if (listener != null) listener.onLeave(budget);
         });
@@ -110,11 +97,10 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
         TextView tvCategory, tvLimit, tvSpent, tvStatus;
         ProgressBar progressBar;
-        Button btnEdit, btnDelete, btnViewMovements, btnLeave;
+        Button btnDelete, btnViewMovements, btnLeave;
 
         public BudgetViewHolder(@NonNull View itemView) {
             super(itemView);
-
             tvCategory = itemView.findViewById(R.id.tvItemCategory);
             tvLimit = itemView.findViewById(R.id.tvItemLimit);
             tvSpent = itemView.findViewById(R.id.tvItemSpent);
@@ -122,7 +108,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
             progressBar = itemView.findViewById(R.id.progressBarBudget);
 
-            btnEdit = itemView.findViewById(R.id.btnItemEdit);
             btnDelete = itemView.findViewById(R.id.btnItemDelete);
             btnViewMovements = itemView.findViewById(R.id.btnItemViewMovements);
             btnLeave = itemView.findViewById(R.id.btnItemLeft);

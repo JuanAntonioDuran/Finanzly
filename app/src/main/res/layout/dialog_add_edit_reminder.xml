@@ -1,127 +1,210 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="20dp"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="0dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
 
+    <!-- 🔵 HEADER -->
     <LinearLayout
-        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:background="@color/green_primary"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nuevo recordatorio"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp" />
+
+
+    </LinearLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- TÍTULO -->
-        <EditText
-            android:id="@+id/edtReminderTitle"
-            android:hint="Título"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- DESCRIPCIÓN -->
-        <EditText
-            android:id="@+id/edtReminderDescription"
-            android:hint="Descripción"
-            android:layout_marginTop="10dp"
-            android:minLines="3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- FECHA -->
-        <EditText
-            android:id="@+id/edtReminderDate"
-            android:hint="Fecha"
-            android:focusable="false"
-            android:clickable="true"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- HORA -->
-        <EditText
-            android:id="@+id/edtReminderTime"
-            android:hint="Hora"
-            android:focusable="false"
-            android:clickable="true"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- SPINNER TIPO -->
-        <Spinner
-            android:id="@+id/spinnerType"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- SPINNER MOVIMIENTO -->
-        <Spinner
-            android:id="@+id/spinnerMovement"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- SPINNER GOALS -->
-        <Spinner
-            android:id="@+id/spinnerLinkedGoal"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- SPINNER BUDGETS -->
-        <Spinner
-            android:id="@+id/spinnerLinkedBudget"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- USUARIOS VINCULADOS -->
         <LinearLayout
-            android:id="@+id/usersContainer"
             android:orientation="vertical"
-            android:layout_marginTop="15dp"
-            android:background="@color/gray_light"
-            android:padding="10dp"
+            android:padding="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- 🟢 TÍTULO -->
             <TextView
-                android:text="Usuarios vinculados"
+                android:text="Título"
                 android:textStyle="bold"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"/>
 
+            <EditText
+                android:id="@+id/edtReminderTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:padding="10dp"
+                android:background="@color/gray_light"
+                android:textColor="@android:color/black"/>
+
+            <!-- 📝 DESCRIPCIÓN -->
+            <TextView
+                android:text="Descripción"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/edtReminderDescription"
+                android:minLines="3"
+                android:layout_marginTop="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:background="@color/gray_light"
+                android:textColor="@android:color/black"/>
+
+            <!-- 📅 FECHA Y HORA -->
             <LinearLayout
-                android:id="@+id/layoutUsers"
-                android:orientation="vertical"
-                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_marginTop="16dp"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="Fecha"
+                        android:textStyle="bold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <EditText
+                        android:id="@+id/edtReminderDate"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:layout_marginTop="6dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:background="@color/gray_light"
+                        android:textColor="@android:color/black"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="match_parent"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="Hora"
+                        android:textStyle="bold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <EditText
+                        android:id="@+id/edtReminderTime"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:layout_marginTop="6dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:background="@color/gray_light"
+                        android:textColor="@android:color/black"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 🟢 BADGE - Vinculado a presupuesto/goal -->
+            <TextView
+                android:text="Vinculado a:"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/tvLinkedResource"
+                android:layout_marginTop="6dp"
+                android:padding="6dp"
+                android:textColor="@android:color/white"
+                android:background="@color/green_primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="(categoria presupuesto / nombre objetivo)"/>
+
+            <!-- 🔽 Usuarios vinculados -->
+            <Button
+                android:id="@+id/btnToggleUsers"
+                android:text="Mostrar usuarios vinculados"
+                android:layout_marginTop="15dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- Users Container -->
+            <LinearLayout
+                android:id="@+id/usersContainer"
+                android:orientation="vertical"
+                android:layout_marginTop="10dp"
+                android:padding="12dp"
+                android:visibility="gone"
+                android:background="@color/gray_light"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/layoutUsers"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
         </LinearLayout>
+    </ScrollView>
 
-        <!-- BOTÓN TOGGLE USUARIOS -->
-        <Button
-            android:id="@+id/btnToggleUsers"
-            android:text="Mostrar/Ocultar usuarios"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- BOTONES GUARDAR / CANCELAR -->
-        <Button
-            android:id="@+id/btnSaveReminder"
-            android:text="Guardar"
-            android:backgroundTint="@color/green_dark"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="15dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    <!-- 🔵 FOOTER -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
         <Button
             android:id="@+id/btnCancelReminder"
             android:text="Cancelar"
-            android:backgroundTint="@android:color/darker_gray"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/btnSaveReminder"
+            android:text="Guardar"
+            android:backgroundTint="@color/green_primary"
             android:textColor="@android:color/white"
-            android:layout_marginTop="10dp"
-            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"/>
     </LinearLayout>
-</ScrollView>
+
+</LinearLayout>

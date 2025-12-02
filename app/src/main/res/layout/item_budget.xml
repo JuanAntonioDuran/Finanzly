@@ -84,15 +84,7 @@
                 android:backgroundTint="@color/blueAccent"
                 android:textColor="@android:color/white"/>
 
-            <Button
-                android:id="@+id/btnItemEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Editar"
-                android:layout_weight="1"
-                android:backgroundTint="@color/green_primary"
-                android:textColor="@android:color/white"
-                android:layout_marginStart="4dp"/>
+
 
             <Button
                 android:id="@+id/btnItemDelete"

@@ -2,166 +2,380 @@ package com.example.finanzly.activities;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
+import android.widget.*;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.finanzly.R;
 import com.example.finanzly.adapters.MovementAdapter;
+import com.example.finanzly.dialogs.AddEditReminderDialog;
+import com.example.finanzly.dialogs.EditBudgetDialog;
+import com.example.finanzly.dialogs.MovementDialog;
 import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.Movement;
 import com.example.finanzly.models.User;
-import com.example.finanzly.services.BudgetService;
 import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BudgetMovements extends AppCompatActivity {
 
-    private RecyclerView recyclerViewMovements;
-    private MovementAdapter adapter;
-    private List<Movement> movementList;
-    private List<Movement> filteredList;
-    private HashMap<String, String> userIdToNameMap = new HashMap<>();
-
-    private MovementService movementService;
-    private BudgetService budgetService;
-    private UserService userService;
-
-    private TextView tvEmptyState;
-    private TextView tvSpent;
-    private TextView tvPercent;
-    private TextView tvTitle;
+    // UI
+    private TextView tvPercent, tvSpent, tvEmptyState;
+    private EditText  etUserFilter, etStartDateFilter, etEndDateFilter;
+    private RecyclerView recyclerView;
     private ProgressBar progressTop;
+    private FloatingActionButton fabAddMovement, fabEditBudget, fabAddReminder;
 
-    private EditText etDateFilter;
-    private EditText etUserFilter;
+    // Firebase references
+    private DatabaseReference budgetsRef;
+    private DatabaseReference movementsRef;
+    private DatabaseReference usersRef;
+    private String uid;
 
+    // Data
     private String budgetId;
     private Budget currentBudget;
 
-    private ImageButton btnBack;
-    private FloatingActionButton fabAddMovement;
+    private MovementAdapter adapter;
+    private List<Movement> movementList = new ArrayList<>();
+    private List<Movement> filteredList = new ArrayList<>();
+
+    private MovementService movementService;
+    private UserService userService;
+
+
+    // Maps
+    private Map<String, String> userIdToNameMap = new HashMap<>();
+
+
+    private String filterUser = "";
+    private String filterDateFrom = "";
+    private String filterDateTo = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_budget_movements);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets sb = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(sb.left, sb.top, sb.right, sb.bottom);
-            return insets;
-        });
-
-        recyclerViewMovements = findViewById(R.id.recyclerViewMovements);
-        tvEmptyState = findViewById(R.id.tvEmptyState);
-        tvSpent = findViewById(R.id.tvSpent);
-        tvPercent = findViewById(R.id.tvPercent);
-        progressTop = findViewById(R.id.progressTop);
-        tvTitle = findViewById(R.id.tvTitle);
-
-        etDateFilter = findViewById(R.id.etDateFilter);
-        etUserFilter = findViewById(R.id.etUserFilter);
-
-        btnBack = findViewById(R.id.btnBack);
-        fabAddMovement = findViewById(R.id.fabAddMovement);
-
-        movementService = new MovementService(this);
-        budgetService = new BudgetService(this);
-        userService = new UserService(this);
-
-        movementList = new ArrayList<>();
-        filteredList = new ArrayList<>();
-        adapter = new MovementAdapter(this, filteredList);
-
-        recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewMovements.setAdapter(adapter);
-
-        btnBack.setOnClickListener(v -> finish());
-        fabAddMovement.setOnClickListener(v -> openMovementDialog(null));
+        uid = FirebaseAuth.getInstance().getUid();
+        budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
+        movementsRef = FirebaseDatabase.getInstance().getReference("movements");
+        usersRef = FirebaseDatabase.getInstance().getReference("users");
 
         budgetId = getIntent().getStringExtra("budgetId");
-        if (budgetId == null) {
-            Toast.makeText(this, "No se recibió budgetId", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
 
-        budgetService.getById(budgetId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                currentBudget = snapshot.getValue(Budget.class);
-                if (currentBudget != null && currentBudget.getCategory() != null)
-                    tvTitle.setText("Movimientos de \"" + currentBudget.getCategory() + "\"");
-                updateSpentText();
-                updateProgressBar();
-                loadMovements();
-            }
-            @Override public void onCancelled(DatabaseError error) {}
+        // UI BINDING
+        tvPercent = findViewById(R.id.tvPercent);
+        tvSpent = findViewById(R.id.tvSpent);
+        tvEmptyState = findViewById(R.id.tvEmptyState);
+        etUserFilter = findViewById(R.id.etUserFilter);
+        etStartDateFilter = findViewById(R.id.etStartDateFilter);
+        etEndDateFilter = findViewById(R.id.etEndDateFilter);
+        recyclerView = findViewById(R.id.recyclerViewMovements);
+        progressTop = findViewById(R.id.progressTop);
+
+        fabAddMovement = findViewById(R.id.fabAddMovement);
+        fabEditBudget = findViewById(R.id.fabEditBudget);
+        fabAddReminder = findViewById(R.id.fabAddReminder);
+
+        // Suponiendo que tienes el budget y el currentUserId
+        FloatingActionButton fabEditBudget = findViewById(R.id.fabEditBudget);
+        FloatingActionButton fabAddReminder = findViewById(R.id.fabAddReminder);
+
+
+
+        movementService = new MovementService(this);
+        userService = new UserService(this);
+
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+
+
+        loadUsers();          // Intentamos precargar usuarios (cache)
+        loadBudget();
+        setupDatePickers();
+        setupFilterButtons();
+
+
+
+
+        // FAB – Añadir movimiento
+        fabAddMovement.setOnClickListener(v -> {
+            MovementDialog dialog = new MovementDialog(this, m -> {
+                String id = m.getId() != null ? m.getId() : movementsRef.child(budgetId).push().getKey();
+                m.setId(id);
+
+                movementsRef.child(budgetId).child(id)
+                        .setValue(m)
+                        .addOnSuccessListener(aVoid -> {
+                            // ❌ No añadimos manualmente a movementList, el listener de loadMovements() se encargará
+                            Toast.makeText(this, "Movimiento guardado", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e ->
+                                Toast.makeText(this, "Error guardando movimiento", Toast.LENGTH_SHORT).show());
+            });
+
+            dialog.setBudget(currentBudget, budgetId);
+            dialog.open(null);
         });
+
+// FAB – Editar presupuesto
+        fabEditBudget.setOnClickListener(v -> {
+            if (currentBudget == null) return;
+
+            EditBudgetDialog dialog = new EditBudgetDialog(
+                    BudgetMovements.this,
+                    currentBudget,
+                    true, // Asumimos que el usuario es owner aquí
+                    FirebaseAuth.getInstance().getUid(),
+                    FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),
+                    updatedBudget -> {
+                        // Callback: actualizamos budget local y en Firebase
+                        currentBudget.setCategory(updatedBudget.getCategory());
+                        currentBudget.setLimit(updatedBudget.getLimit());
+
+                        // Actualizar en Firebase
+                        budgetsRef.child(currentBudget.getId())
+                                .setValue(currentBudget)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(BudgetMovements.this, "Presupuesto actualizado", Toast.LENGTH_SHORT).show();
+                                    recalculateBudgetSpent();
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(BudgetMovements.this, "Error al actualizar presupuesto", Toast.LENGTH_SHORT).show());
+                    });
+
+            dialog.show();
+        });
+
+        fabAddReminder.setOnClickListener(v -> {
+
+            // ⚠️ Verificar que el presupuesto esté cargado
+            if (currentBudget == null) {
+                Toast.makeText(this, "Presupuesto no cargado", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Obtener usuarios compartidos del BUDGET
+            List<String> sharedUsers = currentBudget.getSharedUserIds();
+            if (sharedUsers == null) sharedUsers = new ArrayList<>();
+
+            AddEditReminderDialog dialog = new AddEditReminderDialog(
+                    BudgetMovements.this,
+                    null,                               // crear nuevo
+                    uid,                                // usuario actual
+                    currentBudget.getId(),              // ID del presupuesto
+                    currentBudget.getCategory(),        // nombre del presupuesto
+                    false,                              // false = es BUDGET
+                    currentBudget.getSharedUserIds(),   // lista de usuarios vinculados
+                    userIdToNameMap,                    // mapa UID -> Nombre
+                    (reminder, isNew) -> {
+                        Toast.makeText(this, "Recordatorio guardado", Toast.LENGTH_SHORT).show();
+                    }
+            );
+
+            dialog.show();
+        });
+
+
+
+
+    }
+
+    // ----------------------------
+    // RECYCLER
+    // ----------------------------
+
+    private void setupRecycler() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        adapter = new MovementAdapter(
+                this,
+                filteredList,
+                uid,
+                currentBudget.getUserId()
+        );
+        recyclerView.setAdapter(adapter);
 
         adapter.setOnMovementActionListener(new MovementAdapter.OnMovementActionListener() {
-            @Override public void onEdit(Movement movement) { openMovementDialog(movement); }
-            @Override public void onDelete(Movement movement) { deleteMovement(movement); }
+            @Override
+            public void onEdit(Movement movement) {
+                MovementDialog dialog = new MovementDialog(BudgetMovements.this, m -> {
+                    // Actualizar en Firebase correctamente
+                    movementsRef.child(m.getLinkedBudgetId()).child(m.getId())
+                            .setValue(m)
+                            .addOnSuccessListener(aVoid -> {
+                                // Actualizar lista en memoria buscando por id
+                                int index = findMovementIndexById(m.getId());
+                                if (index != -1) {
+                                    movementList.set(index, m);
+                                    applyFilters();
+                                } else {
+                                    // Si no está, no forzamos duplicados — la escucha de Firebase sincronizará en breve
+                                }
+                                recalculateBudgetSpent();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(BudgetMovements.this, "Error actualizando movimiento", Toast.LENGTH_SHORT).show());
+                });
+
+                dialog.setBudget(currentBudget, budgetId);
+                dialog.open(movement);
+            }
+
+            @Override
+            public void onDelete(Movement movement) {
+                new androidx.appcompat.app.AlertDialog.Builder(BudgetMovements.this)
+                        .setTitle("Eliminar movimiento")
+                        .setMessage("¿Estás seguro de que quieres eliminar este movimiento?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            try {
+                                // Llamamos al servicio para borrar en Firebase.
+                                // NO eliminamos localmente de movementList para evitar inconsistencias/duplicados:
+                                // el ValueEventListener se encargará de actualizar la lista cuando Firebase confirme el cambio.
+                                movementService.delete(movement.getId());
+                                // Si movementService tiene callbacks, deberías usarlos para notificar éxito/fracaso.
+                                Toast.makeText(BudgetMovements.this, "Eliminando movimiento...", Toast.LENGTH_SHORT).show();
+                            } catch (Exception e) {
+                                Toast.makeText(BudgetMovements.this, "Error eliminando movimiento", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+
+
+
         });
+    }
 
-        // FILTER: Date Picker
-        etDateFilter.setOnClickListener(v -> {
-            Calendar c = Calendar.getInstance();
-            new DatePickerDialog(this, (vw, y, m, d) ->
-                    etDateFilter.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, m + 1, d)),
-                    c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
-            ).show();
+    private int findMovementIndexById(String id) {
+        if (id == null) return -1;
+        for (int i = 0; i < movementList.size(); i++) {
+            Movement m = movementList.get(i);
+            if (m != null && id.equals(m.getId())) return i;
+        }
+        return -1;
+    }
+
+
+    // ----------------------------
+    // DATE PICKERS
+    // ----------------------------
+
+    private void setupDatePickers() {
+        etStartDateFilter.setOnClickListener(v -> showDatePicker(etStartDateFilter));
+        etEndDateFilter.setOnClickListener(v -> showDatePicker(etEndDateFilter));
+    }
+
+    private void showDatePicker(EditText target) {
+        Calendar c = Calendar.getInstance();
+        new DatePickerDialog(this, (view, y, m, d) ->
+                target.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, m + 1, d)),
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
+        ).show();
+    }
+
+    // ----------------------------
+    // FILTER BUTTONS
+    // ----------------------------
+
+    private void setupFilterButtons() {
+        findViewById(R.id.btnApplyFilter).setOnClickListener(v -> applyFilters());
+        findViewById(R.id.btnClearFilter).setOnClickListener(v -> clearFilters());
+    }
+
+
+
+    // ----------------------------
+    // LOAD DATA
+    // ----------------------------
+
+    private void loadBudget() {
+        budgetsRef.orderByChild("id").equalTo(budgetId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot child : snapshot.getChildren()) {
+                            currentBudget = child.getValue(Budget.class);
+                        }
+
+                        if (currentBudget != null) {
+                            // Inicializamos el recycler ahora que tenemos el budget
+                            setupRecycler();
+
+
+
+                            // Cargamos movimientos
+                            loadMovements();
+
+                            // Actualizamos UI
+                            recalculateBudgetSpent();
+                            updateProgressBar();
+
+                            if (currentBudget.getUserId().equals(uid)) {
+                                fabEditBudget.setVisibility(View.VISIBLE);
+                                fabAddReminder.setVisibility(View.VISIBLE);
+                            } else {
+                                fabEditBudget.setVisibility(View.GONE);
+                                fabAddReminder.setVisibility(View.GONE);
+                            }
+
+
+                        } else {
+                            Log.e("BudgetMovements", "No se encontró el presupuesto con id: " + budgetId);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("BudgetMovements", "Error cargando presupuesto: " + error.getMessage());
+                    }
+                });
+    }
+
+
+
+    private void loadUsers() {
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                userIdToNameMap.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    User u = child.getValue(User.class);
+                    if (u != null) userIdToNameMap.put(u.getUid(), u.getName());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
-
-        // FILTER: Watcher for date/user changes
-        TextWatcher filterWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) { applyFilters(); }
-        };
-
-        etDateFilter.addTextChangedListener(filterWatcher);
-        etUserFilter.addTextChangedListener(filterWatcher);
     }
 
     private void loadMovements() {
+        if (budgetId == null) return;
+
+        // No borramos userIdToNameMap aquí: podemos reutilizar caché si ya cargamos usuarios.
+        // Reiniciamos sólo las listas de movimientos para evitar duplicados.
+        movementList.clear();
+        filteredList.clear();
+
         movementService.getReference()
                 .orderByChild("linkedBudgetId")
                 .equalTo(budgetId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot snapshot) {
-                        movementList.clear();
-                        userIdToNameMap.clear();
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
 
                         List<Movement> allMovements = new ArrayList<>();
                         for (DataSnapshot ds : snapshot.getChildren()) {
@@ -169,74 +383,160 @@ public class BudgetMovements extends AppCompatActivity {
                             if (m != null) allMovements.add(m);
                         }
 
+                        // Si no hay movimientos
                         if (allMovements.isEmpty()) {
-                            applyFilters();
+                            movementList.clear();
+                            filteredList.clear();
+                            if (adapter != null) adapter.notifyDataSetChanged();
+                            tvEmptyState.setVisibility(View.VISIBLE);
                             recalculateBudgetSpent();
+                            updateProgressBar();
                             return;
                         }
 
-                        // Cargar nombres de usuarios de manera asincrónica
+                        // Detectar userIds que faltan en cache
+                        Set<String> missingUserIds = new HashSet<>();
                         for (Movement m : allMovements) {
-                            if (!userIdToNameMap.containsKey(m.getUserId())) {
-                                userService.getById(m.getUserId()).get()
+                            if (m.getUserId() != null && !userIdToNameMap.containsKey(m.getUserId())) {
+                                missingUserIds.add(m.getUserId());
+                            }
+                        }
+
+                        if (missingUserIds.isEmpty()) {
+                            // Ya tenemos todos los nombres: asignamos de una vez
+                            movementList.clear();
+                            movementList.addAll(allMovements);
+
+                            // Asignar nombres al adapter (si lo requiere)
+                            if (adapter != null) {
+                                for (Movement mv : movementList) {
+                                    String name = userIdToNameMap.getOrDefault(mv.getUserId(), "Desconocido");
+                                    adapter.setUserNameForMovement(mv.getId(), name);
+                                }
+                            }
+
+                            filteredList.clear();
+                            filteredList.addAll(movementList);
+                            if (adapter != null) adapter.notifyDataSetChanged();
+                            tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+
+                            recalculateBudgetSpent();
+                            updateProgressBar();
+                        } else {
+                            // Tenemos que cargar los usuarios faltantes y esperar a que terminen todas las cargas
+                            AtomicInteger counter = new AtomicInteger(missingUserIds.size());
+
+                            for (String userId : missingUserIds) {
+                                userService.getById(userId).get()
                                         .addOnSuccessListener(userSnap -> {
                                             if (userSnap.exists()) {
                                                 User u = userSnap.getValue(User.class);
-                                                if (u != null) userIdToNameMap.put(m.getUserId(), u.getName());
-                                            }
-                                            movementList.add(m);
-                                            if (movementList.size() == allMovements.size()) {
-                                                // Asignar nombres en el adapter
-                                                for (Movement mv : movementList) {
-                                                    String name = userIdToNameMap.get(mv.getUserId());
-                                                    adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+                                                if (u != null) {
+                                                    userIdToNameMap.put(userId, u.getName());
                                                 }
-                                                applyFilters();
+                                            }
+                                            // Si falla o no existe, dejamos sin nombre y seguiremos
+                                            if (counter.decrementAndGet() <= 0) {
+                                                // Todas las cargas terminadas: asignar la lista de movimientos de una vez
+                                                movementList.clear();
+                                                movementList.addAll(allMovements);
+
+                                                if (adapter != null) {
+                                                    for (Movement mv : movementList) {
+                                                        String name = userIdToNameMap.getOrDefault(mv.getUserId(), "Desconocido");
+                                                        adapter.setUserNameForMovement(mv.getId(), name);
+                                                    }
+                                                }
+
+                                                filteredList.clear();
+                                                filteredList.addAll(movementList);
+                                                if (adapter != null) adapter.notifyDataSetChanged();
+                                                tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+
                                                 recalculateBudgetSpent();
+                                                updateProgressBar();
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            // Incluso si falla una petición, decrementamos el contador para no bloquear
+                                            if (counter.decrementAndGet() <= 0) {
+                                                movementList.clear();
+                                                movementList.addAll(allMovements);
+
+                                                if (adapter != null) {
+                                                    for (Movement mv : movementList) {
+                                                        String name = userIdToNameMap.getOrDefault(mv.getUserId(), "Desconocido");
+                                                        adapter.setUserNameForMovement(mv.getId(), name);
+                                                    }
+                                                }
+
+                                                filteredList.clear();
+                                                filteredList.addAll(movementList);
+                                                if (adapter != null) adapter.notifyDataSetChanged();
+                                                tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+
+                                                recalculateBudgetSpent();
+                                                updateProgressBar();
                                             }
                                         });
-                            } else {
-                                movementList.add(m);
-                                if (movementList.size() == allMovements.size()) {
-                                    for (Movement mv : movementList) {
-                                        String name = userIdToNameMap.get(mv.getUserId());
-                                        adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
-                                    }
-                                    applyFilters();
-                                    recalculateBudgetSpent();
-                                }
                             }
                         }
                     }
-                    @Override public void onCancelled(DatabaseError error) {}
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("BudgetMovements", "Error cargando movimientos: " + error.getMessage());
+                    }
                 });
     }
 
+    // ----------------------------
+    // FILTERS
+    // ----------------------------
+
+    private void clearFilters() {
+        etUserFilter.setText("");
+        etStartDateFilter.setText("");
+        etEndDateFilter.setText("");
+
+
+        applyFilters();
+    }
+
+
+
     private void applyFilters() {
-        String filterDate = etDateFilter.getText().toString().trim();
-        String filterUser = etUserFilter.getText().toString().trim().toLowerCase();
+        filterUser = etUserFilter.getText().toString().trim().toLowerCase();
+        filterDateFrom = etStartDateFilter.getText().toString().trim();
+        filterDateTo = etEndDateFilter.getText().toString().trim();
 
         filteredList.clear();
 
         for (Movement m : movementList) {
-            boolean matches = true;
+            boolean ok = true;
 
-            // Filtrar por fecha
-            if (!filterDate.isEmpty() && !m.getDate().equals(filterDate)) matches = false;
+            // Filtrar por fecha desde
+            if (!filterDateFrom.isEmpty() && m.getDate().compareTo(filterDateFrom) < 0)
+                ok = false;
+
+            // Filtrar por fecha hasta
+            if (!filterDateTo.isEmpty() && m.getDate().compareTo(filterDateTo) > 0)
+                ok = false;
 
             // Filtrar por usuario
             if (!filterUser.isEmpty()) {
                 String name = userIdToNameMap.get(m.getUserId());
-                if (name == null || !name.toLowerCase().contains(filterUser)) matches = false;
+                if (name == null || !name.toLowerCase().contains(filterUser))
+                    ok = false;
             }
 
-            if (matches) filteredList.add(m);
+            if (ok) filteredList.add(m);
         }
 
-        // Actualizar nombres en el adapter antes de mostrar
+        // Asignar nombres al adapter
         for (Movement mv : filteredList) {
-            String name = userIdToNameMap.get(mv.getUserId());
-            adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
+            String name = userIdToNameMap.getOrDefault(mv.getUserId(), "Desconocido");
+            adapter.setUserNameForMovement(mv.getId(), name);
         }
 
         adapter.notifyDataSetChanged();
@@ -244,136 +544,63 @@ public class BudgetMovements extends AppCompatActivity {
     }
 
 
-    // ======= CREATE / EDIT =======
-    private void openMovementDialog(Movement movement) {
-        boolean isNew = movement == null;
-        Movement m = isNew ? new Movement() : movement;
+    // ----------------------------
+    // BUDGET LOGIC
+    // ----------------------------
 
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_movement_form, null);
-        EditText etDate = dialogView.findViewById(R.id.etDate);
-        EditText etAmount = dialogView.findViewById(R.id.etAmount);
-        EditText etDescription = dialogView.findViewById(R.id.etDescription);
-        Button btnSave = dialogView.findViewById(R.id.btnSave);
-        Button btnCancel = dialogView.findViewById(R.id.btnCancel);
-
-        if (!isNew) {
-            etDate.setText(m.getDate());
-            etAmount.setText(String.valueOf(m.getAmount()));
-            etDescription.setText(m.getDescription());
-        }
-
-        etDate.setOnClickListener(v -> {
-            Calendar c = Calendar.getInstance();
-            new DatePickerDialog(this, (dView, y, mo, d) ->
-                    etDate.setText(String.format(Locale.getDefault(), "%04d-%02d-%02d", y, mo + 1, d)),
-                    c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)
-            ).show();
-        });
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        btnSave.setOnClickListener(v -> {
-            String date = etDate.getText().toString().trim();
-            String desc = etDescription.getText().toString().trim();
-            String amountStr = etAmount.getText().toString().trim();
-
-            if (date.isEmpty() || amountStr.isEmpty()) {
-                Toast.makeText(this, "Fecha y cantidad obligatorias", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            double amount = Double.parseDouble(amountStr);
-            if (isNew) {
-                double maxAllowed = currentBudget.getLimit() - currentBudget.getSpent();
-                if (amount > maxAllowed) {
-                    amount = maxAllowed;
-                    Toast.makeText(this, "El gasto se ajustó al límite restante", Toast.LENGTH_LONG).show();
-                }
-            } else {
-                double currentSpentWithoutThis = currentBudget.getSpent() - m.getAmount();
-                double maxAllowed = currentBudget.getLimit() - currentSpentWithoutThis;
-                if (amount > maxAllowed) {
-                    Toast.makeText(this, "No puedes pasar el límite", Toast.LENGTH_LONG).show();
-                    return;
-                }
-            }
-
-            m.setId(isNew ? UUID.randomUUID().toString() : m.getId());
-            m.setType("expense");
-            m.setDate(date);
-            m.setDescription(desc);
-            m.setAmount(amount);
-            m.setLinkedBudgetId(budgetId);
-            m.setUserId(FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-            if (currentBudget != null) m.setCategory(currentBudget.getCategory());
-
-            if (isNew) movementService.insert(m);
-            else movementService.update(m.getId(), m);
-
-            recalculateBudgetSpent();
-            updateProgressBar();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
-
-    // ======= DELETE =======
-    private void deleteMovement(Movement movement) {
-        new AlertDialog.Builder(this)
-                .setTitle("Eliminar gasto")
-                .setMessage("¿Seguro que quieres eliminar este gasto?")
-                .setPositiveButton("Sí", (d, w) -> {
-                    movementService.delete(movement.getId());
-                    recalculateBudgetSpent();
-                    updateProgressBar();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-    }
-
-    // ======= BUDGET UPDATE =======
     private void recalculateBudgetSpent() {
-        movementService.getReference()
-                .orderByChild("linkedBudgetId")
-                .equalTo(budgetId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    double total = 0;
-                    for (DataSnapshot ds : snapshot.getChildren()) {
-                        Movement m = ds.getValue(Movement.class);
-                        if (m != null && "expense".equals(m.getType())) total += m.getAmount();
-                    }
-                    HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("spent", total);
-                    budgetService.updatePartial(budgetId, updates);
-                    currentBudget.setSpent(total);
-                    updateSpentText();
-                    updateProgressBar();
-                });
+        if (currentBudget == null) return;
+
+        double spent = 0;
+        for (Movement m : movementList) {
+            if (budgetId.equals(m.getLinkedBudgetId())) {
+                spent += m.getAmount();
+            }
+        }
+
+        currentBudget.setSpent(spent);
+
+        double remaining = currentBudget.getLimit() - spent;
+
+        tvSpent.setText(String.format(Locale.getDefault(), " — Te quedan %.2f€", remaining));
+
+        if (spent > currentBudget.getLimit()) {
+            tvSpent.setTextColor(getColor(R.color.red_error));
+            Toast.makeText(this, "⚠ Has superado tu presupuesto", Toast.LENGTH_SHORT).show();
+        } else {
+            tvSpent.setTextColor(getColor(R.color.gray_dark));
+        }
+
+        double percent = (spent / currentBudget.getLimit()) * 100;
+        if (percent > 100) percent = 100;
+
+        progressTop.setProgress((int) percent);
+        tvPercent.setText(String.format(Locale.getDefault(), "%.0f%%", percent));
+
+        // 🔥 ACTUALIZAR EN FIREBASE
+        DatabaseReference ref = FirebaseDatabase.getInstance()
+                .getReference("budgets")
+                .child(currentBudget.getId()); // o budgetId
+
+        ref.setValue(currentBudget)
+                .addOnSuccessListener(aVoid -> {
+                    // Opcional: Log o Toast silencioso
+                    // Log.d("Budget", "Presupuesto actualizado correctamente en Firebase");
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error al actualizar el presupuesto", Toast.LENGTH_SHORT).show()
+                );
     }
 
-    private void updateSpentText() {
-        if (currentBudget != null) {
-            double remaining = currentBudget.getLimit() - currentBudget.getSpent();
-            if (remaining < 0) remaining = 0;
-            tvSpent.setText(" — Te quedan " + remaining + "€");
-        }
-    }
+
 
     private void updateProgressBar() {
         if (currentBudget == null) return;
-        double limit = currentBudget.getLimit();
-        double spent = currentBudget.getSpent();
-        if (limit <= 0) return;
-        double percent = (spent / limit) * 100;
+
+        double percent = (currentBudget.getSpent() / currentBudget.getLimit()) * 100;
         if (percent > 100) percent = 100;
+
         progressTop.setProgress((int) percent);
-        tvPercent.setText((int) percent + "%");
+        tvPercent.setText(String.format(Locale.getDefault(), "%.0f%%", percent));
     }
 }

@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import com.example.finanzly.R;
 import com.example.finanzly.fragments.BudgetsFragment;
 import com.example.finanzly.fragments.GoalsFragment;
+import com.example.finanzly.fragments.InvitationFragment;
 import com.example.finanzly.fragments.MovementsFragment;
 import com.example.finanzly.fragments.RemindersFragment;
 import com.example.finanzly.fragments.UserFragment;
@@ -55,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = new RemindersFragment();
             } else if (id == R.id.nav_profile) {
                 selectedFragment = new UserFragment();
-            }
+            }else if (id == R.id.nav_invite) {
+            selectedFragment = new InvitationFragment();
+        }
 
             if (selectedFragment != null) {
                 getSupportFragmentManager()

@@ -92,21 +92,12 @@ public class Reminder {
         this.type = type;
     }
 
-    public boolean isCompleted() {
-        return isCompleted;
-    }
+    public boolean getIsCompleted() { return isCompleted; }
+    public void setIsCompleted(boolean completed) { isCompleted = completed; }
 
-    public void setCompleted(boolean completed) {
-        isCompleted = completed;
-    }
+    public boolean getIsExpired() { return isExpired; }
+    public void setIsExpired(boolean expired) { isExpired = expired; }
 
-    public boolean isExpired() {
-        return isExpired;
-    }
-
-    public void setExpired(boolean expired) {
-        isExpired = expired;
-    }
 
     public String getLinkedGoalId() {
         return linkedGoalId;

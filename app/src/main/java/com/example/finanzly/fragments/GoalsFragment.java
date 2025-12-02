@@ -21,6 +21,7 @@ import com.example.finanzly.R;
 import com.example.finanzly.activities.GoalMovements;
 import com.example.finanzly.adapters.GoalAdapter;
 import com.example.finanzly.adapters.UserAdapter;
+import com.example.finanzly.dialogs.GoalDialog;
 import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.GoalService;
@@ -72,16 +73,15 @@ public class GoalsFragment extends Fragment {
         adapter.setOnGoalClickListener(new GoalAdapter.OnGoalClickListener() {
             @Override
             public void onAddProgress(Goal goal) {
+                // El propietario puede añadir progreso
                 goToGoalMovements(goal);
             }
 
-            @Override
-            public void onEdit(Goal goal) {
-                openGoalDialog(goal);
-            }
+
 
             @Override
             public void onDelete(Goal goal) {
+                // Solo propietario puede eliminar
                 onDeleteGoal(goal);
             }
 
@@ -89,18 +89,19 @@ public class GoalsFragment extends Fragment {
             public void onLeave(Goal goal) {
                 if (getContext() == null) return;
 
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                // Verifica que el usuario esté en la lista de colaboradores
+                if (goal.getSharedUserIds() == null || !goal.getSharedUserIds().contains(currentUserId)) {
+                    Toast.makeText(getContext(), "No puedes salir de esta meta.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 new AlertDialog.Builder(getContext())
                         .setTitle("Salir de la meta")
                         .setMessage("¿Estás seguro que deseas salir de la meta \"" + goal.getTitle() + "\"? Ya no podrás acceder a ella.")
                         .setPositiveButton("Sí, salir", (dialog, which) -> {
-
-                            String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                            if (goal.getSharedUserIds() == null || !goal.getSharedUserIds().contains(currentUserId)) {
-                                return;
-                            }
-
-                            // Quitar usuario de la lista
+                            // Quitar usuario de la lista de colaboradores
                             List<String> updatedList = new ArrayList<>(goal.getSharedUserIds());
                             updatedList.remove(currentUserId);
 
@@ -114,13 +115,18 @@ public class GoalsFragment extends Fragment {
                                         loadGoals(); // refrescar lista
                                     })
                                     .addOnFailureListener(e -> Toast.makeText(getContext(), "Error al salir de la meta", Toast.LENGTH_SHORT).show());
-
                         })
                         .setNegativeButton("Cancelar", null)
                         .show();
             }
 
+            @Override
+            public void onViewMovements(Goal goal) {
+                // Todos los usuarios pueden acceder a los movimientos
+                goToGoalMovements(goal);
+            }
         });
+
 
         rvGoals.setLayoutManager(new LinearLayoutManager(getContext()));
         rvGoals.setAdapter(adapter);
@@ -130,7 +136,19 @@ public class GoalsFragment extends Fragment {
         btnApplyFilter.setOnClickListener(v -> applyFilters());
         btnClearFilter.setOnClickListener(v -> clearFilters());
 
-        root.findViewById(R.id.btnAddGoal).setOnClickListener(v -> openGoalDialog(null));
+        // Botón de crear nueva meta
+        root.findViewById(R.id.btnAddGoal).setOnClickListener(v -> {
+            if (currentUserId == null) return;
+
+            GoalDialog dialog = new GoalDialog(
+                    getContext(),
+                    currentUserId,
+                    goalService, // tu instancia de GoalService
+                    () -> loadGoals() // refresca la lista al crear la meta
+            );
+            dialog.show();
+        });
+
 
         return root;
     }
@@ -178,194 +196,7 @@ public class GoalsFragment extends Fragment {
         applyFilters();
     }
 
-    private void openGoalDialog(Goal goalToEdit) {
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_goal_form, null);
 
-        EditText etTitle = dialogView.findViewById(R.id.etTitle);
-        EditText etTargetAmount = dialogView.findViewById(R.id.etTargetAmount);
-        EditText etDeadline = dialogView.findViewById(R.id.etDeadline);
-        EditText etAddUserId = dialogView.findViewById(R.id.etAddUserId);
-        Button btnAddUser = dialogView.findViewById(R.id.btnAddUser);
-        RecyclerView recyclerSharedUsers = dialogView.findViewById(R.id.recyclerSharedUsers);
-        TextView tvUsersTitle = dialogView.findViewById(R.id.tvUsersTitle);
-
-        boolean isEditing = (goalToEdit != null);
-
-        List<User> sharedUsers = new ArrayList<>();
-        List<String> sharedUserIds = new ArrayList<>();
-        UserService userService = new UserService(getContext());
-
-        UserAdapter[] usersAdapter = new UserAdapter[1];
-        usersAdapter[0] = new UserAdapter(sharedUsers, user -> {
-            sharedUsers.remove(user);
-            sharedUserIds.remove(user.getUid());
-            usersAdapter[0].notifyDataSetChanged();
-        });
-
-        recyclerSharedUsers.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerSharedUsers.setAdapter(usersAdapter[0]);
-
-        if (isEditing) {
-            etTitle.setText(goalToEdit.getTitle());
-            etTargetAmount.setText(String.valueOf(goalToEdit.getTargetAmount()));
-            etDeadline.setText(goalToEdit.getDeadline());
-
-            if (goalToEdit.getSharedUserIds() != null) {
-                tvUsersTitle.setVisibility(View.VISIBLE);
-                recyclerSharedUsers.setVisibility(View.VISIBLE);
-
-                for (String uid : goalToEdit.getSharedUserIds()) {
-                    userService.getById(uid).get().addOnSuccessListener(snapshot -> {
-                        if (snapshot.exists()) {
-                            User u = snapshot.getValue(User.class);
-                            if (u != null) {
-                                sharedUsers.add(u);
-                                sharedUserIds.add(u.getUid());
-                                usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        btnAddUser.setOnClickListener(v -> {
-            String uid = etAddUserId.getText().toString().trim();
-            if (uid.isEmpty()) {
-                Toast.makeText(getContext(), "Introduce un UID válido", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (sharedUserIds.contains(uid)) {
-                Toast.makeText(getContext(), "Ese usuario ya está agregado.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            userService.getById(uid).get().addOnSuccessListener(snapshot -> {
-                if (snapshot.exists()) {
-                    User user = snapshot.getValue(User.class);
-                    if (user != null) {
-                        sharedUsers.add(user);
-                        sharedUserIds.add(uid);
-                        usersAdapter[0].notifyItemInserted(sharedUsers.size() - 1);
-                        etAddUserId.setText("");
-                        tvUsersTitle.setVisibility(View.VISIBLE);
-                        recyclerSharedUsers.setVisibility(View.VISIBLE);
-                    }
-                } else {
-                    Toast.makeText(getContext(), "Usuario no encontrado.", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        // -------------------------- DatePicker para la fecha --------------------------
-        etDeadline.setFocusable(false);
-        etDeadline.setClickable(true);
-        etDeadline.setOnClickListener(v -> {
-            java.util.Calendar calendar = java.util.Calendar.getInstance();
-
-            try {
-                String[] parts = etDeadline.getText().toString().split("-");
-                if (parts.length == 3) {
-                    calendar.set(java.util.Calendar.YEAR, Integer.parseInt(parts[0]));
-                    calendar.set(java.util.Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
-                    calendar.set(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(parts[2]));
-                }
-            } catch (Exception ignored) {}
-
-            android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
-                    getContext(),
-                    (view, selectedYear, selectedMonth, selectedDay) -> {
-                        String formattedDate = String.format("%04d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
-                        etDeadline.setText(formattedDate);
-                    },
-                    calendar.get(java.util.Calendar.YEAR),
-                    calendar.get(java.util.Calendar.MONTH),
-                    calendar.get(java.util.Calendar.DAY_OF_MONTH)
-            );
-            datePickerDialog.show();
-        });
-        // ------------------------------------------------------------------------------
-
-        new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setTitle(isEditing ? "Editar meta" : "Nueva meta")
-                .setView(dialogView)
-                .setPositiveButton(isEditing ? "Actualizar" : "Guardar", (dialog, which) -> {
-                    String title = etTitle.getText().toString().trim();
-                    String targetStr = etTargetAmount.getText().toString().trim();
-                    String deadline = etDeadline.getText().toString().trim();
-
-                    if (title.isEmpty() || targetStr.isEmpty() || deadline.isEmpty()) {
-                        showAlert("Campos incompletos", "Debes llenar todos los campos.");
-                        return;
-                    }
-
-                    if (title.length() < 3) {
-                        showAlert("Título inválido", "El título debe tener al menos 3 caracteres.");
-                        return;
-                    }
-
-                    double target;
-                    try {
-                        target = Double.parseDouble(targetStr);
-                    } catch (NumberFormatException e) {
-                        showAlert("Cantidad inválida", "Introduce un número válido.");
-                        return;
-                    }
-
-                    if (target <= 0) {
-                        showAlert("Cantidad inválida", "Debe ser mayor que 0.");
-                        return;
-                    }
-
-                    // Validación de fecha
-                    try {
-                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                        sdf.setLenient(false);
-                        java.util.Date selectedDate = sdf.parse(deadline);
-                        java.util.Date today = new java.util.Date();
-
-                        // Si la fecha es anterior a hoy
-                        if (selectedDate.before(today)) {
-                            showAlert("Fecha inválida", "La fecha de la meta no puede ser anterior a hoy.");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        showAlert("Fecha inválida", "Formato de fecha incorrecto. Use yyyy-MM-dd.");
-                        return;
-                    }
-
-                    if (isEditing) {
-                        // Confirmación antes de actualizar
-                        new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                                .setTitle("Confirmar actualización")
-                                .setMessage("¿Estás seguro de actualizar esta meta?")
-                                .setPositiveButton("Sí", (confirmDialog, confirmWhich) -> {
-                                    goalToEdit.setTitle(title);
-                                    goalToEdit.setTargetAmount(target);
-                                    goalToEdit.setDeadline(deadline);
-                                    goalToEdit.setSharedUserIds(sharedUserIds);
-                                    goalService.update(goalToEdit.getId(), goalToEdit);
-                                    showAlert("Actualizado", "Meta actualizada correctamente.");
-                                    loadGoals();
-                                })
-                                .setNegativeButton("Cancelar", null)
-                                .show();
-                    } else {
-                        Goal newGoal = new Goal();
-                        newGoal.setTitle(title);
-                        newGoal.setTargetAmount(target);
-                        newGoal.setCurrentAmount(0);
-                        newGoal.setUserId(currentUserId);
-                        newGoal.setDeadline(deadline);
-                        newGoal.setSharedUserIds(sharedUserIds);
-                        goalService.insert(newGoal);
-                        showAlert("Creado", "Meta creada correctamente.");
-                        loadGoals();
-                    }
-                })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
-                .show();
-    }
 
 
     private void onDeleteGoal(Goal goal) {

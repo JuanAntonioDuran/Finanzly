@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/invitation_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 🧭 TÍTULO PRINCIPAL -->
+    <TextView
+        android:id="@+id/tvInvitationsTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📬 Invitaciones"
+        android:textColor="@color/green_primary"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:paddingBottom="12dp" />
+
+    <!-- 🔘 BOTONES DE CAMBIO DE VISTA -->
+    <LinearLayout
+        android:id="@+id/layoutViewModeButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="12dp">
+
+        <Button
+            android:id="@+id/btnReceived"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Recibidas"
+            android:backgroundTint="@color/green_primary"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/btnSent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Enviadas"
+            android:backgroundTint="@color/gray_light"
+            android:textColor="@android:color/black"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- 📩 LISTA DE INVITACIONES RECIBIDAS -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerReceivedInvitations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="visible" />
+
+    <!-- 📤 LISTA DE INVITACIONES ENVIADAS -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerSentInvitations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <!-- Mensaje de vacío -->
+    <TextView
+        android:id="@+id/tvEmptyMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No hay invitaciones"
+        android:textColor="@color/gray_dark"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="gone"/>
+</LinearLayout>

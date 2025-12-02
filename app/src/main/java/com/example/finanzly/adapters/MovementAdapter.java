@@ -25,9 +25,14 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
 
     private OnMovementActionListener listener;
 
-    public MovementAdapter(Context context, List<Movement> movementList) {
+    private final String currentUserId;
+    private final String budgetOwnerId;
+
+    public MovementAdapter(Context context, List<Movement> movementList, String currentUserId, String budgetOwnerId) {
         this.context = context;
         this.movementList = movementList;
+        this.currentUserId = currentUserId;
+        this.budgetOwnerId = budgetOwnerId;
     }
 
     @NonNull
@@ -48,6 +53,15 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
 
         String userName = movementIdToUserName.get(movement.getId());
         holder.tvUserName.setText(userName != null ? userName : movement.getUserId());
+
+        // -------------------------
+        // Mostrar botones según permisos
+        // -------------------------
+        boolean isBudgetOwner = currentUserId.equals(budgetOwnerId);
+        boolean isMovementOwner = currentUserId.equals(movement.getUserId());
+
+        holder.btnEdit.setVisibility((isBudgetOwner || isMovementOwner) ? View.VISIBLE : View.GONE);
+        holder.btnDelete.setVisibility(isBudgetOwner ? View.VISIBLE : View.GONE);
 
         holder.btnEdit.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(movement);

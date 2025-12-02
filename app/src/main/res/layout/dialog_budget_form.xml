@@ -31,57 +31,7 @@
             android:padding="10dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- 👥 Sección para compartir con usuarios -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Compartir con otros usuarios"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp" />
 
-        <!-- Campo + Botón para agregar usuarios -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <EditText
-                android:id="@+id/etAddUserId"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="Introduce UID de usuario"
-                android:inputType="text"
-                android:background="@drawable/edit_text_background"
-                android:padding="10dp"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/btnAddUser"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Agregar" />
-        </LinearLayout>
-
-        <!-- Lista de usuarios añadidos -->
-        <TextView
-            android:id="@+id/tvUsersTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Usuarios añadidos:"
-            android:textStyle="bold"
-            android:paddingTop="16dp"
-            android:paddingBottom="4dp"
-            android:visibility="gone" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerSharedUsers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:visibility="gone" />
 
     </LinearLayout>
 </ScrollView>

@@ -63,6 +63,16 @@
             android:layout_marginTop="2dp"
             android:visibility="gone"/>
 
+        <!-- Estado del reminder -->
+        <TextView
+            android:id="@+id/txtReminderStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pendiente"
+            android:textColor="@color/yellow"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="2dp"/>
         <!-- Botones -->
         <LinearLayout
             android:orientation="horizontal"
@@ -76,7 +86,7 @@
                 android:layout_height="wrap_content"
                 android:text="Editar"
                 android:textAllCaps="false"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:backgroundTint="@color/blue_primary"
                 android:textColor="@color/white"/>
 
@@ -86,6 +96,7 @@
                 android:layout_height="wrap_content"
                 android:text="Borrar"
                 android:textAllCaps="false"
+                android:layout_marginEnd="4dp"
                 android:backgroundTint="@color/red_error"
                 android:textColor="@color/white"/>
 
@@ -95,7 +106,27 @@
                 android:layout_height="wrap_content"
                 android:text="Completar"
                 android:textAllCaps="false"
+                android:layout_marginEnd="4dp"
                 android:backgroundTint="@color/green_light"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/btnPendingReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pendiente"
+                android:textAllCaps="false"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@color/yellow"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/btnLeaveReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Salir"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/gray_dark"
                 android:textColor="@color/white"/>
         </LinearLayout>
 

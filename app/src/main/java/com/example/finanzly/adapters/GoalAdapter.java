@@ -92,7 +92,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         boolean isOwner = goal.getUserId().equals(currentUserId);
 
         // Visibilidad de botones
-        holder.btnAddProgress.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        holder.btnAddProgress.setVisibility(View.VISIBLE);
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(!isOwner ? View.VISIBLE : View.GONE);
 

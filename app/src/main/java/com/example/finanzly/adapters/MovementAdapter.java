@@ -61,7 +61,7 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
         boolean isMovementOwner = currentUserId.equals(movement.getUserId());
 
         holder.btnEdit.setVisibility((isBudgetOwner || isMovementOwner) ? View.VISIBLE : View.GONE);
-        holder.btnDelete.setVisibility(isBudgetOwner ? View.VISIBLE : View.GONE);
+        holder.btnDelete.setVisibility((isBudgetOwner || isMovementOwner) ? View.VISIBLE : View.GONE);
 
         holder.btnEdit.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(movement);

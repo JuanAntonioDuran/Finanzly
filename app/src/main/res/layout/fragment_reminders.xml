@@ -1,154 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/reminders_fragment_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/white">
 
-    <!-- ALERTA -->
-    <LinearLayout
-        android:id="@+id/alertPendingContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:background="@color/yellow"
-        android:gravity="center_vertical"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <TextView
-            android:id="@+id/txtPendingAlert"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tienes"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"/>
-
-        <TextView
-            android:id="@+id/txtPendingCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginStart="6dp"
-            android:textColor="@android:color/black"/>
-    </LinearLayout>
-
-    <!-- TITULO -->
-    <TextView
-        android:id="@+id/txtTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Recordatorios"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/alertPendingContainer"
-        app:layout_constraintStart_toStartOf="parent"/>
-
-    <!-- CHIPGROUP -->
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroupFilters"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        app:singleSelection="true"
-        app:layout_constraintTop_toBottomOf="@id/txtTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipAll"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Todos"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipPending"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pendientes"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipCompleted"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Completados"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipExpired"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Expirados"/>
-    </com.google.android.material.chip.ChipGroup>
-
-    <!-- FILTROS NUEVOS (fuera del ChipGroup) -->
-    <LinearLayout
-        android:id="@+id/advancedFiltersContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="12dp"
-        app:layout_constraintTop_toBottomOf="@id/chipGroupFilters"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <EditText
-            android:id="@+id/edtFilterSearch"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Buscar por texto"
-            android:padding="10dp"/>
+            android:paddingBottom="24dp">
 
-        <Spinner
-            android:id="@+id/spinnerFilterType"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"/>
+            <!-- ALERTA PENDIENTES -->
+            <LinearLayout
+                android:id="@+id/alertPendingContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="@color/yellow"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
-        <Spinner
-            android:id="@+id/spinnerFilterStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"/>
+                <TextView
+                    android:id="@+id/txtPendingAlert"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tienes"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:layout_marginTop="8dp">
+                <TextView
+                    android:id="@+id/txtPendingCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginStart="6dp"
+                    android:textColor="@android:color/black"/>
+            </LinearLayout>
 
-            <Button
-                android:id="@+id/btnClearFilters"
+            <!-- TÍTULO -->
+            <TextView
+                android:id="@+id/txtTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Limpiar"/>
+                android:text="Recordatorios"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/green_primary"
+                app:layout_constraintTop_toBottomOf="@id/alertPendingContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp"/>
 
-            <Button
-                android:id="@+id/btnApplyFilters"
-                android:layout_width="wrap_content"
+            <!-- SPINNER PARA FILTRAR ESTADO -->
+            <Spinner
+                android:id="@+id/spinnerReminderStatus"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Aplicar"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
+                android:layout_marginTop="12dp"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                app:layout_constraintTop_toBottomOf="@id/txtTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-    </LinearLayout>
 
-    <!-- RECYCLER -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerReminders"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:paddingTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/advancedFiltersContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:listitem="@layout/item_reminder"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- FILTROS AVANZADOS -->
+            <LinearLayout
+                android:id="@+id/advancedFiltersContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:elevation="3dp"
+                android:layout_marginTop="12dp"
+                app:layout_constraintTop_toBottomOf="@id/spinnerReminderStatus"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <EditText
+                    android:id="@+id/edtFilterSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Buscar por texto"
+                    android:padding="12dp"
+                    android:background="@drawable/edit_text_background"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginTop="8dp">
+
+                    <Button
+                        android:id="@+id/btnClearFilters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Limpiar"
+                        android:textAllCaps="false"
+                        android:backgroundTint="@color/gray_dark"
+                        android:textColor="@color/white"
+                        android:elevation="3dp"/>
+
+                    <Button
+                        android:id="@+id/btnApplyFilters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Aplicar"
+                        android:layout_marginStart="8dp"
+                        android:textAllCaps="false"
+                        android:backgroundTint="@color/blueAccent"
+                        android:textColor="@color/white"
+                        android:elevation="3dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- RECYCLER -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerReminders"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:clipToPadding="false"
+                android:paddingBottom="80dp"
+                app:layout_constraintTop_toBottomOf="@id/advancedFiltersContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- VISTA VACÍA -->
+            <TextView
+                android:id="@+id/tvEmptyState"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="No hay recordatorios todavía."
+                android:gravity="center"
+                android:textColor="@color/gray_dark"
+                android:textSize="16sp"
+                android:padding="24dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/recyclerReminders"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

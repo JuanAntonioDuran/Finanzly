@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.UUID;
 
 public class MovementDialog {
 
@@ -35,26 +34,22 @@ public class MovementDialog {
     private OnMovementSavedListener listener;
     private MovementService movementService;
 
-
     public MovementDialog(Context context, OnMovementSavedListener listener) {
         this.context = context;
         this.listener = listener;
     }
 
-    // Para budgets
     public void setBudget(Budget budget, String budgetId) {
         this.currentBudget = budget;
         this.linkedBudgetId = budgetId;
     }
 
-    // Para goals
     public void setGoal(Goal goal, String goalId) {
         this.currentGoal = goal;
         this.linkedGoalId = goalId;
     }
 
     public void open(Movement movement) {
-
         boolean isNew = movement == null;
         Movement m = isNew ? new Movement() : movement;
 
@@ -65,14 +60,36 @@ public class MovementDialog {
         EditText etDescription = dialogView.findViewById(R.id.etDescription);
         Button btnSave = dialogView.findViewById(R.id.btnSave);
         Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        Button btnType = dialogView.findViewById(R.id.btnType); // Botón de tipo
 
         movementService = new MovementService(context);
 
-        // Cargar valores si es edición
         if (!isNew) {
             etDate.setText(m.getDate());
             etAmount.setText(String.valueOf(m.getAmount()));
             etDescription.setText(m.getDescription());
+            btnType.setText(m.getType().equals("income") ? "Ingreso" : "Gasto");
+        }
+
+        // Mostrar el botón solo si es Goal
+        if (currentGoal != null) {
+            btnType.setVisibility(View.VISIBLE);
+            // Inicializamos tipo si es nuevo
+            if (isNew) m.setType("expense");
+            btnType.setText(m.getType().equals("income") ? "Ingreso" : "Gasto");
+
+            btnType.setOnClickListener(v -> {
+                if (m.getType().equals("income")) {
+                    m.setType("expense");
+                    btnType.setText("Gasto");
+                } else {
+                    m.setType("income");
+                    btnType.setText("Ingreso");
+                }
+            });
+        } else {
+            btnType.setVisibility(View.GONE);
+            m.setType("expense"); // presupuestos siempre expense
         }
 
         // Selector de fecha
@@ -122,8 +139,15 @@ public class MovementDialog {
                 double spentWithoutThis = isNew ? currentGoal.getCurrentAmount() : currentGoal.getCurrentAmount() - m.getAmount();
                 double newTotal = spentWithoutThis + amount;
 
-                if (newTotal > currentGoal.getTargetAmount()) {
+                // 🔹 Validación para que el goal no quede por debajo de 0
+                if (m.getType().equals("expense") && (spentWithoutThis - amount) < 0) {
                     Toast.makeText(context, "No puedes gastar más de lo que tienes en este objetivo.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                // Validación límite máximo
+                if (newTotal > currentGoal.getTargetAmount()) {
+                    Toast.makeText(context, "No puedes superar el objetivo total.", Toast.LENGTH_LONG).show();
                     return;
                 }
             }
@@ -132,7 +156,7 @@ public class MovementDialog {
             m.setDate(date);
             m.setDescription(desc);
             m.setAmount(amount);
-            m.setType("expense");
+            // 🔹 El tipo se obtiene del botón de tipo
             m.setUserId(FirebaseAuth.getInstance().getUid());
 
             if (currentBudget != null) {
@@ -157,8 +181,7 @@ public class MovementDialog {
             dialog.dismiss();
         });
 
+
         dialog.show();
     }
-
-
 }

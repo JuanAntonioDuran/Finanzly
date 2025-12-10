@@ -59,8 +59,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp"
-                android:background="@drawable/card_background"
-                android:elevation="3dp"
+                android:background="@drawable/card_background_rounded"
+                android:elevation="4dp"
                 android:layout_marginTop="16dp"
                 app:layout_constraintTop_toBottomOf="@id/tvBudgetTitle"
                 app:layout_constraintStart_toStartOf="parent"
@@ -72,7 +72,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:weightSum="2"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical">
 
                     <EditText
                         android:id="@+id/etCategoryFilter"
@@ -82,10 +83,11 @@
                         android:hint="Categoría"
                         android:inputType="text"
                         android:padding="12dp"
-                        android:background="@drawable/edit_text_background"
+                        android:background="@drawable/edit_text_background_rounded"
                         android:textColor="@color/black"
                         android:textSize="16sp"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_marginEnd="8dp"
+                        android:imeOptions="actionDone"/>
 
                     <Spinner
                         android:id="@+id/spinnerStatusFilter"
@@ -93,9 +95,9 @@
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
                         android:entries="@array/budget_status_options"
-                        android:padding="10dp"
-                        android:background="@drawable/spinner_background"
-                        android:textAlignment="center" />
+                        android:padding="12dp"
+                        android:background="@drawable/spinner_background_rounded"
+                        android:textAlignment="center"/>
                 </LinearLayout>
 
                 <!-- Segunda fila: botones -->
@@ -143,10 +145,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="16dp"
+                android:clipToPadding="false"
+                android:paddingBottom="8dp"
+                android:paddingTop="8dp"
                 app:layout_constraintTop_toBottomOf="@id/filter_container"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:clipToPadding="false" />
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <!-- ⚠️ VISTA VACÍA -->
             <TextView

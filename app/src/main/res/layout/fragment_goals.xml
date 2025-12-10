@@ -53,7 +53,7 @@
                 app:layout_constraintTop_toTopOf="@id/tvGoalTitle"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- 🧭 FILTROS (Opcional) -->
+            <!-- 🧭 FILTROS -->
             <LinearLayout
                 android:id="@+id/filter_container"
                 android:layout_width="0dp"
@@ -67,7 +67,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <!-- Primera fila: título y estado de la meta (activo/completado) -->
+                <!-- Primera fila: título y estado -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -86,7 +86,7 @@
                         android:background="@drawable/edit_text_background"
                         android:textColor="@color/black"
                         android:textSize="16sp"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_marginEnd="8dp"/>
 
                     <Spinner
                         android:id="@+id/spinnerGoalStatusFilter"
@@ -96,7 +96,7 @@
                         android:entries="@array/goal_status_options"
                         android:padding="10dp"
                         android:background="@drawable/spinner_background"
-                        android:textAlignment="center" />
+                        android:textAlignment="center"/>
                 </LinearLayout>
 
                 <!-- Segunda fila: botones -->
@@ -147,7 +147,7 @@
                 app:layout_constraintTop_toBottomOf="@id/filter_container"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:clipToPadding="false" />
+                android:clipToPadding="false"/>
 
             <!-- ⚠️ VISTA VACÍA -->
             <TextView
@@ -162,7 +162,7 @@
                 android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/rvGoals"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/reminders_fragment_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -28,6 +28,7 @@
                 android:background="@color/yellow"
                 android:gravity="center_vertical"
                 android:visibility="gone"
+                android:layout_marginBottom="8dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
@@ -59,9 +60,9 @@
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:textColor="@color/green_primary"
+                android:layout_marginTop="8dp"
                 app:layout_constraintTop_toBottomOf="@id/alertPendingContainer"
-                app:layout_constraintStart_toStartOf="parent"
-                android:layout_marginTop="8dp"/>
+                app:layout_constraintStart_toStartOf="parent"/>
 
             <!-- SPINNER PARA FILTRAR ESTADO -->
             <Spinner
@@ -74,7 +75,6 @@
                 app:layout_constraintTop_toBottomOf="@id/txtTitle"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
-
 
             <!-- FILTROS AVANZADOS -->
             <LinearLayout
@@ -96,14 +96,17 @@
                     android:layout_height="wrap_content"
                     android:hint="Buscar por texto"
                     android:padding="12dp"
-                    android:background="@drawable/edit_text_background"/>
+                    android:background="@drawable/edit_text_background"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="end"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:spacing="8dp">
 
                     <Button
                         android:id="@+id/btnClearFilters"
@@ -113,7 +116,9 @@
                         android:textAllCaps="false"
                         android:backgroundTint="@color/gray_dark"
                         android:textColor="@color/white"
-                        android:elevation="3dp"/>
+                        android:elevation="3dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"/>
 
                     <Button
                         android:id="@+id/btnApplyFilters"
@@ -124,7 +129,9 @@
                         android:textAllCaps="false"
                         android:backgroundTint="@color/blueAccent"
                         android:textColor="@color/white"
-                        android:elevation="3dp"/>
+                        android:elevation="3dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -138,7 +145,7 @@
                 android:paddingBottom="80dp"
                 app:layout_constraintTop_toBottomOf="@id/advancedFiltersContainer"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
             <!-- VISTA VACÍA -->
             <TextView
@@ -154,7 +161,6 @@
                 app:layout_constraintTop_toBottomOf="@id/recyclerReminders"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

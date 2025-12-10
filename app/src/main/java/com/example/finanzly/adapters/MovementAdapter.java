@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -91,7 +92,7 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
 
     public static class MovementViewHolder extends RecyclerView.ViewHolder {
         TextView tvDescription, tvCategory, tvDate, tvAmount, tvUserName;
-        Button btnEdit, btnDelete;
+        ImageButton btnEdit, btnDelete;
 
         public MovementViewHolder(@NonNull View itemView) {
             super(itemView);

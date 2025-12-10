@@ -1,58 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    android:background="@color/white">
+    app:cardElevation="6dp"
+    android:background="@color/white"
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:orientation="vertical"
-        android:padding="12dp"
+        android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <!-- Título -->
         <TextView
             android:id="@+id/txtReminderTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Título del recordatorio"
             android:textColor="@color/black"
             android:textStyle="bold"
-            android:textSize="16sp" />
+            android:textSize="17sp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
 
         <!-- Descripción -->
         <TextView
             android:id="@+id/txtReminderDescription"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Descripción del recordatorio"
             android:textColor="@color/gray_dark"
             android:textSize="14sp"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="2"/>
 
         <!-- Fecha y Hora -->
-        <TextView
-            android:id="@+id/txtReminderDate"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fecha"
-            android:textColor="@color/gray_dark"
-            android:textSize="13sp"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="6dp">
 
-        <TextView
-            android:id="@+id/txtReminderTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hora"
-            android:textColor="@color/gray_dark"
-            android:textSize="13sp"
-            android:layout_marginTop="2dp" />
+            <TextView
+                android:id="@+id/txtReminderDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha"
+                android:textColor="@color/gray_dark"
+                android:textSize="13sp"/>
 
+            <TextView
+                android:id="@+id/txtReminderTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hora"
+                android:textColor="@color/gray_dark"
+                android:textSize="13sp"
+                android:layout_marginStart="12dp"/>
+        </LinearLayout>
+
+        <!-- Compartido -->
         <TextView
             android:id="@+id/txtSharedCount"
             android:layout_width="wrap_content"
@@ -60,10 +72,10 @@
             android:text="Compartido con X usuarios"
             android:textColor="@color/gray_dark"
             android:textSize="12sp"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone"/>
 
-        <!-- Estado del reminder -->
+        <!-- Estado -->
         <TextView
             android:id="@+id/txtReminderStatus"
             android:layout_width="wrap_content"
@@ -72,63 +84,77 @@
             android:textColor="@color/yellow"
             android:textStyle="bold"
             android:textSize="14sp"
-            android:layout_marginTop="2dp"/>
-        <!-- Botones -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="wrap_content"
+            android:layout_marginTop="6dp"/>
+
+        <!-- Botones (scrollable si hay muchos) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="10dp"
+            android:scrollbars="none">
 
-            <Button
-                android:id="@+id/btnEditReminder"
+            <LinearLayout
+                android:orientation="horizontal"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Editar"
-                android:textAllCaps="false"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="@color/blue_primary"
-                android:textColor="@color/white"/>
+                android:layout_height="wrap_content">
 
-            <Button
-                android:id="@+id/btnDeleteReminder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Borrar"
-                android:textAllCaps="false"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="@color/red_error"
-                android:textColor="@color/white"/>
+                <Button
+                    android:id="@+id/btnEditReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Editar"
+                    android:textAllCaps="false"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/blue_primary"
+                    android:textColor="@color/white"
+                    android:drawableStart="@drawable/ic_edit"
+                    android:drawablePadding="4dp"/>
 
-            <Button
-                android:id="@+id/btnCompleteReminder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Completar"
-                android:textAllCaps="false"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="@color/green_light"
-                android:textColor="@color/white"/>
+                <Button
+                    android:id="@+id/btnDeleteReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Borrar"
+                    android:textAllCaps="false"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/red_error"
+                    android:textColor="@color/white"
+                    android:drawableStart="@drawable/ic_cross"
+                    android:drawablePadding="4dp"/>
 
-            <Button
-                android:id="@+id/btnPendingReminder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pendiente"
-                android:textAllCaps="false"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="@color/yellow"
-                android:textColor="@color/white"/>
+                <Button
+                    android:id="@+id/btnCompleteReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Completar"
+                    android:textAllCaps="false"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/green_light"
+                    android:textColor="@color/white"
+                    android:drawablePadding="4dp"/>
 
-            <Button
-                android:id="@+id/btnLeaveReminder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Salir"
-                android:textAllCaps="false"
-                android:backgroundTint="@color/gray_dark"
-                android:textColor="@color/white"/>
-        </LinearLayout>
+                <Button
+                    android:id="@+id/btnPendingReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pendiente"
+                    android:textAllCaps="false"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/yellow"
+                    android:textColor="@color/white"
+                    android:drawablePadding="4dp"/>
+
+                <Button
+                    android:id="@+id/btnLeaveReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Salir"
+                    android:textAllCaps="false"
+                    android:backgroundTint="@color/gray_dark"
+                    android:textColor="@color/white"
+                    android:drawablePadding="4dp"/>
+            </LinearLayout>
+        </HorizontalScrollView>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

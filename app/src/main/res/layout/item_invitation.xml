@@ -3,15 +3,20 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/tools"
     android:layout_marginBottom="12dp"
-    card_view:cardElevation="4dp"
-    card_view:cardCornerRadius="8dp"
-    android:padding="12dp">
+    card_view:cardElevation="6dp"
+    card_view:cardCornerRadius="12dp"
+    android:padding="16dp"
+    android:background="@color/white"
+    app:cardUseCompatPadding="true"
+    app:ignore="NamespaceTypo">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
         <!-- IZQUIERDA: Info de la invitación -->
         <LinearLayout
@@ -27,7 +32,9 @@
                 android:text="Usuario te invitó"
                 android:textColor="@color/green_primary"
                 android:textStyle="bold"
-                android:textSize="16sp"/>
+                android:textSize="16sp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
 
             <TextView
                 android:id="@+id/tvResourceType"
@@ -35,7 +42,11 @@
                 android:layout_height="wrap_content"
                 android:text="Presupuesto / Objetivo"
                 android:textStyle="bold"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginTop="2dp"
+                android:textColor="@color/gray_dark"
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
 
             <TextView
                 android:id="@+id/tvMessage"
@@ -44,7 +55,9 @@
                 android:text="Mensaje opcional"
                 android:textColor="#666666"
                 android:textSize="14sp"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"/>
 
             <TextView
                 android:id="@+id/tvDate"
@@ -59,19 +72,22 @@
         <!-- DERECHA: Botones o estado -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="end">
+            android:gravity="end"
+            android:layout_marginStart="12dp">
 
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pending"
-                android:padding="6dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
                 android:background="@drawable/status_badge"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
+                android:layout_marginBottom="6dp"
                 android:visibility="gone"/>
 
             <Button
@@ -80,8 +96,10 @@
                 android:layout_height="wrap_content"
                 android:text="Aceptar"
                 android:textSize="12sp"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"/>
+                android:layout_marginBottom="4dp"
+                android:visibility="gone"
+                android:backgroundTint="@color/green_light"
+                android:textColor="@android:color/white"/>
 
             <Button
                 android:id="@+id/btnDecline"
@@ -89,8 +107,10 @@
                 android:layout_height="wrap_content"
                 android:text="Rechazar"
                 android:textSize="12sp"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"/>
+                android:layout_marginBottom="4dp"
+                android:visibility="gone"
+                android:backgroundTint="@color/red_error"
+                android:textColor="@android:color/white"/>
 
             <Button
                 android:id="@+id/btnCancel"
@@ -98,10 +118,9 @@
                 android:layout_height="wrap_content"
                 android:text="Cancelar"
                 android:textSize="12sp"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"/>
-
-
+                android:visibility="gone"
+                android:backgroundTint="@color/gray_dark"
+                android:textColor="@android:color/white"/>
         </LinearLayout>
 
     </LinearLayout>

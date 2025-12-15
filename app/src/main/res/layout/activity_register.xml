@@ -9,96 +9,124 @@
     android:background="@color/white"
     tools:context=".activities.RegisterActivity">
 
-    <!-- Título -->
+    <!-- 🟢 TÍTULO -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Crear cuenta"
-        android:textColor="@color/blue_primary"
-        android:textSize="28sp"
+        android:textSize="26sp"
         android:textStyle="bold"
+        android:textColor="@color/green_primary"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="60dp"/>
+        android:layout_marginTop="64dp"/>
 
-    <!-- Campo Nombre -->
-    <EditText
-        android:id="@+id/etName"
+    <!-- 📦 CARD FORM -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardRegister"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Nombre completo"
-        android:inputType="textPersonName"
-        android:padding="12dp"
-        android:backgroundTint="@color/blue_primary"
+        android:layout_marginTop="32dp"
+        android:layout_marginHorizontal="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginTop="32dp"/>
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Campo Email -->
-    <EditText
-        android:id="@+id/etEmail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Correo electrónico"
-        android:inputType="textEmailAddress"
-        android:padding="12dp"
-        android:backgroundTint="@color/blue_primary"
-        app:layout_constraintTop_toBottomOf="@id/etName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-    <!-- Campo Contraseña -->
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Contraseña"
-        android:inputType="textPassword"
-        android:padding="12dp"
-        android:backgroundTint="@color/blue_primary"
-        app:layout_constraintTop_toBottomOf="@id/etEmail"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginTop="16dp"/>
+            <!-- 👤 NOMBRE -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre completo"
+                android:textStyle="bold"
+                android:textColor="@color/gray_dark"/>
 
-    <!-- Botón Registrar -->
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Registrarse"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/green_primary"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/etPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+            <EditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tu nombre"
+                android:inputType="textPersonName"
+                android:padding="12dp"
+                android:background="@drawable/edit_text_background"
+                android:layout_marginTop="6dp"/>
 
-    <!-- Enlace a Login -->
+            <!-- 📧 EMAIL -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Correo electrónico"
+                android:textStyle="bold"
+                android:textColor="@color/gray_dark"
+                android:layout_marginTop="16dp"/>
+
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="ejemplo@email.com"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:background="@drawable/edit_text_background"
+                android:layout_marginTop="6dp"/>
+
+            <!-- 🔒 CONTRASEÑA -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Contraseña"
+                android:textStyle="bold"
+                android:textColor="@color/gray_dark"
+                android:layout_marginTop="16dp"/>
+
+            <EditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="••••••••"
+                android:inputType="textPassword"
+                android:padding="12dp"
+                android:background="@drawable/edit_text_background"
+                android:layout_marginTop="6dp"/>
+
+            <!-- 🟢 BOTÓN REGISTRAR -->
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Crear cuenta"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/green_primary"
+                android:layout_marginTop="24dp"
+                android:paddingVertical="12dp"
+                android:elevation="4dp"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 🔁 LINK A LOGIN -->
     <TextView
         android:id="@+id/tvLoginLink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="¿Ya tienes cuenta? Inicia sesión"
-        android:textColor="@color/blue_primary"
+        android:textColor="@color/blueAccent"
         android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/btnRegister"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/cardRegister"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="20dp"/>
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

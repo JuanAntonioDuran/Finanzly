@@ -27,7 +27,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvGoalStatus"
-            android:layout_marginEnd="8dp" />
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"/>
 
         <!-- BADGE ESTADO -->
         <TextView
@@ -54,7 +55,8 @@
             android:textColor="@color/gray_dark"
             android:layout_marginTop="10dp"
             app:layout_constraintTop_toBottomOf="@id/tvGoalTitle"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="8dp"/>
 
         <!-- PROGRESO -->
         <TextView
@@ -66,7 +68,8 @@
             android:textColor="@color/gray_dark"
             android:layout_marginTop="4dp"
             app:layout_constraintTop_toBottomOf="@id/tvGoalTarget"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="8dp"/>
 
         <!-- BARRA DE PROGRESO -->
         <ProgressBar

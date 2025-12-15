@@ -214,10 +214,6 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                         }
                     }
 
-                    if (!names.contains("Tú") && currentUserId.equals(r.getUserId())) {
-                        names.add("Tú");
-                    }
-
                     sharedUsersMap.put(r.getId(), names);
                     reminderList.add(r);
                 }

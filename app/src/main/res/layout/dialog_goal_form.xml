@@ -9,40 +9,64 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 🏷️ Título de la meta -->
+        <!-- 🏷️ NOMBRE DE LA META -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre de la meta"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+
         <EditText
             android:id="@+id/etTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Título de la meta"
+            android:hint="Ej: Viaje a Japón"
             android:inputType="text"
             android:background="@drawable/edit_text_background"
-            android:padding="10dp"
-            android:layout_marginBottom="12dp" />
+            android:padding="12dp"
+            android:layout_marginTop="6dp" />
 
-        <!-- 💰 Cantidad objetivo -->
+        <!-- 💰 CANTIDAD OBJETIVO -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cantidad objetivo (€)"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
         <EditText
             android:id="@+id/etTargetAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Cantidad objetivo (€)"
+            android:hint="Ej: 3000"
             android:inputType="numberDecimal"
             android:background="@drawable/edit_text_background"
-            android:padding="10dp"
-            android:layout_marginBottom="12dp" />
+            android:padding="12dp"
+            android:layout_marginTop="6dp" />
 
-        <!-- 📅 Fecha límite -->
+        <!-- 📅 FECHA LÍMITE -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fecha límite (opcional)"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
         <EditText
             android:id="@+id/etDeadline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Fecha límite"
-            android:inputType="date"
+            android:hint="Seleccionar fecha"
+            android:focusable="false"
+            android:clickable="true"
             android:background="@drawable/edit_text_background"
-            android:padding="10dp"
-            android:layout_marginBottom="16dp" />
+            android:padding="12dp"
+            android:layout_marginTop="6dp"
+            android:drawableEnd="@drawable/ic_calendar"
+            android:drawablePadding="8dp" />
 
-
+        
 
     </LinearLayout>
 </ScrollView>

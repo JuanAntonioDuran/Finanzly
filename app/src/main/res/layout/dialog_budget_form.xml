@@ -1,37 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="20dp">
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 🏷️ Categoría -->
-        <EditText
-            android:id="@+id/etCategory"
+        <!-- 🟢 CARD PRESUPUESTO -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Categoría"
-            android:inputType="text"
-            android:background="@drawable/edit_text_background"
-            android:padding="10dp"
-            android:layout_marginBottom="12dp" />
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/card_background"
+            android:elevation="3dp">
 
-        <!-- 💰 Límite -->
-        <EditText
-            android:id="@+id/etLimit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Límite (€)"
-            android:inputType="numberDecimal"
-            android:background="@drawable/edit_text_background"
-            android:padding="10dp"
-            android:layout_marginBottom="16dp" />
+            <!-- 🏷️ Categoría -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Categoría"
+                android:textStyle="bold"
+                android:textSize="14sp" />
 
+            <EditText
+                android:id="@+id/etCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ej: Comida, Transporte..."
+                android:inputType="text"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp" />
 
+            <!-- 💰 Límite -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Límite mensual"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/etLimit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="€ 0.00"
+                android:inputType="numberDecimal"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

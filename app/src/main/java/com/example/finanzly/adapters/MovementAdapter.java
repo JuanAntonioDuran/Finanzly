@@ -47,8 +47,8 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
     public void onBindViewHolder(@NonNull MovementViewHolder holder, int position) {
         Movement movement = movementList.get(position);
 
-        holder.tvDescription.setText(movement.getDescription() != null ? movement.getDescription() : "-");
-        holder.tvCategory.setText(movement.getCategory() != null ? movement.getCategory() : "-");
+        holder.tvCategory.setText(movement.getDescription() != null ? movement.getDescription() : "-");
+        holder.tvDescription.setText(movement.getCategory() != null ? movement.getCategory() : "-");
         holder.tvDate.setText(movement.getDate() != null ? movement.getDate() : "-");
         holder.tvAmount.setText(String.format("%.2f €", movement.getAmount()));
 

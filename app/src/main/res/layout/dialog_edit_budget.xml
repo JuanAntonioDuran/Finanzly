@@ -1,77 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="vertical">
 
-        <!-- TÍTULO (Estilo del header del modal Angular) -->
+        <!-- 🟡 HEADER -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Editar Presupuesto"
+            android:text="Editar presupuesto"
             android:textStyle="bold"
             android:textSize="20sp"
-            android:padding="10dp"
+            android:textColor="@color/black"
+            android:padding="14dp"
             android:background="@color/yellow"
-            android:textColor="@color/black" />
+            android:layout_marginBottom="16dp" />
 
-        <!-- CATEGORÍA -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Categoría"
-            android:textStyle="bold"
-            android:layout_marginTop="15dp" />
-
-        <EditText
-            android:id="@+id/etCategory"
+        <!-- 🟢 CARD CONTENIDO -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Categoría" />
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/card_background"
+            android:elevation="3dp">
 
-        <!-- LÍMITE -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Límite (€)"
-            android:textStyle="bold"
-            android:layout_marginTop="15dp" />
+            <!-- 🏷️ Categoría -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Categoría"
+                android:textStyle="bold"
+                android:textSize="14sp" />
 
-        <EditText
-            android:id="@+id/etLimit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="numberDecimal"
-            android:hint="Límite" />
+            <EditText
+                android:id="@+id/etCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ej: Comida, Transporte…"
+                android:inputType="text"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp" />
 
+            <!-- 💰 Límite -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Límite mensual"
+                android:textStyle="bold"
+                android:textSize="14sp" />
 
-        <!-- COLABORADORES (solo dueño) -->
+            <EditText
+                android:id="@+id/etLimit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="€ 0.00"
+                android:inputType="numberDecimal"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+        <!-- 👥 COLABORADORES -->
         <LinearLayout
             android:id="@+id/layoutCollaborators"
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp">
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:background="@drawable/card_background"
+            android:elevation="2dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Colaboradores (correo electrónico)"
-                android:textStyle="bold" />
+                android:text="Colaboradores"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
 
-            <!-- Input + botón -->
+            <!-- Input email + botón -->
             <LinearLayout
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:layout_marginTop="5dp">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <EditText
                     android:id="@+id/etEmail"
@@ -79,51 +104,53 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="Correo del colaborador"
-                    android:inputType="textEmailAddress" />
+                    android:inputType="textEmailAddress"
+                    android:background="@drawable/edit_text_background"
+                    android:padding="12dp" />
 
                 <ImageButton
                     android:id="@+id/btnAddEmail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
                     android:src="@drawable/ic_add"
-                    android:contentDescription="Añadir"
-                    android:background="@android:color/transparent" />
+                    android:contentDescription="Añadir colaborador"
+                    android:background="@drawable/circle_button_background"
+                    app:tint="@color/white" />
             </LinearLayout>
 
-            <!-- Lista de colaboradores -->
+            <!-- Lista colaboradores -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvCollaborators"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:layout_marginTop="10dp"/>
-
-
-
+                android:layout_marginTop="12dp" />
         </LinearLayout>
 
-        <!-- BOTONES -->
+        <!-- 🔵 BOTONES -->
         <LinearLayout
-            android:gravity="end"
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
             android:layout_marginTop="20dp">
-
-            <Button
-                android:id="@+id/btnSave"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Guardar cambios" />
 
             <Button
                 android:id="@+id/btnCancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cancelar"
-                android:layout_marginStart="10dp"/>
+                android:text="Cancelar" />
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Guardar cambios"
+                android:layout_marginStart="12dp"
+                android:backgroundTint="@color/green_primary"
+                android:textColor="@android:color/white" />
         </LinearLayout>
 
     </LinearLayout>
-
 </ScrollView>

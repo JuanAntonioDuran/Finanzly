@@ -115,17 +115,32 @@ public class MovementsFragment extends Fragment {
         filteredList.clear();
 
         String categoryFilter = etCategoryFilter.getText().toString().trim().toLowerCase();
-        String typeFilter = spinnerTypeFilter.getSelectedItem().toString();
+        String typeFilter = spinnerTypeFilter.getSelectedItem().toString().trim().toLowerCase();
         String startDate = etStartDateFilter.getText().toString().trim();
         String endDate = etEndDateFilter.getText().toString().trim();
 
         for (Movement m : movementList) {
+
+            // 🔹 Filtro por categoría
             boolean matchesCategory = categoryFilter.isEmpty() ||
                     (m.getCategory() != null && m.getCategory().toLowerCase().contains(categoryFilter));
 
-            boolean matchesType = typeFilter.equals("Todos") ||
-                    (m.getType() != null && m.getType().equalsIgnoreCase(typeFilter));
+            // 🔹 Filtro por tipo (Gasto / Ingreso)
+            boolean matchesType = true;
 
+            if (!typeFilter.equals("todos")) {
+                String movementType = m.getType() != null ? m.getType().toLowerCase() : "";
+
+                if (typeFilter.contains("gasto")) {
+                    matchesType = movementType.equals("expense");
+                } else if (typeFilter.contains("ingreso")) {
+                    matchesType = movementType.equals("income");
+                } else {
+                    matchesType = movementType.equals(typeFilter);
+                }
+            }
+
+            // 🔹 Filtro por fecha
             boolean matchesDate = true;
 
             if (!startDate.isEmpty() || !endDate.isEmpty()) {
@@ -138,6 +153,7 @@ public class MovementsFragment extends Fragment {
                 }
             }
 
+            // ✅ Si cumple todo
             if (matchesCategory && matchesType && matchesDate) {
                 filteredList.add(m);
             }
@@ -146,6 +162,8 @@ public class MovementsFragment extends Fragment {
         adapter.notifyDataSetChanged();
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
+
+
 
     private void clearFilter() {
         etCategoryFilter.setText("");

@@ -1,124 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/scrollViewUser"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Título -->
+        <!-- TÍTULO -->
         <TextView
             android:id="@+id/tvUserTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Mi Perfil"
-            android:textSize="24sp"
+            android:text="Mi perfil"
+            android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="@color/blue_primary"
             android:layout_gravity="center_horizontal"
-            android:paddingBottom="24dp"/>
+            android:layout_marginBottom="24dp"/>
 
-        <!-- UID -->
-        <TextView
-            android:id="@+id/tvUidLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="UID:"
-            android:textStyle="bold"
-            android:textColor="@color/gray_dark"/>
-        <TextView
-            android:id="@+id/tvUid"
+        <!-- CARD: DATOS USUARIO -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="uid_aqui"
-            android:textColor="@color/gray_dark"
-            android:paddingBottom="16dp"/>
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
 
-        <!-- Nombre editable -->
-        <TextView
-            android:id="@+id/tvNameLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Nombre:"
-            android:textStyle="bold"
-            android:textColor="@color/gray_dark"/>
-        <EditText
-            android:id="@+id/etName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Nombre de usuario"
-            android:textColor="@color/gray_dark"
-            android:backgroundTint="@color/blue_light"
-            android:paddingBottom="16dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <!-- Email -->
-        <TextView
-            android:id="@+id/tvEmailLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Correo electrónico:"
-            android:textStyle="bold"
-            android:textColor="@color/gray_dark"/>
-        <TextView
-            android:id="@+id/tvEmail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="correo@ejemplo.com"
-            android:textColor="@color/gray_dark"
-            android:paddingBottom="16dp"/>
+                <!-- UID -->
+                <TextView
+                    android:id="@+id/tvUidLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UID"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray_dark"/>
 
-        <!-- Fecha de creación -->
-        <TextView
-            android:id="@+id/tvCreatedAtLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Fecha de creación:"
-            android:textStyle="bold"
-            android:textColor="@color/gray_dark"/>
-        <TextView
-            android:id="@+id/tvCreatedAt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="01/01/2023"
-            android:textColor="@color/gray_dark"
-            android:paddingBottom="24dp"/>
+                <TextView
+                    android:id="@+id/tvUid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="uid_aqui"
+                    android:textColor="@color/gray_dark"
+                    android:layout_marginBottom="16dp"/>
 
-        <!-- Botón actualizar nombre -->
+                <!-- NOMBRE -->
+                <TextView
+                    android:id="@+id/tvNameLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray_dark"/>
+
+                <EditText
+                    android:id="@+id/etName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nombre de usuario"
+                    android:padding="12dp"
+                    android:textColor="@color/gray_dark"
+                    android:backgroundTint="@color/blue_primary"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- EMAIL -->
+                <TextView
+                    android:id="@+id/tvEmailLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Correo electrónico"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray_dark"/>
+
+                <TextView
+                    android:id="@+id/tvEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="correo@ejemplo.com"
+                    android:textColor="@color/gray_dark"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- FECHA CREACIÓN -->
+                <TextView
+                    android:id="@+id/tvCreatedAtLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cuenta creada el"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray_dark"/>
+
+                <TextView
+                    android:id="@+id/tvCreatedAt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="01/01/2023"
+                    android:textColor="@color/gray_dark"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- BOTÓN ACTUALIZAR NOMBRE -->
         <Button
             android:id="@+id/btnUpdateName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Actualizar nombre"
+            android:textAllCaps="false"
             android:backgroundTint="@color/green_success"
             android:textColor="@color/white"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
+            android:padding="14dp"
+            android:layout_marginBottom="12dp"/>
 
-        <!-- Botón cambiar contraseña -->
+        <!-- BOTÓN CAMBIAR CONTRASEÑA -->
         <Button
             android:id="@+id/btnChangePassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cambiar contraseña"
+            android:textAllCaps="false"
             android:backgroundTint="@color/blue_primary"
             android:textColor="@color/white"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
+            android:padding="14dp"
+            android:layout_marginBottom="12dp"/>
 
-        <!-- Botón cerrar sesión -->
+        <!-- BOTÓN CERRAR SESIÓN -->
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cerrar sesión"
+            android:textAllCaps="false"
             android:backgroundTint="@color/red_error"
             android:textColor="@color/white"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
+            android:padding="14dp"/>
+
     </LinearLayout>
 </ScrollView>

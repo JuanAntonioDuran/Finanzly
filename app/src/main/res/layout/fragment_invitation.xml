@@ -1,87 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/invitation_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:padding="16dp">
 
-    <!-- 🧭 TÍTULO PRINCIPAL -->
+    <!-- TÍTULO -->
     <TextView
         android:id="@+id/tvInvitationsTitle"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="📬 Invitaciones"
-        android:textColor="@color/green_primary"
-        android:textSize="22sp"
+        android:text="Invitaciones"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:paddingBottom="12dp"/>
+        android:textColor="@color/green_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
 
-    <!-- 🔘 BOTONES DE CAMBIO DE VISTA -->
+    <!-- CONTENEDOR BOTONES -->
     <LinearLayout
         android:id="@+id/layoutViewModeButtons"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingBottom="12dp">
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/tvInvitationsTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Button
             android:id="@+id/btnReceived"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Recibidas"
-            android:backgroundTint="@color/green_primary"
-            android:textColor="@android:color/white"
             android:textAllCaps="false"
-            android:paddingVertical="10dp"
-            android:elevation="2dp"/>
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/green_primary"
+            android:paddingVertical="10dp"/>
 
         <Button
             android:id="@+id/btnSent"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
             android:text="Enviadas"
-            android:backgroundTint="@color/gray_light"
-            android:textColor="@android:color/black"
             android:textAllCaps="false"
-            android:paddingVertical="10dp"
-            android:layout_marginStart="8dp"
-            android:elevation="2dp"/>
+            android:textStyle="bold"
+            android:textColor="@color/gray_dark"
+            android:backgroundTint="@color/gray_light"
+            android:paddingVertical="10dp"/>
     </LinearLayout>
 
-    <!-- 📩 LISTA DE INVITACIONES RECIBIDAS -->
+    <!-- LISTA RECIBIDAS -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerReceivedInvitations"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="8dp"
+        android:paddingTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutViewModeButtons"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:visibility="visible"/>
 
-    <!-- 📤 LISTA DE INVITACIONES ENVIADAS -->
+    <!-- LISTA ENVIADAS -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSentInvitations"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="8dp"
+        android:paddingTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutViewModeButtons"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:visibility="gone"/>
 
-    <!-- Mensaje de vacío -->
+    <!-- MENSAJE VACÍO -->
     <TextView
         android:id="@+id/tvEmptyMessage"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="No hay invitaciones"
+        android:textSize="16sp"
         android:textColor="@color/gray_dark"
-        android:gravity="center"
-        android:padding="16dp"
         android:visibility="gone"
-        android:textSize="16sp"/>
-</LinearLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

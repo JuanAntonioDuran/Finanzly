@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +34,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class GoalsFragment extends Fragment {
 
@@ -44,6 +48,7 @@ public class GoalsFragment extends Fragment {
     private TextView tvNoGoals;
     private EditText etTitleFilter;
     private Button btnApplyFilter, btnClearFilter;
+    private Spinner spinnerGoalStatusFilter;
 
     private List<Goal> allGoals = new ArrayList<>();
     private List<Goal> filteredGoals = new ArrayList<>();
@@ -66,6 +71,7 @@ public class GoalsFragment extends Fragment {
         etTitleFilter = root.findViewById(R.id.etTitleFilter);
         btnApplyFilter = root.findViewById(R.id.btnApplyGoalFilter);
         btnClearFilter = root.findViewById(R.id.btnClearGoalFilter);
+        spinnerGoalStatusFilter = root.findViewById(R.id.spinnerGoalStatusFilter);
 
         goalService = new GoalService(getContext());
 
@@ -178,18 +184,72 @@ public class GoalsFragment extends Fragment {
 
 
     private void applyFilters() {
-        String titleFilter = etTitleFilter.getText().toString().trim();
+        String titleFilter = etTitleFilter.getText().toString().trim().toLowerCase();
+        String statusFilter = spinnerGoalStatusFilter.getSelectedItem().toString();
 
         filteredGoals.clear();
+
         for (Goal goal : allGoals) {
-            boolean matchesTitle = TextUtils.isEmpty(titleFilter) ||
-                    goal.getTitle().toLowerCase().contains(titleFilter.toLowerCase());
-            if (matchesTitle) filteredGoals.add(goal);
+
+            // 🔎 Filtro por título
+            boolean matchesTitle = titleFilter.isEmpty() ||
+                    goal.getTitle().toLowerCase().contains(titleFilter);
+
+            // 🏷️ Filtro por estado calculado
+            boolean matchesStatus = true;
+
+            // Calcular el estado de la meta en tiempo real
+            String goalStatus = getGoalStatus(goal);  // Método para obtener el estado calculado de la meta
+
+            if (!statusFilter.equals("Todos")) {
+                switch (statusFilter) {
+                    case "Completada":
+                        matchesStatus = "completado".equalsIgnoreCase(goalStatus);
+                        break;
+                    case "En progreso":
+                        matchesStatus = "en_progreso".equalsIgnoreCase(goalStatus);
+                        break;
+                    case "Fallida":
+                        matchesStatus = "fallida".equalsIgnoreCase(goalStatus);
+                        break;
+                }
+            }
+
+            if (matchesTitle && matchesStatus) {
+                filteredGoals.add(goal);
+            }
         }
 
         adapter.notifyDataSetChanged();
         tvNoGoals.setVisibility(filteredGoals.isEmpty() ? View.VISIBLE : View.GONE);
     }
+
+    // Método para calcular el estado de la meta
+    private String getGoalStatus(Goal goal) {
+        // Lógica para calcular el estado de la meta en tiempo real
+
+        // Obtener la fecha límite
+        String deadline = goal.getDeadline(); // Por ejemplo, "2025-12-31"
+        String currentDate = getCurrentDate(); // Método que obtiene la fecha actual (ej. "2025-12-16")
+
+        if (goal.getCurrentAmount() >= goal.getTargetAmount()) {
+            return "completado";  // Si se alcanzó la cantidad objetivo
+        }
+
+        if (currentDate.compareTo(deadline) > 0) {
+            return "fallida";  // Si la fecha actual es después de la fecha límite
+        }
+
+        return "en_progreso";  // Si aún no se ha completado y no ha pasado la fecha límite
+    }
+
+    // Método para obtener la fecha actual en formato "YYYY-MM-DD"
+    private String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return sdf.format(new Date());
+    }
+
+
 
     private void clearFilters() {
         etTitleFilter.setText("");

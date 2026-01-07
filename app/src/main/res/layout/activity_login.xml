@@ -121,6 +121,18 @@
                 android:textSize="14sp"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"/>
+
+
+            <!-- OLVIDASTE CONTRASEÑA -->
+            <TextView
+                android:id="@+id/tvForgotPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¿Olvidaste tu contraseña?"
+                android:textColor="@color/blueAccent"
+                android:textSize="14sp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="12dp"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

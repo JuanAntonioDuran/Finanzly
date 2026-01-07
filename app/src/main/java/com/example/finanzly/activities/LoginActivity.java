@@ -16,13 +16,14 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.finanzly.R;
+import com.example.finanzly.dialogs.PasswordResetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private Button btnLogin;
-    private TextView tvRegisterLink;
+    private TextView tvRegisterLink , tvForgotPassword;
 
     private FirebaseAuth auth;
 
@@ -46,6 +47,12 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         tvRegisterLink = findViewById(R.id.tvRegisterLink);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
+
+        tvForgotPassword.setOnClickListener(v -> {
+            PasswordResetDialog dialog = new PasswordResetDialog();
+            dialog.show(getSupportFragmentManager(), "password_reset_dialog");
+        });
 
         // 🔹 Acción de inicio de sesión
         btnLogin.setOnClickListener(v -> loginUser());

@@ -13,6 +13,7 @@ public class Goal {
     private String deadline;            // Fecha límite (opcional)
     private String createdAt;          // Fecha de creación (opcional)
 
+    private String updatedAt;
     // 🔹 Constructor vacío (Firebase lo necesita)
     public Goal() {
     }
@@ -87,9 +88,19 @@ public class Goal {
         this.deadline = deadline;
     }
 
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public String getCreatedAt() {
         return createdAt;
     }
+
+
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;

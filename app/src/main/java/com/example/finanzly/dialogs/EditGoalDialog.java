@@ -184,10 +184,11 @@ public class EditGoalDialog {
                 return;
             }
 
+            String currentDate = getCurrentUTCDate();
             goal.setTitle(title);
             goal.setTargetAmount(targetAmount);
             goal.setDeadline(!deadline.isEmpty() ? deadline : null);
-
+            goal.setUpdatedAt(currentDate);
             listener.onGoalEdited(goal);
             dialog.dismiss();
         });
@@ -200,5 +201,11 @@ public class EditGoalDialog {
                 .create();
 
         dialog.show();
+    }
+
+    private String getCurrentUTCDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date());
     }
 }

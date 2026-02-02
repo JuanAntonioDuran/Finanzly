@@ -184,10 +184,10 @@ public class EditBudgetDialog {
                 etLimit.setError("Número inválido");
                 return;
             }
-
+            String currentDate = getCurrentUTCDate();
             budget.setCategory(category);
             budget.setLimit(limit);
-
+            budget.setUpdatedAt(currentDate);
             listener.onBudgetEdited(budget);
             dialog.dismiss();
         });
@@ -202,4 +202,9 @@ public class EditBudgetDialog {
         dialog.show();
     }
 
+    private String getCurrentUTCDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date());
+    }
 }

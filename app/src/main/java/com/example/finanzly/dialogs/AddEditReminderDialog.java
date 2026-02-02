@@ -83,7 +83,9 @@ public class AddEditReminderDialog {
 
         Reminder working = existing != null ? existing : new Reminder();
 
+        // -----------------------------
         // Modo edición
+        // -----------------------------
         if (existing != null) {
             edtTitle.setText(existing.getTitle());
             edtDesc.setText(existing.getDescription());
@@ -91,7 +93,9 @@ public class AddEditReminderDialog {
             edtTime.setText(existing.getTime());
         }
 
+        // -----------------------------
         // Date picker
+        // -----------------------------
         Calendar c = Calendar.getInstance();
         edtDate.setOnClickListener(v -> {
             DatePickerDialog dp = new DatePickerDialog(
@@ -106,7 +110,9 @@ public class AddEditReminderDialog {
             dp.show();
         });
 
+        // -----------------------------
         // Time picker
+        // -----------------------------
         edtTime.setOnClickListener(v -> {
             TimePickerDialog tp = new TimePickerDialog(
                     context,
@@ -120,7 +126,9 @@ public class AddEditReminderDialog {
             tp.show();
         });
 
+        // -----------------------------
         // Toggle usuarios
+        // -----------------------------
         btnToggleUsers.setOnClickListener(v -> {
             if (usersContainer.getVisibility() == View.GONE) {
                 usersContainer.setVisibility(View.VISIBLE);
@@ -134,9 +142,14 @@ public class AddEditReminderDialog {
 
         AlertDialog dialog = builder.create();
 
+        // -----------------------------
         // Cancelar
+        // -----------------------------
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
+        // -----------------------------
+        // Guardar
+        // -----------------------------
         btnSave.setOnClickListener(v -> {
 
             String title = edtTitle.getText().toString().trim();
@@ -167,7 +180,6 @@ public class AddEditReminderDialog {
                 if (cb.isChecked()) {
                     userIds.add(uid);
 
-                    // Mantener estado previo o inicializar a false
                     boolean prev = existing != null &&
                             existing.getSharedUsersStatus() != null &&
                             existing.getSharedUsersStatus().getOrDefault(uid, false);
@@ -182,8 +194,6 @@ public class AddEditReminderDialog {
                 String newId = remindersRef.push().getKey();
                 working.setId(newId);
                 working.setCreatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date()));
-
-                // Inicializar booleanos correctamente
                 working.setIsCompleted(false);
                 working.setIsExpired(false);
             }
@@ -204,9 +214,6 @@ public class AddEditReminderDialog {
 
             working.setUpdatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date()));
 
-            // -----------------------------
-            // Guardar en Firebase
-            // -----------------------------
             remindersRef.child(working.getId()).setValue(working);
 
             Toast.makeText(context,
@@ -214,21 +221,27 @@ public class AddEditReminderDialog {
                     Toast.LENGTH_SHORT).show();
 
             listener.onReminderSaved(working, existing == null);
-
             dialog.dismiss();
         });
-
 
         dialog.show();
     }
 
-    // Populate linked users
+    // =====================================================
+    // Poblar usuarios vinculados (VERSIÓN SEGURA)
+    // =====================================================
     private void populateLinkedUsers(LinearLayout usersContainer, Reminder existing) {
 
         usersContainer.removeAllViews();
-        List<String> sourceUsers = new ArrayList<>(linkedSharedUsers);
 
-        if (!sourceUsers.contains(currentUserId)) sourceUsers.add(0, currentUserId);
+        // 🔐 Blindaje total contra null
+        List<String> sourceUsers = linkedSharedUsers != null
+                ? new ArrayList<>(linkedSharedUsers)
+                : new ArrayList<>();
+
+        if (!sourceUsers.contains(currentUserId)) {
+            sourceUsers.add(0, currentUserId);
+        }
 
         List<String> selected = existing != null && existing.getSharedUserIds() != null
                 ? existing.getSharedUserIds()
@@ -242,7 +255,12 @@ public class AddEditReminderDialog {
             CheckBox cb = new CheckBox(context);
             cb.setId(R.id.checkbox_user_dynamic);
             cb.setTag(uid);
-            cb.setText("Usuario: " + userIdToNameMap.getOrDefault(uid, uid));
+
+            String name = userIdToNameMap != null
+                    ? userIdToNameMap.getOrDefault(uid, uid)
+                    : uid;
+
+            cb.setText(name);
 
             if (selected.contains(uid)) cb.setChecked(true);
 

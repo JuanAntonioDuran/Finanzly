@@ -38,8 +38,18 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
         holder.tvCategory.setText(movement.getDescription() != null ? movement.getDescription() : "-");
         holder.tvDescription.setText(movement.getCategory() != null ? movement.getCategory() : "-");
         holder.tvDate.setText(movement.getDate() != null ? movement.getDate() : "-");
-        holder.tvAmount.setText(String.format("%.2f €", movement.getAmount()));
+
+        double amount = movement.getAmount();
+
+        if ("income".equalsIgnoreCase(movement.getType())) {
+            holder.tvAmount.setText(String.format("+%.2f €", amount));
+            holder.tvAmount.setTextColor(context.getColor(R.color.green_primary)); // verde
+        } else {
+            holder.tvAmount.setText(String.format("-%.2f €", amount));
+            holder.tvAmount.setTextColor(context.getColor(R.color.red_error)); // rojo
+        }
     }
+
 
     @Override
     public int getItemCount() {

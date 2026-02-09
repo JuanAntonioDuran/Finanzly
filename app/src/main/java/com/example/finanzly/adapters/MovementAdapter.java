@@ -50,14 +50,20 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
         holder.tvCategory.setText(movement.getDescription() != null ? movement.getDescription() : "-");
         holder.tvDescription.setText(movement.getCategory() != null ? movement.getCategory() : "-");
         holder.tvDate.setText(movement.getDate() != null ? movement.getDate() : "-");
-        holder.tvAmount.setText(String.format("%.2f €", movement.getAmount()));
+
+        double amount = movement.getAmount();
+
+        if ("income".equalsIgnoreCase(movement.getType())) {
+            holder.tvAmount.setText(String.format("+%.2f €", amount));
+            holder.tvAmount.setTextColor(context.getColor(R.color.green_primary));
+        } else {
+            holder.tvAmount.setText(String.format("-%.2f €", amount));
+            holder.tvAmount.setTextColor(context.getColor(R.color.red_error));
+        }
 
         String userName = movementIdToUserName.get(movement.getId());
         holder.tvUserName.setText(userName != null ? userName : movement.getUserId());
 
-        // -------------------------
-        // Mostrar botones según permisos
-        // -------------------------
         boolean isBudgetOwner = currentUserId.equals(budgetOwnerId);
         boolean isMovementOwner = currentUserId.equals(movement.getUserId());
 
@@ -72,6 +78,7 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
             if (listener != null) listener.onDelete(movement);
         });
     }
+
 
     @Override
     public int getItemCount() {

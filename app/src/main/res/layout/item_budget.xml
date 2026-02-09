@@ -101,10 +101,13 @@
                 android:id="@+id/btnItemViewMovements"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mov."
+                android:text=" Mov."
+                android:drawableLeft="@drawable/ic_movement"
+                android:drawablePadding="6dp"
                 android:textAllCaps="false"
                 android:backgroundTint="@color/blueAccent"
                 android:textColor="@android:color/white"
+                android:drawableTint="@android:color/white"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
                 android:layout_marginEnd="8dp" />
@@ -113,10 +116,13 @@
                 android:id="@+id/btnItemDelete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Eliminar"
+                android:text=" Eliminar"
+                android:drawableLeft="@drawable/ic_cross"
+                android:drawablePadding="6dp"
                 android:textAllCaps="false"
                 android:backgroundTint="@android:color/holo_red_dark"
                 android:textColor="@android:color/white"
+                android:drawableTint="@android:color/white"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
                 android:layout_marginEnd="8dp" />
@@ -125,12 +131,17 @@
                 android:id="@+id/btnItemLeft"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Salir"
+                android:text=" Salir"
+                android:drawableLeft="@drawable/ic_exit"
+                android:drawablePadding="6dp"
                 android:textAllCaps="false"
                 android:backgroundTint="@android:color/holo_orange_light"
                 android:textColor="@android:color/white"
+                android:tint="@android:color/white"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp" />
+
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

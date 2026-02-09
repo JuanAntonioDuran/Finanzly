@@ -75,13 +75,13 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         // Estado del objetivo
         if (goal.getCurrentAmount() >= goal.getTargetAmount()) {
             holder.tvStatus.setText("Completada");
-            holder.tvStatus.setBackgroundResource(R.color.green_primary);
+            holder.tvStatus.setBackgroundResource(R.color.blueAccent);
         } else if (isFailed) {
             holder.tvStatus.setText("Fallido");
             holder.tvStatus.setBackgroundResource(R.color.red_error);
         } else {
             holder.tvStatus.setText("Activo");
-            holder.tvStatus.setBackgroundResource(R.color.blueAccent);
+            holder.tvStatus.setBackgroundResource(R.color.green_primary);
         }
 
         // Barra de progreso

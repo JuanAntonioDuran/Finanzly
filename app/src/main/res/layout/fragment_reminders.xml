@@ -64,19 +64,7 @@
                 app:layout_constraintTop_toBottomOf="@id/alertPendingContainer"
                 app:layout_constraintStart_toStartOf="parent"/>
 
-            <!-- SPINNER PARA FILTRAR ESTADO -->
-            <Spinner
-                android:id="@+id/spinnerReminderStatus"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/edit_text_background"
-                android:padding="12dp"
-                app:layout_constraintTop_toBottomOf="@id/txtTitle"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <!-- FILTROS AVANZADOS -->
+            <!-- FILTROS -->
             <LinearLayout
                 android:id="@+id/advancedFiltersContainer"
                 android:layout_width="0dp"
@@ -85,28 +73,60 @@
                 android:padding="16dp"
                 android:background="@drawable/card_background"
                 android:elevation="3dp"
-                android:layout_marginTop="12dp"
-                app:layout_constraintTop_toBottomOf="@id/spinnerReminderStatus"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/txtTitle"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <EditText
-                    android:id="@+id/edtFilterSearch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Buscar por texto"
-                    android:padding="12dp"
-                    android:background="@drawable/edit_text_background"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"/>
-
+                <!-- FILA BUSCADOR + ESTADO -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginTop="8dp"
-                    android:spacing="8dp">
+                    android:weightSum="2"
+                    android:layout_marginBottom="12dp">
+
+                    <EditText
+                        android:id="@+id/edtFilterSearch"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:hint="Buscar por texto"
+                        android:padding="12dp"
+                        android:background="@drawable/edit_text_background"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginEnd="8dp"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerReminderStatus"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/edit_text_background"
+                        android:padding="12dp"/>
+                </LinearLayout>
+
+                <!-- BOTONES -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btnApplyFilters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filtrar"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:textAllCaps="false"
+                        android:backgroundTint="@color/blueAccent"
+                        android:textColor="@color/white"
+                        android:elevation="3dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"/>
 
                     <Button
                         android:id="@+id/btnClearFilters"
@@ -120,19 +140,9 @@
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="8dp"/>
 
-                    <Button
-                        android:id="@+id/btnApplyFilters"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Aplicar"
-                        android:layout_marginStart="8dp"
-                        android:textAllCaps="false"
-                        android:backgroundTint="@color/blueAccent"
-                        android:textColor="@color/white"
-                        android:elevation="3dp"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="8dp"/>
+
                 </LinearLayout>
+
             </LinearLayout>
 
             <!-- RECYCLER -->
@@ -161,6 +171,7 @@
                 app:layout_constraintTop_toBottomOf="@id/recyclerReminders"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

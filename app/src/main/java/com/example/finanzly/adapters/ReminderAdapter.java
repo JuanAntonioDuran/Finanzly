@@ -89,21 +89,36 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
 
         // ---- ESTADO DEL USUARIO EN ESTE REMINDER ----
         boolean isCompletedByUser = false;
-
         Map<String, Boolean> sharedStatus = r.getSharedUsersStatus();
         if (sharedStatus != null && sharedStatus.containsKey(currentUserId)) {
             isCompletedByUser = sharedStatus.get(currentUserId);
+        }
+
+        // ---- ESTADO GENERAL ----
+        boolean isCompleted = r.getIsCompleted();
+        boolean isExpired = computeExpired(r);
+
+        // ---- TEXTO DE ESTADO ----
+        if (isCompleted) {
+            holder.txtStatus.setText("Completado");
+            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.green_light));
+        } else if (isExpired) {
+            holder.txtStatus.setText("Expirado");
+            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.red_error));
+        } else {
+            holder.txtStatus.setText("Pendiente");
+            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.yellow));
         }
 
         // ---- BOTONES DEL CREADOR ----
         holder.btnEdit.setVisibility(isCreator ? View.VISIBLE : View.GONE);
         holder.btnDelete.setVisibility(isCreator ? View.VISIBLE : View.GONE);
 
-        // ---- BOTÓN SALIR (solo shared users, no creator) ----
+        // ---- BOTÓN SALIR ----
         holder.btnLeave.setVisibility(!isCreator && isSharedUser ? View.VISIBLE : View.GONE);
 
-        // ---- CONTROL DE BOTONES COMPLETE/PENDING ----
-        if (isSharedUser) {
+        // ---- CONTROL DE COMPLETE / PENDING ----
+        if (isSharedUser && !isExpired) {
             if (isCompletedByUser) {
                 holder.btnComplete.setVisibility(View.GONE);
                 holder.btnPending.setVisibility(View.VISIBLE);
@@ -116,27 +131,10 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
             holder.btnPending.setVisibility(View.GONE);
         }
 
-        // ---- ESTADO GENERAL DEL REMINDER ----
-        boolean isCompleted = r.getIsCompleted();
-        boolean isExpired = computeExpired(r);
-
-        if (isCompleted) {
-            holder.txtStatus.setText("Completado");
-            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.green_light));
-        } else if (isExpired) {
-            holder.txtStatus.setText("Expirado");
-            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.red_error));
-        } else {
-            holder.txtStatus.setText("Pendiente");
-            holder.txtStatus.setTextColor(context.getResources().getColor(R.color.yellow));
-        }
-
         // ---- LISTENERS ----
         holder.btnEdit.setOnClickListener(v -> listener.onEdit(r));
         holder.btnDelete.setOnClickListener(v -> listener.onDelete(r));
         holder.btnLeave.setOnClickListener(v -> listener.onLeave(r));
-
-        // Ambos botones usan el toggle
         holder.btnComplete.setOnClickListener(v -> listener.onToggleComplete(r));
         holder.btnPending.setOnClickListener(v -> listener.onToggleComplete(r));
     }
@@ -158,7 +156,7 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView txtTitle, txtDescription, txtDate, txtTime, txtSharedCount, txtStatus; // <-- añadimos txtStatus
+        TextView txtTitle, txtDescription, txtDate, txtTime, txtSharedCount, txtStatus;
         Button btnEdit, btnDelete, btnComplete, btnPending, btnLeave;
 
         public ViewHolder(@NonNull View itemView) {
@@ -168,7 +166,7 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
             txtDate = itemView.findViewById(R.id.txtReminderDate);
             txtTime = itemView.findViewById(R.id.txtReminderTime);
             txtSharedCount = itemView.findViewById(R.id.txtSharedCount);
-            txtStatus = itemView.findViewById(R.id.txtReminderStatus); // <-- enlazamos TextView
+            txtStatus = itemView.findViewById(R.id.txtReminderStatus);
 
             btnEdit = itemView.findViewById(R.id.btnEditReminder);
             btnDelete = itemView.findViewById(R.id.btnDeleteReminder);
@@ -177,7 +175,6 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
             btnLeave = itemView.findViewById(R.id.btnLeaveReminder);
         }
     }
-
 
     public void updateList(List<Reminder> newList) {
         items.clear();

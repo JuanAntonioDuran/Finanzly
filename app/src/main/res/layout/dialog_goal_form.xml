@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 🏷️ NOMBRE DE LA META -->
+        <!-- NOMBRE DE LA META -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -27,7 +27,7 @@
             android:padding="12dp"
             android:layout_marginTop="6dp" />
 
-        <!-- 💰 CANTIDAD OBJETIVO -->
+        <!-- CANTIDAD OBJETIVO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,11 +45,11 @@
             android:padding="12dp"
             android:layout_marginTop="6dp" />
 
-        <!-- 📅 FECHA LÍMITE -->
+        <!--  FECHA LÍMITE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fecha límite (opcional)"
+            android:text="Fecha límite"
             android:textStyle="bold"
             android:layout_marginTop="16dp" />
 

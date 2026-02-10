@@ -24,9 +24,13 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class RemindersFragment extends Fragment implements ReminderAdapter.OnReminderActionListener {
@@ -100,17 +104,17 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
         for (Reminder r : allReminders) {
 
-            // FILTRO POR TÍTULO
+            // ---- FILTRO POR TEXTO ----
             boolean matchesText = r.getTitle() != null &&
                     r.getTitle().toLowerCase().contains(searchText);
 
+            boolean isExpired = isReminderExpired(r);
             boolean matchesState = true;
 
-            // FILTRO POR ESTADO DEL SPINNER
+            // ---- FILTRO POR ESTADO ----
             switch (selectedStatus) {
-
                 case "Pendientes":
-                    matchesState = !r.getIsCompleted() && !r.getIsExpired();
+                    matchesState = !r.getIsCompleted() && !isExpired;
                     break;
 
                 case "Completados":
@@ -118,7 +122,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     break;
 
                 case "Expirados":
-                    matchesState = r.getIsExpired();
+                    matchesState = isExpired;
                     break;
 
                 case "Todos":
@@ -135,6 +139,18 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         adapter.updateList(filtered);
     }
 
+
+    private boolean isReminderExpired(Reminder r) {
+        if (r.getDate() == null || r.getTime() == null) return false;
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
+            Date reminderDate = sdf.parse(r.getDate() + "T" + r.getTime());
+            return new Date().after(reminderDate);
+        } catch (ParseException e) {
+            return false;
+        }
+    }
 
     // =========================================================
     // El resto del fragment permanece **exactamente igual**

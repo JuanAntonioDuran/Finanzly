@@ -1,10 +1,13 @@
 package com.example.finanzly.dialogs;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.finanzly.R;
 import com.example.finanzly.models.Goal;
@@ -35,83 +38,101 @@ public class GoalDialog {
     }
 
     public void show() {
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_goal_form, null);
+
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_goal, null);
 
         EditText etTitle = dialogView.findViewById(R.id.etTitle);
         EditText etTargetAmount = dialogView.findViewById(R.id.etTargetAmount);
         EditText etDeadline = dialogView.findViewById(R.id.etDeadline);
 
-        // --------------------------- DatePicker para deadline ---------------------------
+        // DatePicker para fecha límite
         etDeadline.setFocusable(false);
         etDeadline.setClickable(true);
+
         etDeadline.setOnClickListener(v -> {
+
             java.util.Calendar calendar = java.util.Calendar.getInstance();
-            android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
                     context,
                     (view, year, month, dayOfMonth) ->
-                            etDeadline.setText(String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)),
+                            etDeadline.setText(
+                                    String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                            ),
                     calendar.get(java.util.Calendar.YEAR),
                     calendar.get(java.util.Calendar.MONTH),
                     calendar.get(java.util.Calendar.DAY_OF_MONTH)
             );
+
             datePickerDialog.show();
         });
-        // ------------------------------------------------------------------------------
 
-        new androidx.appcompat.app.AlertDialog.Builder(context)
-                .setTitle("Nueva meta")
+        AlertDialog dialog = new AlertDialog.Builder(context)
                 .setView(dialogView)
-                .setPositiveButton("Guardar", (dialog, which) -> {
-                    String title = etTitle.getText().toString().trim();
-                    String targetStr = etTargetAmount.getText().toString().trim();
-                    String deadline = etDeadline.getText().toString().trim();
+                .setPositiveButton("Guardar", null)
+                .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
+                .create();
 
-                    if (title.isEmpty() || targetStr.isEmpty() || deadline.isEmpty()) {
-                        Toast.makeText(context, "Debes llenar todos los campos.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        dialog.show();
 
-                    if (title.length() < 3) {
-                        Toast.makeText(context, "El título debe tener al menos 3 caracteres.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
 
-                    double target;
-                    try {
-                        target = Double.parseDouble(targetStr);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(context, "Introduce un número válido.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+            String title = etTitle.getText().toString().trim();
+            String targetStr = etTargetAmount.getText().toString().trim();
+            String deadline = etDeadline.getText().toString().trim();
 
-                    if (target <= 0) {
-                        Toast.makeText(context, "Debe ser mayor que 0.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+            if (title.isEmpty() || targetStr.isEmpty() || deadline.isEmpty()) {
+                Toast.makeText(context, "Debes llenar todos los campos.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                    String currentDate = getCurrentUTCDate();
+            if (title.length() < 3) {
+                Toast.makeText(context, "El título debe tener al menos 3 caracteres.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                    Goal newGoal = new Goal();
-                    newGoal.setTitle(title);
-                    newGoal.setTargetAmount(target);
-                    newGoal.setCurrentAmount(0);
-                    newGoal.setUserId(currentUserId);
-                    newGoal.setDeadline(deadline);
-                    newGoal.setCreatedAt(currentDate);
-                    newGoal.setSharedUserIds(List.of()); // sin usuarios compartidos
+            double target;
 
-                    goalService.insert(newGoal);
+            try {
+                target = Double.parseDouble(targetStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(context, "Introduce un número válido.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                    Toast.makeText(context, "Meta creada correctamente.", Toast.LENGTH_SHORT).show();
-                    if (listener != null) listener.onGoalCreated();
-                })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
-                .show();
+            if (target <= 0) {
+                Toast.makeText(context, "Debe ser mayor que 0.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String currentDate = getCurrentUTCDate();
+
+            Goal newGoal = new Goal();
+            newGoal.setTitle(title);
+            newGoal.setTargetAmount(target);
+            newGoal.setCurrentAmount(0);
+            newGoal.setUserId(currentUserId);
+            newGoal.setDeadline(deadline);
+            newGoal.setCreatedAt(currentDate);
+            newGoal.setSharedUserIds(List.of());
+
+            goalService.insert(newGoal);
+
+            Toast.makeText(context, "Meta creada correctamente.", Toast.LENGTH_SHORT).show();
+
+            if (listener != null) listener.onGoalCreated();
+
+            dialog.dismiss();
+        });
     }
 
     private String getCurrentUTCDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+
+        SimpleDateFormat sdf =
+                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         return sdf.format(new Date());
     }
 }

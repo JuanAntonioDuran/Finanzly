@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp"
+    android:padding="20dp"
     android:background="@color/white">
 
     <LinearLayout
@@ -17,29 +17,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Nuevo movimiento"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/green_primary"
-            android:paddingBottom="12dp" />
+            android:gravity="center"
+            android:paddingBottom="16dp" />
 
         <!-- 📦 CARD FORM -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            android:layout_marginBottom="24dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <!-- 📅 FECHA -->
                 <TextView
                     android:text="Fecha"
                     android:textStyle="bold"
+                    android:textSize="14sp"
                     android:textColor="@color/gray_dark"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
@@ -48,6 +50,7 @@
                     android:id="@+id/etDate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:hint="YYYY-MM-DD"
                     android:focusable="false"
                     android:clickable="true"
@@ -59,8 +62,9 @@
                 <TextView
                     android:text="Monto (€)"
                     android:textStyle="bold"
+                    android:textSize="14sp"
                     android:textColor="@color/gray_dark"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -68,6 +72,7 @@
                     android:id="@+id/etAmount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:hint="0.00"
                     android:inputType="numberDecimal"
                     android:background="@drawable/edit_text_background"
@@ -78,8 +83,9 @@
                 <TextView
                     android:text="Descripción"
                     android:textStyle="bold"
+                    android:textSize="14sp"
                     android:textColor="@color/gray_dark"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -87,22 +93,45 @@
                     android:id="@+id/etDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:hint="Ej: Pago alquiler"
                     android:background="@drawable/edit_text_background"
                     android:padding="12dp"
                     android:layout_marginTop="6dp" />
 
+                <!-- 👤 USUARIO (solo visible para owner) -->
+                <TextView
+                    android:id="@+id/tvUserLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Asignar a usuario"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/gray_dark"
+                    android:layout_marginTop="18dp"
+                    android:visibility="gone"/>
+
+                <Spinner
+                    android:id="@+id/spUserAssign"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/edit_text_background"
+                    android:padding="8dp"
+                    android:visibility="gone"/>
+
                 <!-- 🔄 TIPO (opcional) -->
                 <Button
                     android:id="@+id/btnType"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Tipo de movimiento"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:visibility="gone"
                     android:textAllCaps="false"
                     android:backgroundTint="@color/blueAccent"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:padding="10dp" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -121,7 +150,9 @@
                 android:text="Cancelar"
                 android:textAllCaps="false"
                 android:backgroundTint="@color/gray_dark"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"/>
 
             <Button
                 android:id="@+id/btnSave"
@@ -131,7 +162,10 @@
                 android:textAllCaps="false"
                 android:layout_marginStart="12dp"
                 android:backgroundTint="@color/green_success"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"/>
+
         </LinearLayout>
 
     </LinearLayout>

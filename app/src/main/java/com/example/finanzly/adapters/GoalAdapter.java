@@ -56,6 +56,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.tvTitle.setText(goal.getTitle());
         holder.tvTarget.setText("Meta: €" + goal.getTargetAmount());
         holder.tvCurrent.setText("Progreso: €" + goal.getCurrentAmount());
+        holder.tvDeadLine.setText("Fecha límite: "+goal.getDeadline());
 
         // Estado basado en fecha límite
         boolean isFailed = false;
@@ -122,12 +123,13 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
     static class GoalViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvTitle, tvTarget, tvCurrent, tvStatus;
+        TextView tvTitle, tvTarget, tvCurrent, tvStatus,tvDeadLine;
         ProgressBar progressBar;
         Button btnAddProgress, btnDelete, btnLeave;
 
         public GoalViewHolder(@NonNull View itemView) {
             super(itemView);
+            tvDeadLine = itemView.findViewById(R.id.tvGoalDeadline);
             tvTitle = itemView.findViewById(R.id.tvGoalTitle);
             tvTarget = itemView.findViewById(R.id.tvGoalTarget);
             tvCurrent = itemView.findViewById(R.id.tvGoalCurrent);

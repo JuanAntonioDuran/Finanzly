@@ -3,7 +3,6 @@ package com.example.finanzly.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -28,7 +27,7 @@ import java.util.Locale;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private EditText etName, etEmail, etPassword;
+    private EditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnRegister;
     private TextView tvLoginLink;
 
@@ -56,16 +55,17 @@ public class RegisterActivity extends AppCompatActivity {
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
+        etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnRegister = findViewById(R.id.btnRegister);
         tvLoginLink = findViewById(R.id.tvLoginLink);
 
         // 🔹 Acción de registro
         btnRegister.setOnClickListener(v -> registerUser());
 
-        // 🔹 Enlace a login (si lo tienes implementado)
+        // 🔹 Enlace a login
         tvLoginLink.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-            finish(); // Por ahora solo cerramos
+            finish();
         });
     }
 
@@ -73,21 +73,36 @@ public class RegisterActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
+        String confirmPassword = etConfirmPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(name)) {
             etName.setError("Ingresa tu nombre");
             return;
         }
+
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Ingresa tu correo");
             return;
         }
+
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Ingresa una contraseña");
             return;
         }
+
+        if (TextUtils.isEmpty(confirmPassword)) {
+            etConfirmPassword.setError("Confirma tu contraseña");
+            return;
+        }
+
         if (password.length() < 6) {
             etPassword.setError("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+
+        // 🔹 Verificar que coincidan
+        if (!password.equals(confirmPassword)) {
+            etConfirmPassword.setError("Las contraseñas no coinciden");
             return;
         }
 
@@ -114,21 +129,21 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void saveUserToDatabase(String uid, String name, String email) {
-        // 🔹 Fecha actual
+
         String createdAt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 .format(new Date());
 
         User user = new User(uid, name, email, createdAt);
 
-        // 🔹 Guardar en Firebase Realtime Database
         usersRef.child(uid).setValue(user)
                 .addOnSuccessListener(unused -> {
                     Toast.makeText(this, "Cuenta creada con éxito", Toast.LENGTH_SHORT).show();
-                     startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                     finish();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this,
-                        "Error al guardar datos: " + e.getMessage(),
-                        Toast.LENGTH_LONG).show());
+                .addOnFailureListener(e ->
+                        Toast.makeText(this,
+                                "Error al guardar datos: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
     }
 }

@@ -36,6 +36,7 @@ public class BudgetMovements extends AppCompatActivity {
     private ProgressBar progressTop;
     private FloatingActionButton fabAddMovement, fabEditBudget, fabAddReminder;
 
+    private Spinner spUserFilter;  // en lugar de EditText
     // Firebase references
     private DatabaseReference budgetsRef;
     private DatabaseReference movementsRef;
@@ -57,7 +58,7 @@ public class BudgetMovements extends AppCompatActivity {
     // Maps
     private Map<String, String> userIdToNameMap = new HashMap<>();
 
-
+    private Map<String, String> userNameToIdMap = new HashMap<>();
     private String filterUser = "";
     private String filterDateFrom = "";
     private String filterDateTo = "";
@@ -78,7 +79,7 @@ public class BudgetMovements extends AppCompatActivity {
         tvPercent = findViewById(R.id.tvPercent);
         tvSpent = findViewById(R.id.tvSpent);
         tvEmptyState = findViewById(R.id.tvEmptyState);
-        etUserFilter = findViewById(R.id.etUserFilter);
+        spUserFilter = findViewById(R.id.spUserFilter);
         etStartDateFilter = findViewById(R.id.etStartDateFilter);
         etEndDateFilter = findViewById(R.id.etEndDateFilter);
         recyclerView = findViewById(R.id.recyclerViewMovements);
@@ -196,6 +197,166 @@ public class BudgetMovements extends AppCompatActivity {
     // RECYCLER
     // ----------------------------
 
+    private void setupUserFilterSpinner() {
+        if (currentBudget == null) return;
+
+        // 1) Recolectar ids que debemos mostrar: owner + sharedUserIds + (opcional) usuarios en movimientos
+        final LinkedHashSet<String> userIdsToInclude = new LinkedHashSet<>();
+
+        // Owner siempre primero (si existe)
+        if (currentBudget.getUserId() != null) {
+            userIdsToInclude.add(currentBudget.getUserId());
+        }
+
+        // Shared users
+        if (currentBudget.getSharedUserIds() != null) {
+            for (String s : currentBudget.getSharedUserIds()) {
+                if (s != null) userIdsToInclude.add(s);
+            }
+        }
+
+        // Opcional: añadir usuarios que aparecen en los movimientos (si quieres mostrarlos también)
+        for (Movement m : movementList) {
+            if (m.getUserId() != null) userIdsToInclude.add(m.getUserId());
+        }
+
+        // 2) Detectar qué userIds faltan en la caché userIdToNameMap
+        final Set<String> missingUserIds = new HashSet<>();
+        for (String uid : userIdsToInclude) {
+            if (!userIdToNameMap.containsKey(uid)) {
+                missingUserIds.add(uid);
+            }
+        }
+
+        if (userIdsToInclude.isEmpty()) {
+            // Sólo "Todos"
+            List<String> userNames = new ArrayList<>();
+            userNames.add("Todos");
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    this, android.R.layout.simple_spinner_item, userNames);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spUserFilter.setAdapter(adapter);
+            spUserFilter.setOnItemSelectedListener(spinnerListener());
+            return;
+        }
+
+        if (missingUserIds.isEmpty()) {
+            // Tenemos todos los nombres: poblar inmediatamente
+            populateSpinnerFromUserIds(userIdsToInclude);
+        } else {
+            // Tenemos que cargar los nombres faltantes
+            final AtomicInteger counter = new AtomicInteger(missingUserIds.size());
+
+            for (String missingId : missingUserIds) {
+                userService.getById(missingId).get()
+                        .addOnSuccessListener(userSnap -> {
+                            if (userSnap.exists()) {
+                                User u = userSnap.getValue(User.class);
+                                if (u != null && u.getName() != null) {
+                                    userIdToNameMap.put(missingId, u.getName());
+                                    Log.d("BudgetMovements", "Cargado nombre para uid=" + missingId + " -> " + u.getName());
+                                }
+                            } else {
+                                Log.w("BudgetMovements", "Usuario no existe para uid=" + missingId);
+                            }
+
+                            if (counter.decrementAndGet() <= 0) {
+                                // ahora sí: poblar spinner
+                                populateSpinnerFromUserIds(userIdsToInclude);
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("BudgetMovements", "Error cargando user " + missingId + ": " + e.getMessage());
+                            if (counter.decrementAndGet() <= 0) {
+                                populateSpinnerFromUserIds(userIdsToInclude);
+                            }
+                        });
+            }
+        }
+    }
+
+    private void populateSpinnerFromUserIds(Collection<String> userIdsOrdered) {
+        List<String> userNames = new ArrayList<>();
+        userNames.add("Todos"); // primera opción
+
+        userNameToIdMap.clear();
+
+        for (String uid : userIdsOrdered) {
+            String name = userIdToNameMap.get(uid);
+            if (name == null) {
+                // Si aun así no tenemos nombre, mostramos "Desconocido (uid corto)"
+                String shortId = uid.length() > 6 ? uid.substring(0, 6) : uid;
+                name = "Desconocido (" + shortId + ")";
+            }
+            // Evitar duplicados de nombre (si 2 usuarios comparten nombre, añadimos sufijo para mapear correctamente)
+            String uniqueName = name;
+            int suffix = 1;
+            while (userNames.contains(uniqueName)) {
+                uniqueName = name + " (" + suffix + ")";
+                suffix++;
+            }
+
+            userNames.add(uniqueName);
+            userNameToIdMap.put(uniqueName, uid);
+        }
+
+        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                userNames
+        );
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spUserFilter.setAdapter(adapterSpinner);
+        spUserFilter.setOnItemSelectedListener(spinnerListener());
+
+        // Si filterUser ya tenía un value (p.e. se había seleccionado algo antes), intentar reaplicar selección
+        if (filterUser != null && !filterUser.isEmpty()) {
+            // buscar la posición del nombre que corresponde al userId
+            String desiredName = null;
+            for (Map.Entry<String, String> e : userNameToIdMap.entrySet()) {
+                if (filterUser.equals(e.getValue())) { desiredName = e.getKey(); break; }
+            }
+            if (desiredName != null) {
+                int pos = userNames.indexOf(desiredName);
+                if (pos >= 0) spUserFilter.setSelection(pos);
+            } else {
+                spUserFilter.setSelection(0);
+                filterUser = "";
+                applyFilters();
+            }
+        } else {
+            spUserFilter.setSelection(0);
+        }
+    }
+
+    private AdapterView.OnItemSelectedListener spinnerListener() {
+        return new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                String selectedName = (String) parent.getItemAtPosition(position);
+
+                if ("Todos".equals(selectedName)) {
+                    filterUser = "";
+                } else {
+                    filterUser = userNameToIdMap.get(selectedName);
+                    if (filterUser == null) {
+                        filterUser = "";
+                    }
+                }
+
+                // 🔥 YA NO LLAMAMOS applyFilters() AQUÍ
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                filterUser = "";
+                // 🔥 TAMPOCO LLAMAMOS applyFilters()
+            }
+        };
+    }
+
+
     private void setupRecycler() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -302,26 +463,31 @@ public class BudgetMovements extends AppCompatActivity {
     // ----------------------------
 
     private void loadBudget() {
-        budgetsRef.orderByChild("id").equalTo(budgetId)
+
+        budgetsRef.orderByChild("id")
+                .equalTo(budgetId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
+
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        currentBudget = null;
+
                         for (DataSnapshot child : snapshot.getChildren()) {
                             currentBudget = child.getValue(Budget.class);
                         }
 
                         if (currentBudget != null) {
-                            // Inicializamos el recycler ahora que tenemos el budget
+
                             setupRecycler();
-
-
-
-                            // Cargamos movimientos
                             loadMovements();
-
-                            // Actualizamos UI
                             recalculateBudgetSpent();
                             updateProgressBar();
+
+                            // 🔥 Si los usuarios ya están cargados, inicializamos spinner
+                            if (!userIdToNameMap.isEmpty()) {
+                                setupUserFilterSpinner();
+                            }
 
                             if (currentBudget.getUserId().equals(uid)) {
                                 fabEditBudget.setVisibility(View.VISIBLE);
@@ -330,7 +496,6 @@ public class BudgetMovements extends AppCompatActivity {
                                 fabEditBudget.setVisibility(View.GONE);
                                 fabAddReminder.setVisibility(View.GONE);
                             }
-
 
                         } else {
                             Log.e("BudgetMovements", "No se encontró el presupuesto con id: " + budgetId);
@@ -351,14 +516,26 @@ public class BudgetMovements extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userIdToNameMap.clear();
+
                 for (DataSnapshot child : snapshot.getChildren()) {
                     User u = child.getValue(User.class);
-                    if (u != null) userIdToNameMap.put(u.getUid(), u.getName());
+                    if (u != null && u.getUid() != null && u.getName() != null) {
+                        userIdToNameMap.put(u.getUid(), u.getName());
+                    }
+                }
+
+                Log.d("BudgetMovements", "Usuarios en caché cargados: " + userIdToNameMap.size());
+
+                // Siempre intentamos poblar el spinner (setupUserFilterSpinner maneja faltantes)
+                if (currentBudget != null) {
+                    setupUserFilterSpinner();
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("BudgetMovements", "Error cargando usuarios: " + error.getMessage());
+            }
         });
     }
 
@@ -495,10 +672,15 @@ public class BudgetMovements extends AppCompatActivity {
     // ----------------------------
 
     private void clearFilters() {
-        etUserFilter.setText("");
+        // si tenías etUserFilter (ahora usas Spinner), no la usamos
+        if (spUserFilter != null) {
+            spUserFilter.setSelection(0);
+        }
         etStartDateFilter.setText("");
         etEndDateFilter.setText("");
-
+        filterUser = "";
+        filterDateFrom = "";
+        filterDateTo = "";
 
         applyFilters();
     }
@@ -506,40 +688,59 @@ public class BudgetMovements extends AppCompatActivity {
 
 
     private void applyFilters() {
-        filterUser = etUserFilter.getText().toString().trim().toLowerCase();
+
+        // Fechas escritas en los EditText
         filterDateFrom = etStartDateFilter.getText().toString().trim();
         filterDateTo = etEndDateFilter.getText().toString().trim();
 
         filteredList.clear();
 
         for (Movement m : movementList) {
+
             boolean ok = true;
 
-            // Filtrar por fecha desde
-            if (!filterDateFrom.isEmpty() && m.getDate().compareTo(filterDateFrom) < 0)
-                ok = false;
-
-            // Filtrar por fecha hasta
-            if (!filterDateTo.isEmpty() && m.getDate().compareTo(filterDateTo) > 0)
-                ok = false;
-
-            // Filtrar por usuario
-            if (!filterUser.isEmpty()) {
-                String name = userIdToNameMap.get(m.getUserId());
-                if (name == null || !name.toLowerCase().contains(filterUser))
+            // 🔹 FILTRO POR USUARIO (POR userId)
+            if (filterUser != null && !filterUser.isEmpty()) {
+                if (m.getUserId() == null || !m.getUserId().equals(filterUser)) {
                     ok = false;
+                }
             }
 
-            if (ok) filteredList.add(m);
+            // 🔹 FILTRO POR FECHA DESDE
+            if (ok && !filterDateFrom.isEmpty()) {
+                if (m.getDate() == null || m.getDate().compareTo(filterDateFrom) < 0) {
+                    ok = false;
+                }
+            }
+
+            // 🔹 FILTRO POR FECHA HASTA
+            if (ok && !filterDateTo.isEmpty()) {
+                if (m.getDate() == null || m.getDate().compareTo(filterDateTo) > 0) {
+                    ok = false;
+                }
+            }
+
+            if (ok) {
+                filteredList.add(m);
+            }
         }
 
-        // Asignar nombres al adapter
-        for (Movement mv : filteredList) {
-            String name = userIdToNameMap.getOrDefault(mv.getUserId(), "Desconocido");
-            adapter.setUserNameForMovement(mv.getId(), name);
+        // 🔹 Actualizar nombres en adapter
+        if (adapter != null) {
+
+            for (Movement mv : filteredList) {
+                String name = userIdToNameMap.getOrDefault(
+                        mv.getUserId(),
+                        "Desconocido"
+                );
+
+                adapter.setUserNameForMovement(mv.getId(), name);
+            }
+
+            adapter.notifyDataSetChanged();
         }
 
-        adapter.notifyDataSetChanged();
+        // 🔹 Mostrar mensaje vacío si no hay resultados
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 

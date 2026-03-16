@@ -123,6 +123,10 @@ public class BudgetsFragment extends Fragment {
                         .show();
             }
 
+            @Override
+            public void onReminder(Budget budget) {
+
+            }
 
 
         });

@@ -134,16 +134,15 @@
                 android:layout_height="wrap_content"/>
         </LinearLayout>
 
-        <!-- Filtro por usuario -->
-        <EditText
-            android:id="@+id/etUserFilter"
+        <!-- Filtro por usuario con Spinner -->
+        <Spinner
+            android:id="@+id/spUserFilter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Usuario"
             android:padding="12dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/edit_text_background"
-            android:textSize="16sp"
-            android:layout_marginBottom="12dp"/>
+            android:spinnerMode="dropdown"/>
 
         <!-- Botones -->
         <LinearLayout

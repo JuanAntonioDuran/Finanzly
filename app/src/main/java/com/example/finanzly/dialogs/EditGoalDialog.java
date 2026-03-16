@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,6 +39,7 @@ public class EditGoalDialog {
     private AlertDialog dialog;
 
     private final DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+    private final DatabaseReference invitationsRef = FirebaseDatabase.getInstance().getReference("invitations");
     private final InvitationService invitationService = new InvitationService();
 
     private List<User> collaboratorList;
@@ -67,7 +69,6 @@ public class EditGoalDialog {
         LinearLayout layoutCollaborators = view.findViewById(R.id.layoutCollaborators);
         RecyclerView rvCollaborators = view.findViewById(R.id.rvCollaborators);
 
-        // Cargar datos existentes
         etTitle.setText(goal.getTitle());
         etTargetAmount.setText(String.valueOf(goal.getTargetAmount()));
         etDeadline.setText(goal.getDeadline() != null ? goal.getDeadline() : "");
@@ -76,7 +77,6 @@ public class EditGoalDialog {
             goal.setSharedUserIds(new ArrayList<>());
         }
 
-        // Inicializar lista y adapter de colaboradores
         collaboratorList = new ArrayList<>();
         adapter = new UserAdapter(collaboratorList, user -> {
             collaboratorList.remove(user);
@@ -87,7 +87,7 @@ public class EditGoalDialog {
         rvCollaborators.setLayoutManager(new LinearLayoutManager(context));
         rvCollaborators.setAdapter(adapter);
 
-        // Cargar usuarios existentes de Firebase para mostrar nombres reales
+        // Cargar colaboradores existentes
         if (!goal.getSharedUserIds().isEmpty()) {
             usersRef.get().addOnSuccessListener(snapshot -> {
                 for (String uid : goal.getSharedUserIds()) {
@@ -109,9 +109,10 @@ public class EditGoalDialog {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        // Agregar colaborador por email y crear invitación
+        // 🔥 Añadir colaborador con validaciones
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
+
             if (email.isEmpty()) {
                 etEmail.setError("Ingresa un correo válido");
                 return;
@@ -119,43 +120,62 @@ public class EditGoalDialog {
 
             usersRef.get().addOnSuccessListener(snapshot -> {
                 boolean found = false;
+
                 for (DataSnapshot child : snapshot.getChildren()) {
                     User invitedUser = child.getValue(User.class);
+
                     if (invitedUser != null && invitedUser.getEmail().equalsIgnoreCase(email)) {
                         found = true;
 
-                        // Solo enviamos invitación, no añadimos todavía al Goal
-                        String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-                                .format(new Date());
-                        Invitation invitation = new Invitation();
-                        invitation.setFromUserId(currentUserId);
-                        invitation.setToUserId(invitedUser.getUid());
-                        invitation.setResourceType("goal");
-                        invitation.setResourceIdGoal(goal.getId());
-                        invitation.setCreatedAt(now);
-                        invitation.setStatus("pending");
-                        invitation.setMessage(currentUserName + " te ha invitado al objetivo \"" + goal.getTitle() + "\"");
+                        // ✅ Ya está dentro del goal
+                        if (goal.getSharedUserIds().contains(invitedUser.getUid())) {
+                            Toast.makeText(context, "Usuario ya es colaborador", Toast.LENGTH_SHORT).show();
+                            etEmail.setText("");
+                            return;
+                        }
 
-                        invitationService.createInvitation(invitation,
-                                id -> Toast.makeText(context, "Invitación enviada a " + invitedUser.getName(), Toast.LENGTH_SHORT).show(),
-                                e -> Toast.makeText(context, "Error al enviar invitación", Toast.LENGTH_SHORT).show()
-                        );
+                        // 🔍 Comprobar invitación pendiente
+                        checkExistingInvitation(invitedUser.getUid(), goal.getId(), exists -> {
 
-                        etEmail.setText("");
-                        break;
+                            if (exists) {
+                                Toast.makeText(context, "Ya existe una invitación pendiente", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            // Crear invitación
+                            String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+                                    .format(new Date());
+
+                            Invitation invitation = new Invitation();
+                            invitation.setFromUserId(currentUserId);
+                            invitation.setToUserId(invitedUser.getUid());
+                            invitation.setResourceType("goal");
+                            invitation.setResourceIdGoal(goal.getId());
+                            invitation.setCreatedAt(now);
+                            invitation.setStatus("pending");
+                            invitation.setMessage(currentUserName + " te ha invitado al objetivo \"" + goal.getTitle() + "\"");
+
+                            invitationService.createInvitation(invitation,
+                                    id -> Toast.makeText(context, "Invitación enviada a " + invitedUser.getName(), Toast.LENGTH_SHORT).show(),
+                                    e -> Toast.makeText(context, "Error al enviar invitación", Toast.LENGTH_SHORT).show()
+                            );
+
+                            etEmail.setText("");
+                        });
+
+                        return;
                     }
                 }
 
                 if (!found) {
                     Toast.makeText(context, "No existe usuario con email: " + email, Toast.LENGTH_SHORT).show();
                 }
+
             }).addOnFailureListener(e ->
                     Toast.makeText(context, "Error cargando usuarios: " + e.getMessage(), Toast.LENGTH_SHORT).show()
             );
         });
 
-
-        // Guardar cambios del goal
         btnSave.setOnClickListener(v -> {
             String title = etTitle.getText().toString().trim();
             String targetStr = etTargetAmount.getText().toString().trim();
@@ -185,10 +205,12 @@ public class EditGoalDialog {
             }
 
             String currentDate = getCurrentUTCDate();
+
             goal.setTitle(title);
             goal.setTargetAmount(targetAmount);
             goal.setDeadline(!deadline.isEmpty() ? deadline : null);
             goal.setUpdatedAt(currentDate);
+
             listener.onGoalEdited(goal);
             dialog.dismiss();
         });
@@ -201,6 +223,32 @@ public class EditGoalDialog {
                 .create();
 
         dialog.show();
+    }
+
+    // 🔍 Comprobar invitaciones duplicadas
+    private void checkExistingInvitation(String toUserId, String goalId, OnCheckInvitation callback) {
+        invitationsRef.get().addOnSuccessListener(snapshot -> {
+            boolean exists = false;
+
+            for (DataSnapshot child : snapshot.getChildren()) {
+                Invitation inv = child.getValue(Invitation.class);
+
+                if (inv != null
+                        && inv.getToUserId().equals(toUserId)
+                        && goalId.equals(inv.getResourceIdGoal())
+                        && "pending".equals(inv.getStatus())) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            callback.onResult(exists);
+
+        }).addOnFailureListener(e -> callback.onResult(false));
+    }
+
+    interface OnCheckInvitation {
+        void onResult(boolean exists);
     }
 
     private String getCurrentUTCDate() {

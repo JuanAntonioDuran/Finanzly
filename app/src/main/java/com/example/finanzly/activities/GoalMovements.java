@@ -5,9 +5,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +40,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,11 +65,12 @@ public class GoalMovements extends AppCompatActivity {
     private EditText etStartDateFilter;
     private EditText etEndDateFilter;
     private EditText etUserFilter;
-
+    private Spinner spUserFilter;
     private String goalId;
     private Goal currentGoal;
     private String uid;
-
+    private String filterUser = "";
+    private HashMap<String, String> userNameToIdMap = new HashMap<>();
     private ImageButton btnBack;
     private FloatingActionButton fabAddMovement, fabEditGoal, fabAddReminder;
 
@@ -84,7 +89,7 @@ public class GoalMovements extends AppCompatActivity {
 
         etStartDateFilter = findViewById(R.id.etStartDateFilter);
         etEndDateFilter = findViewById(R.id.etEndDateFilter);
-        etUserFilter = findViewById(R.id.etUserFilter);
+        spUserFilter = findViewById(R.id.spUserFilter);
 
         btnBack = findViewById(R.id.btnBack);
         fabAddMovement = findViewById(R.id.fabAddMovement);
@@ -183,8 +188,84 @@ public class GoalMovements extends AppCompatActivity {
         };
         etStartDateFilter.addTextChangedListener(filterWatcher);
         etEndDateFilter.addTextChangedListener(filterWatcher);
-        etUserFilter.addTextChangedListener(filterWatcher);
+
     }
+
+
+    private void setupUserFilterSpinner() {
+
+        if (currentGoal == null) return;
+
+        userNameToIdMap.clear();
+        List<String> userNames = new ArrayList<>();
+        userNames.add("Todos");
+
+        HashSet<String> userIds = new HashSet<>();
+
+        // 🔹 Owner
+        if (currentGoal.getUserId() != null) {
+            userIds.add(currentGoal.getUserId());
+        }
+
+        // 🔹 Shared users
+        if (currentGoal.getSharedUserIds() != null) {
+            userIds.addAll(currentGoal.getSharedUserIds());
+        }
+
+        // 🔹 Usuarios que aparecen en movimientos
+        for (Movement m : movementList) {
+            if (m.getUserId() != null) {
+                userIds.add(m.getUserId());
+            }
+        }
+
+        for (String uid : userIds) {
+            String name = userIdToNameMap.get(uid);
+            if (name != null) {
+                userNames.add(name);
+                userNameToIdMap.put(name, uid);
+            }
+        }
+
+        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                userNames
+        );
+
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spUserFilter.setAdapter(adapterSpinner);
+
+        spUserFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                String selectedName = (String) parent.getItemAtPosition(position);
+
+                if ("Todos".equals(selectedName)) {
+                    filterUser = "";
+                } else {
+                    filterUser = userNameToIdMap.get(selectedName);
+                }
+
+                applyFilters(); // si quieres solo con botón, quita esta línea
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                filterUser = "";
+            }
+        });
+    }
+
+
+
+
+
+
+
+
+
 
     private void openMovementDialog(Movement movement) {
         MovementDialog dialog = new MovementDialog(this, savedMovement -> {
@@ -248,30 +329,52 @@ public class GoalMovements extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
+
         for (Movement mv : movementList) {
             String name = userIdToNameMap.get(mv.getUserId());
             adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
         }
+
+        setupUserFilterSpinner();   // 🔥 IMPORTANTE
         applyFilters();
         recalculateGoalCurrentAmount();
     }
 
     private void applyFilters() {
+
         String startDate = etStartDateFilter.getText().toString().trim();
         String endDate = etEndDateFilter.getText().toString().trim();
-        String filterUser = etUserFilter.getText().toString().trim().toLowerCase();
 
         filteredList.clear();
 
         for (Movement m : movementList) {
+
             boolean matches = true;
-            if (!startDate.isEmpty() && m.getDate().compareTo(startDate) < 0) matches = false;
-            if (!endDate.isEmpty() && m.getDate().compareTo(endDate) > 0) matches = false;
-            if (!filterUser.isEmpty()) {
-                String name = userIdToNameMap.get(m.getUserId());
-                if (name == null || !name.toLowerCase().contains(filterUser)) matches = false;
+
+            // 🔹 Filtro fecha inicio
+            if (!startDate.isEmpty() && m.getDate() != null) {
+                if (m.getDate().compareTo(startDate) < 0) {
+                    matches = false;
+                }
             }
-            if (matches) filteredList.add(m);
+
+            // 🔹 Filtro fecha fin
+            if (!endDate.isEmpty() && m.getDate() != null) {
+                if (m.getDate().compareTo(endDate) > 0) {
+                    matches = false;
+                }
+            }
+
+            // 🔹 Filtro usuario por userId
+            if (!filterUser.isEmpty()) {
+                if (m.getUserId() == null || !m.getUserId().equals(filterUser)) {
+                    matches = false;
+                }
+            }
+
+            if (matches) {
+                filteredList.add(m);
+            }
         }
 
         for (Movement mv : filteredList) {

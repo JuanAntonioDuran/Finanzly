@@ -20,33 +20,32 @@ import com.example.finanzly.R;
 import com.example.finanzly.adapters.ReminderAdapter;
 import com.example.finanzly.dialogs.AddEditReminderDialog;
 import com.example.finanzly.models.Reminder;
-import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class RemindersFragment extends Fragment implements ReminderAdapter.OnReminderActionListener {
 
     private RecyclerView recyclerView;
     private ReminderAdapter adapter;
+
     private final List<Reminder> reminderList = new ArrayList<>();
-    private final List<Reminder> allReminders = new ArrayList<>(); // lista completa para filtrar
+    private final List<Reminder> allReminders = new ArrayList<>();
+
     private final Map<String, List<String>> sharedUsersMap = new HashMap<>();
+
     private String currentUserId;
     private DatabaseReference remindersRef;
     private Map<String, Map<String, Object>> usersMap = new HashMap<>();
 
     private Spinner spinnerReminderStatus;
+    private Spinner spinnerReminderType; // NUEVO FILTRO
     private EditText edtFilterSearch;
-    private Button btnApplyFilters , btncleanFilters; // botón para aplicar filtros
+
+    private Button btnApplyFilters , btncleanFilters;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -58,13 +57,16 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         spinnerReminderStatus = root.findViewById(R.id.spinnerReminderStatus);
+        spinnerReminderType = root.findViewById(R.id.spinnerReminderType); // NUEVO
         edtFilterSearch = root.findViewById(R.id.edtFilterSearch);
+
         btnApplyFilters = root.findViewById(R.id.btnApplyFilters);
         btncleanFilters = root.findViewById(R.id.btnClearFilters);
 
-        setupFilters(); // configuramos solo el filtrado por botón
+        setupFilters();
 
         currentUserId = FirebaseAuth.getInstance().getUid();
+
         adapter = new ReminderAdapter(getContext(), reminderList, sharedUsersMap, this, currentUserId);
         recyclerView.setAdapter(adapter);
 
@@ -72,22 +74,30 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
         loadUsers();
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        // SPINNER ESTADO
+        ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(
                 requireContext(),
                 android.R.layout.simple_spinner_item,
                 new String[]{"Todos", "Pendientes", "Completados", "Expirados"}
         );
+        statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminderStatus.setAdapter(statusAdapter);
 
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerReminderStatus.setAdapter(adapter);
-
+        // SPINNER TIPO (META / PRESUPUESTO)
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                new String[]{"Todos", "Meta", "Presupuesto"}
+        );
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminderType.setAdapter(typeAdapter);
 
         return root;
     }
 
     // =============================================
-// FILTROS — solo se aplican al pulsar el botón
-// =============================================
+    // FILTROS
+    // =============================================
     private void setupFilters() {
 
         btnApplyFilters.setOnClickListener(v -> applyFilters());
@@ -95,24 +105,26 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         btncleanFilters.setOnClickListener(v -> cleanFilters());
     }
 
-
     private void applyFilters() {
+
         String searchText = edtFilterSearch.getText().toString().trim().toLowerCase();
         String selectedStatus = spinnerReminderStatus.getSelectedItem().toString();
+        String selectedType = spinnerReminderType.getSelectedItem().toString();
 
         List<Reminder> filtered = new ArrayList<>();
 
         for (Reminder r : allReminders) {
 
-            // ---- FILTRO POR TEXTO ----
+            // ---- FILTRO TEXTO ----
             boolean matchesText = r.getTitle() != null &&
                     r.getTitle().toLowerCase().contains(searchText);
 
             boolean isExpired = isReminderExpired(r);
             boolean matchesState = true;
 
-            // ---- FILTRO POR ESTADO ----
+            // ---- FILTRO ESTADO ----
             switch (selectedStatus) {
+
                 case "Pendientes":
                     matchesState = !r.getIsCompleted() && !isExpired;
                     break;
@@ -131,7 +143,26 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     break;
             }
 
-            if (matchesText && matchesState) {
+            // ---- FILTRO TIPO (META / PRESUPUESTO) ----
+            boolean matchesType = true;
+
+            switch (selectedType) {
+
+                case "Meta":
+                    matchesType = r.getLinkedGoalId() != null;
+                    break;
+
+                case "Presupuesto":
+                    matchesType = r.getLinkedBudgetId() != null;
+                    break;
+
+                case "Todos":
+                default:
+                    matchesType = true;
+                    break;
+            }
+
+            if (matchesText && matchesState && matchesType) {
                 filtered.add(r);
             }
         }
@@ -139,8 +170,8 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         adapter.updateList(filtered);
     }
 
-
     private boolean isReminderExpired(Reminder r) {
+
         if (r.getDate() == null || r.getTime() == null) return false;
 
         try {
@@ -152,56 +183,53 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         }
     }
 
-    // =========================================================
-    // El resto del fragment permanece **exactamente igual**
-    // =========================================================
-
     private void cleanFilters() {
 
-        // Limpiar texto
         edtFilterSearch.setText("");
 
-        // Resetear spinner a "Todos"
         spinnerReminderStatus.setSelection(0);
+        spinnerReminderType.setSelection(0);
 
-        // Restaurar lista completa
         adapter.updateList(new ArrayList<>(allReminders));
     }
 
-/**
-     * Carga TODOS los usuarios una vez y luego llama a loadReminders().
-     * De esta forma garantizamos que usersMap ya está poblado cuando armamos los nombres.
-     */
+    // =========================================================
+    // CARGA DE USUARIOS
+    // =========================================================
+
     private void loadUsers() {
+
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                 usersMap.clear();
+
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    // Guardamos todo el nodo del usuario para poder acceder a name u otros campos
                     usersMap.put(ds.getKey(), (Map<String, Object>) ds.getValue());
                 }
-                Log.d("RemindersFragment", "Usuarios cargados: " + usersMap.size());
 
-                // ahora que tenemos usuarios, cargamos los reminders
                 loadReminders();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("RemindersFragment", "Error cargando usuarios: " + error.getMessage());
-                // incluso si falla, intentamos cargar reminders para no dejar la UI vacía
                 loadReminders();
             }
         });
     }
 
-    /**
-     * Escucha los reminders y construye sharedUsersMap usando usersMap (ya poblado).
-     */
+    // =========================================================
+    // CARGA RECORDATORIOS
+    // =========================================================
+
     private void loadReminders() {
+
         remindersRef.addValueEventListener(new ValueEventListener() {
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -209,6 +237,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                 sharedUsersMap.clear();
 
                 for (DataSnapshot ds : snapshot.getChildren()) {
+
                     Reminder r = ds.getValue(Reminder.class);
                     if (r == null) continue;
 
@@ -218,11 +247,15 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     boolean accepted = currentUserId != null &&
                             (currentUserId.equals(r.getUserId()) ||
                                     r.getSharedUserIds().contains(currentUserId));
+
                     if (!accepted) continue;
 
                     List<String> names = new ArrayList<>();
+
                     for (String uid : r.getSharedUserIds()) {
+
                         Map<String, Object> userData = usersMap.get(uid);
+
                         if (userData != null && userData.get("name") != null) {
                             names.add((String) userData.get("name"));
                         } else {
@@ -234,17 +267,15 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     reminderList.add(r);
                 }
 
-                // 🔥🔥🔥 AÑADE SOLO ESTO 🔥🔥🔥
                 allReminders.clear();
                 allReminders.addAll(reminderList);
-                // ---------------------------------
 
                 adapter.notifyDataSetChanged();
             }
 
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+
                 Log.e("RemindersFragment", "Error cargando reminders: " + error.getMessage());
             }
         });

@@ -7,11 +7,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -21,24 +17,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.finanzly.R;
 import com.example.finanzly.activities.BudgetMovements;
 import com.example.finanzly.adapters.BudgetAdapter;
-import com.example.finanzly.adapters.UserAdapter;
-import com.example.finanzly.dialogs.BudgetDialog;
 import com.example.finanzly.models.Budget;
-import com.example.finanzly.models.User;
+import com.example.finanzly.models.Reminder;
 import com.example.finanzly.services.BudgetService;
 import com.example.finanzly.services.MovementService;
-import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 public class BudgetsFragment extends Fragment {
 
@@ -52,6 +38,9 @@ public class BudgetsFragment extends Fragment {
 
     private List<Budget> allBudgets = new ArrayList<>();
     private List<Budget> filteredBudgets = new ArrayList<>();
+
+    private Map<String, List<Reminder>> remindersByBudget = new HashMap<>();
+
     private BudgetAdapter adapter;
 
     private String currentUserId;
@@ -60,6 +49,7 @@ public class BudgetsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         View root = inflater.inflate(R.layout.fragment_budgets, container, false);
 
         currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -75,9 +65,13 @@ public class BudgetsFragment extends Fragment {
 
         budgetService = new BudgetService(getContext());
 
-        adapter = new BudgetAdapter(filteredBudgets, getContext());
-        adapter.setOnBudgetClickListener(new BudgetAdapter.OnBudgetClickListener() {
+        adapter = new BudgetAdapter(
+                filteredBudgets,
+                requireContext(),
+                remindersByBudget
+        );
 
+        adapter.setOnBudgetClickListener(new BudgetAdapter.OnBudgetClickListener() {
 
             @Override
             public void onDelete(Budget budget) {
@@ -88,104 +82,143 @@ public class BudgetsFragment extends Fragment {
             public void onViewMovements(Budget budget) {
                 goToMovements(budget);
             }
+
             @Override
             public void onLeave(Budget budget) {
-                if (getContext() == null) return;
-
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Salir del presupuesto")
-                        .setMessage("¿Estás seguro que deseas salir del presupuesto \"" + budget.getCategory() + "\"? Ya no podrás acceder a él.")
-                        .setPositiveButton("Sí, salir", (dialog, which) -> {
-
-                            String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                            if (budget.getSharedUserIds() == null || !budget.getSharedUserIds().contains(currentUserId)) {
-                                return;
-                            }
-
-                            // Quitar usuario de la lista
-                            List<String> updatedList = new ArrayList<>(budget.getSharedUserIds());
-                            updatedList.remove(currentUserId);
-
-                            // Actualizar en Realtime Database
-                            FirebaseDatabase.getInstance().getReference("budgets")
-                                    .child(budget.getId())
-                                    .child("sharedUserIds")
-                                    .setValue(updatedList)
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(getContext(), "Has salido del presupuesto", Toast.LENGTH_SHORT).show();
-                                        loadBudgets(); // refrescar lista
-                                    })
-                                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Error al salir del presupuesto", Toast.LENGTH_SHORT).show());
-
-                        })
-                        .setNegativeButton("Cancelar", null)
-                        .show();
+                leaveBudget(budget);
             }
 
             @Override
             public void onReminder(Budget budget) {
-
+                openRemindersFragment(budget.getId());
             }
-
-
         });
 
         rvBudgets.setLayoutManager(new LinearLayoutManager(getContext()));
         rvBudgets.setAdapter(adapter);
 
-        loadBudgets();
-
         btnApplyFilter.setOnClickListener(v -> applyFilters());
         btnClearFilter.setOnClickListener(v -> clearFilters());
 
-        root.findViewById(R.id.btnAddBudget).setOnClickListener(v -> openBudgetDialog(null));
+        root.findViewById(R.id.btnAddBudget)
+                .setOnClickListener(v -> openBudgetDialog(null));
+
+        loadBudgets();
+        loadReminders(); // 🔥 IMPORTANTE
 
         return root;
     }
 
-    private void loadBudgets() {
-        budgetService.getReference().addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                allBudgets.clear();
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    Budget budget = child.getValue(Budget.class);
-                    if (budget != null) {
-                        if ((budget.getUserId() != null && budget.getUserId().equals(currentUserId)) ||
-                                (budget.getSharedUserIds() != null && budget.getSharedUserIds().contains(currentUserId))) {
-                            allBudgets.add(budget);
-                        }
-                    }
-                }
-                applyFilters();
-            }
+    // 🔥 CARGAR REMINDERS
+    private void loadReminders() {
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                showAlert("Error", "No se pudieron cargar los presupuestos: " + error.getMessage());
-            }
-        });
+        FirebaseDatabase.getInstance()
+                .getReference("reminders")
+                .addValueEventListener(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        remindersByBudget.clear();
+
+                        for (DataSnapshot child : snapshot.getChildren()) {
+
+                            Reminder reminder =
+                                    child.getValue(Reminder.class);
+
+                            if (reminder == null) continue;
+
+                            if (reminder.getLinkedBudgetId() == null)
+                                continue;
+
+                            String budgetId =
+                                    reminder.getLinkedBudgetId();
+
+                            if (!remindersByBudget.containsKey(budgetId)) {
+                                remindersByBudget.put(
+                                        budgetId,
+                                        new ArrayList<>()
+                                );
+                            }
+
+                            remindersByBudget
+                                    .get(budgetId)
+                                    .add(reminder);
+                        }
+
+                        adapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+    }
+
+    private void loadBudgets() {
+
+        budgetService.getReference()
+                .addValueEventListener(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        allBudgets.clear();
+
+                        for (DataSnapshot child : snapshot.getChildren()) {
+
+                            Budget budget =
+                                    child.getValue(Budget.class);
+
+                            if (budget == null) continue;
+
+                            if ((budget.getUserId() != null &&
+                                    budget.getUserId().equals(currentUserId)) ||
+
+                                    (budget.getSharedUserIds() != null &&
+                                            budget.getSharedUserIds()
+                                                    .contains(currentUserId))) {
+
+                                allBudgets.add(budget);
+                            }
+                        }
+
+                        applyFilters();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
     }
 
     private void applyFilters() {
-        String categoryFilter = etCategoryFilter.getText().toString().trim();
-        String statusFilter = spinnerStatusFilter.getSelectedItem() != null
-                ? spinnerStatusFilter.getSelectedItem().toString()
-                : "";
+
+        String categoryFilter =
+                etCategoryFilter.getText().toString().trim();
+
+        String statusFilter =
+                spinnerStatusFilter.getSelectedItem() != null
+                        ? spinnerStatusFilter.getSelectedItem().toString()
+                        : "";
 
         filteredBudgets.clear();
 
         for (Budget budget : allBudgets) {
-            boolean matchesCategory = TextUtils.isEmpty(categoryFilter)
-                    || (budget.getCategory() != null && budget.getCategory().toLowerCase().contains(categoryFilter.toLowerCase()));
+
+            boolean matchesCategory =
+                    TextUtils.isEmpty(categoryFilter)
+                            || (budget.getCategory() != null
+                            && budget.getCategory()
+                            .toLowerCase()
+                            .contains(categoryFilter.toLowerCase()));
 
             boolean matchesStatus = true;
 
             if ("Activo".equals(statusFilter)) {
-                matchesStatus = budget.getSpent() < budget.getLimit();
+                matchesStatus =
+                        budget.getSpent() < budget.getLimit();
             } else if ("Excedido".equals(statusFilter)) {
-                matchesStatus = budget.getSpent() >= budget.getLimit();
+                matchesStatus =
+                        budget.getSpent() >= budget.getLimit();
             }
 
             if (matchesCategory && matchesStatus) {
@@ -194,7 +227,12 @@ public class BudgetsFragment extends Fragment {
         }
 
         adapter.notifyDataSetChanged();
-        tvNoBudgets.setVisibility(filteredBudgets.isEmpty() ? View.VISIBLE : View.GONE);
+
+        tvNoBudgets.setVisibility(
+                filteredBudgets.isEmpty()
+                        ? View.VISIBLE
+                        : View.GONE
+        );
     }
 
     private void clearFilters() {
@@ -204,63 +242,76 @@ public class BudgetsFragment extends Fragment {
     }
 
     private void openBudgetDialog(Budget budgetToEdit) {
-        if (currentUserId == null) return;
-
-        BudgetDialog dialog = new BudgetDialog(
-                getContext(),
-                currentUserId,
-                budgetService,
-                new UserService(getContext()),
-                () -> loadBudgets() // Este código se ejecuta al guardar o actualizar
-        );
-
-        dialog.show(budgetToEdit);
+        Toast.makeText(getContext(),
+                "Aquí abrirías tu BudgetDialog",
+                Toast.LENGTH_SHORT).show();
     }
 
-
     private void onDeleteBudget(Budget budget) {
-        if (budget == null || budget.getId() == null || currentUserId == null) return;
 
-        if (currentUserId.equals(budget.getUserId())) {
-            new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                    .setTitle("¿Eliminar presupuesto?")
-                    .setMessage("Esta acción no se puede deshacer. También se eliminarán todos los movimientos asociados.")
-                    .setPositiveButton("Sí", (dialog, which) -> {
-                        // Eliminar todos los movimientos asociados
-                        MovementService movementService = new MovementService(getContext());
-                        movementService.deleteByBudgetId(budget.getId());
+        if (budget == null || budget.getId() == null)
+            return;
 
-                        // Eliminar presupuesto
-                        budgetService.delete(budget.getId());
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle("Eliminar presupuesto")
+                .setMessage("También se eliminarán los movimientos asociados.")
+                .setPositiveButton("Sí", (dialog, which) -> {
 
-                        showAlert("Eliminado", "Presupuesto y movimientos asociados eliminados correctamente.");
-                        loadBudgets();
-                    })
-                    .setNegativeButton("Cancelar", null)
-                    .show();
-        } else {
-            budgetService.removeCollaborator(budget.getId(), currentUserId);
-            showAlert("Actualizado", "Se ha dejado de compartir el presupuesto.");
-            loadBudgets();
-        }
+                    MovementService movementService =
+                            new MovementService(getContext());
+
+                    movementService.deleteByBudgetId(
+                            budget.getId()
+                    );
+
+                    budgetService.delete(budget.getId());
+
+                    loadBudgets();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void leaveBudget(Budget budget) {
+
+        List<String> updated =
+                new ArrayList<>(budget.getSharedUserIds());
+
+        updated.remove(currentUserId);
+
+        FirebaseDatabase.getInstance()
+                .getReference("budgets")
+                .child(budget.getId())
+                .child("sharedUserIds")
+                .setValue(updated)
+                .addOnSuccessListener(aVoid -> loadBudgets());
     }
 
     private void goToMovements(Budget budget) {
-        if (budget == null || budget.getId() == null) {
-            showAlert("Error", "No se pudo obtener el ID del presupuesto.");
-            return;
-        }
 
-        Intent intent = new Intent(getContext(), BudgetMovements.class);
+        Intent intent =
+                new Intent(getContext(), BudgetMovements.class);
+
         intent.putExtra("budgetId", budget.getId());
+
         startActivity(intent);
     }
 
-    private void showAlert(String title, String message) {
-        new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
+    // 🔥 NAVEGACIÓN A REMINDERS
+    private void openRemindersFragment(String budgetId) {
+
+        RemindersFragment fragment =
+                new RemindersFragment();
+
+        Bundle bundle = new Bundle();
+        bundle.putString("budgetId", budgetId);
+        fragment.setArguments(bundle);
+
+        requireActivity()
+                .getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

@@ -154,6 +154,21 @@
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp" />
 
+
+            <Button
+                android:id="@+id/btnItemReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" Record."
+                android:drawableLeft="@drawable/ic_reminder"
+                android:drawablePadding="6dp"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/green_primary"
+                android:textColor="@android:color/white"
+                android:drawableTint="@android:color/white"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

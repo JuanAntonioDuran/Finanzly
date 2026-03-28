@@ -17,6 +17,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.finanzly.R;
 import com.example.finanzly.models.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -100,7 +103,6 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // 🔹 Verificar que coincidan
         if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Las contraseñas no coinciden");
             return;
@@ -109,7 +111,6 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister.setEnabled(false);
         btnRegister.setText("Registrando...");
 
-        // 🔹 Crear cuenta en Firebase Auth
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     btnRegister.setEnabled(true);
@@ -120,9 +121,21 @@ public class RegisterActivity extends AppCompatActivity {
                         if (firebaseUser != null) {
                             saveUserToDatabase(firebaseUser.getUid(), name, email);
                         }
+
                     } else {
+                        String mensajeError = "No se pudo registrar. Inténtalo de nuevo.";
+                        Exception exception = task.getException();
+
+                        if (exception instanceof FirebaseAuthUserCollisionException) {
+                            mensajeError = "Este correo ya está registrado";
+                        } else if (exception instanceof FirebaseAuthInvalidCredentialsException) {
+                            mensajeError = "El correo no tiene un formato válido";
+                        } else if (exception instanceof FirebaseAuthWeakPasswordException) {
+                            mensajeError = "La contraseña es demasiado débil";
+                        }
+
                         Toast.makeText(RegisterActivity.this,
-                                "Error al registrar: " + task.getException().getMessage(),
+                                mensajeError,
                                 Toast.LENGTH_LONG).show();
                     }
                 });

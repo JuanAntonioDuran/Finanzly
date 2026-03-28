@@ -18,6 +18,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.finanzly.R;
 import com.example.finanzly.dialogs.PasswordResetDialog;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -86,14 +89,31 @@ public class LoginActivity extends AppCompatActivity {
                     btnLogin.setText("Iniciar sesión");
 
                     if (task.isSuccessful()) {
-                        Toast.makeText(LoginActivity.this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show();
-                        // Redirigir al Home
+                        Toast.makeText(LoginActivity.this,
+                                "Inicio de sesión exitoso",
+                                Toast.LENGTH_SHORT).show();
+
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(intent);
                         finish();
+
                     } else {
+                        String mensajeError = "Error al iniciar sesión";
+
+                        Exception exception = task.getException();
+
+                        if (exception instanceof FirebaseAuthInvalidUserException) {
+                            mensajeError = "El usuario no existe";
+                        } else if (exception instanceof FirebaseAuthInvalidCredentialsException) {
+                            mensajeError = "Correo o contraseña incorrectos";
+                        } else if (exception instanceof FirebaseAuthUserCollisionException) {
+                            mensajeError = "Este correo ya está en uso";
+                        } else if (exception != null && exception.getMessage() != null) {
+                            mensajeError = "Error: " + exception.getMessage();
+                        }
+
                         Toast.makeText(LoginActivity.this,
-                                "Error: " + task.getException().getMessage(),
+                                mensajeError,
                                 Toast.LENGTH_LONG).show();
                     }
                 });

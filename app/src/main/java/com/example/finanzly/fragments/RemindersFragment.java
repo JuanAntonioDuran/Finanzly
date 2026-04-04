@@ -32,9 +32,16 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     private RecyclerView recyclerView;
     private ReminderAdapter adapter;
 
+
+    private Spinner spinnerLinkedResource;
+
+    private final List<String> linkedResourceNames = new ArrayList<>();
+    private final Map<String, String> linkedResourceMap = new HashMap<>();
     private final List<Reminder> reminderList = new ArrayList<>();
     private final List<Reminder> allReminders = new ArrayList<>();
 
+    private String filterGoalId = null;
+    private String filterBudgetId = null;
     private final Map<String, List<String>> sharedUsersMap = new HashMap<>();
 
     private String currentUserId;
@@ -62,6 +69,9 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
         btnApplyFilters = root.findViewById(R.id.btnApplyFilters);
         btncleanFilters = root.findViewById(R.id.btnClearFilters);
+
+        spinnerLinkedResource = root.findViewById(R.id.spinnerLinkedResource);
+        loadLinkedResources();
 
         setupFilters();
 
@@ -92,6 +102,12 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerReminderType.setAdapter(typeAdapter);
 
+        if (getArguments() != null) {
+            filterGoalId = getArguments().getString("goalId");
+            filterBudgetId = getArguments().getString("budgetId");
+        }
+
+
         return root;
     }
 
@@ -105,11 +121,130 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         btncleanFilters.setOnClickListener(v -> cleanFilters());
     }
 
+
+    private void loadLinkedResources() {
+
+        linkedResourceNames.clear();
+        linkedResourceMap.clear();
+
+        linkedResourceNames.add("Todos");
+
+        DatabaseReference remindersRef = FirebaseDatabase.getInstance().getReference("reminders");
+        DatabaseReference goalsRef = FirebaseDatabase.getInstance().getReference("goals");
+        DatabaseReference budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
+
+        // 👇 Sets para evitar duplicados
+        Set<String> goalIds = new HashSet<>();
+        Set<String> budgetIds = new HashSet<>();
+
+        // 1️⃣ PRIMERO: sacar IDs usados en reminders del usuario
+        remindersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                for (DataSnapshot ds : snapshot.getChildren()) {
+
+                    String userId = ds.child("userId").getValue(String.class);
+
+                    // ⚠️ Filtrar solo los del usuario actual
+                    if (userId == null || !userId.equals(currentUserId)) continue;
+
+                    String goalId = ds.child("linkedGoalId").getValue(String.class);
+                    String budgetId = ds.child("linkedBudgetId").getValue(String.class);
+
+                    if (goalId != null && !goalId.isEmpty()) {
+                        goalIds.add(goalId);
+                    }
+
+                    if (budgetId != null && !budgetId.isEmpty()) {
+                        budgetIds.add(budgetId);
+                    }
+                }
+
+                // 2️⃣ Cargar SOLO esos goals
+                goalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String id = ds.getKey();
+                            String title = ds.child("title").getValue(String.class);
+
+                            if (id != null && title != null && goalIds.contains(id)) {
+                                String name = "Meta: " + title;
+                                linkedResourceNames.add(name);
+                                linkedResourceMap.put(name, id);
+                            }
+                        }
+
+                        // 3️⃣ Cargar SOLO esos budgets
+                        budgetsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                    String id = ds.getKey();
+                                    String category = ds.child("category").getValue(String.class);
+
+                                    if (id != null && category != null && budgetIds.contains(id)) {
+                                        String name = "Presupuesto: " + category;
+                                        linkedResourceNames.add(name);
+                                        linkedResourceMap.put(name, id);
+                                    }
+                                }
+
+                                // 4️⃣ Set adapter
+                                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                        requireContext(),
+                                        android.R.layout.simple_spinner_item,
+                                        linkedResourceNames
+                                );
+
+                                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                spinnerLinkedResource.setAdapter(adapter);
+                                if (filterGoalId != null || filterBudgetId != null) {
+
+                                    spinnerLinkedResource.post(() -> {
+                                        for (int i = 0; i < linkedResourceNames.size(); i++) {
+
+                                            String name = linkedResourceNames.get(i);
+                                            String id = linkedResourceMap.get(name);
+
+                                            if ((filterGoalId != null && filterGoalId.equals(id)) ||
+                                                    (filterBudgetId != null && filterBudgetId.equals(id))) {
+
+                                                spinnerLinkedResource.setSelection(i);
+                                                applyFilters();
+                                                break;
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+
+                            @Override public void onCancelled(@NonNull DatabaseError error) {}
+                        });
+                    }
+
+                    @Override public void onCancelled(@NonNull DatabaseError error) {}
+                });
+            }
+
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+
     private void applyFilters() {
 
         String searchText = edtFilterSearch.getText().toString().trim().toLowerCase();
         String selectedStatus = spinnerReminderStatus.getSelectedItem().toString();
         String selectedType = spinnerReminderType.getSelectedItem().toString();
+        String selectedResource = spinnerLinkedResource.getSelectedItem() != null
+                ? spinnerLinkedResource.getSelectedItem().toString()
+                : "Todos";
+        String selectedResourceId = linkedResourceMap.get(selectedResource);
+
 
         List<Reminder> filtered = new ArrayList<>();
 
@@ -119,6 +254,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
             boolean matchesText = r.getTitle() != null &&
                     r.getTitle().toLowerCase().contains(searchText);
 
+            boolean matchesResource = true;
             boolean isExpired = isReminderExpired(r);
             boolean matchesState = true;
 
@@ -162,7 +298,13 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     break;
             }
 
-            if (matchesText && matchesState && matchesType) {
+            if (!selectedResource.equals("Todos") && selectedResourceId != null) {
+                matchesResource =
+                        (r.getLinkedGoalId() != null && r.getLinkedGoalId().equals(selectedResourceId)) ||
+                                (r.getLinkedBudgetId() != null && r.getLinkedBudgetId().equals(selectedResourceId));
+            }
+
+            if (matchesText && matchesState && matchesType && matchesResource) {
                 filtered.add(r);
             }
         }
@@ -186,7 +328,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     private void cleanFilters() {
 
         edtFilterSearch.setText("");
-
+        spinnerLinkedResource.setSelection(0);
         spinnerReminderStatus.setSelection(0);
         spinnerReminderType.setSelection(0);
 
@@ -264,12 +406,24 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     }
 
                     sharedUsersMap.put(r.getId(), names);
+                    // FILTRO AUTOMÁTICO SI VIENE DESDE GOAL
+                    if (filterGoalId != null) {
+                        if (r.getLinkedGoalId() == null || !r.getLinkedGoalId().equals(filterGoalId)) {
+                            continue;
+                        }
+                    }
+
                     reminderList.add(r);
                 }
 
                 allReminders.clear();
                 allReminders.addAll(reminderList);
-
+//  Si viene filtrado por goal → aplicar filtros directamente
+                if (filterGoalId != null) {
+                    applyFilters();
+                } else {
+                    adapter.notifyDataSetChanged();
+                }
                 adapter.notifyDataSetChanged();
             }
 

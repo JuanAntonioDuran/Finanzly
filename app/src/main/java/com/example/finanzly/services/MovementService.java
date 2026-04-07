@@ -121,15 +121,19 @@ public class MovementService {
                 .addOnFailureListener(e -> listener.onError(e.getMessage()));
     }
 
-    public void deleteByGoalId(String goalId) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("movements");
-        ref.orderByChild("linkedGoalId").equalTo(goalId)
+    public void deleteByGoalId(String goalId, Runnable onComplete) {
+
+        reference.orderByChild("linkedGoalId").equalTo(goalId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
+
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                         for (DataSnapshot child : snapshot.getChildren()) {
                             child.getRef().removeValue();
                         }
+
+                        if (onComplete != null) onComplete.run();
                     }
 
                     @Override
@@ -137,19 +141,33 @@ public class MovementService {
                 });
     }
 
-    public void deleteByBudgetId(String budgetId) {
+    public void deleteByBudgetId(String budgetId, Runnable onComplete) {
+
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("movements");
+
         ref.orderByChild("linkedBudgetId").equalTo(budgetId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot child : snapshot.getChildren()) {
-                            child.getRef().removeValue();
-                        }
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    if (!snapshot.exists()) {
+                        if (onComplete != null) onComplete.run();
+                        return;
                     }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
+                    int total = (int) snapshot.getChildrenCount();
+                    final int[] counter = {0};
+
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        child.getRef().removeValue().addOnCompleteListener(task -> {
+                            counter[0]++;
+                            if (counter[0] == total && onComplete != null) {
+                                onComplete.run();
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (onComplete != null) onComplete.run();
                 });
     }
 

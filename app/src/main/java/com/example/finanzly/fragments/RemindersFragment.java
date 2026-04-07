@@ -378,6 +378,10 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                 reminderList.clear();
                 sharedUsersMap.clear();
 
+                long now = System.currentTimeMillis();
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
+
                 for (DataSnapshot ds : snapshot.getChildren()) {
 
                     Reminder r = ds.getValue(Reminder.class);
@@ -392,6 +396,29 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     if (!accepted) continue;
 
+                    // 🔥 CALCULAR EXPIRACIÓN
+                    try {
+                        String dateTimeString = r.getDate() + "T" + (r.getTime() != null ? r.getTime() : "00:00");
+                        Date reminderDate = sdf.parse(dateTimeString);
+
+                        if (reminderDate != null) {
+                            boolean isExpired = !r.getIsCompleted() &&
+                                    reminderDate.getTime() < now;
+
+                            // Persistir en Firebase si cambia
+                            if (isExpired && !r.getIsExpired()) {
+                                r.setIsExpired(true);
+                                remindersRef.child(r.getId()).child("isExpired").setValue(true);
+                            } else {
+                                r.setIsExpired(isExpired);
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        Log.e("RemindersFragment", "Error parseando fecha: " + e.getMessage());
+                    }
+
+                    // 🔗 Usuarios compartidos
                     List<String> names = new ArrayList<>();
 
                     for (String uid : r.getSharedUserIds()) {
@@ -406,7 +433,8 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     }
 
                     sharedUsersMap.put(r.getId(), names);
-                    // FILTRO AUTOMÁTICO SI VIENE DESDE GOAL
+
+                    // 🎯 Filtro por goal
                     if (filterGoalId != null) {
                         if (r.getLinkedGoalId() == null || !r.getLinkedGoalId().equals(filterGoalId)) {
                             continue;
@@ -418,18 +446,18 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                 allReminders.clear();
                 allReminders.addAll(reminderList);
-//  Si viene filtrado por goal → aplicar filtros directamente
+
                 if (filterGoalId != null) {
                     applyFilters();
                 } else {
                     adapter.notifyDataSetChanged();
                 }
+
                 adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
                 Log.e("RemindersFragment", "Error cargando reminders: " + error.getMessage());
             }
         });

@@ -6,8 +6,10 @@ import androidx.annotation.NonNull;
 
 import com.example.finanzly.models.Reminder;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,6 +43,66 @@ public class ReminderService {
         return id;
     }
 
+    public void deleteByGoalId(String goalId, Runnable onComplete) {
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("reminders");
+
+        ref.orderByChild("linkedGoalId").equalTo(goalId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    if (!snapshot.exists()) {
+                        if (onComplete != null) onComplete.run();
+                        return;
+                    }
+
+                    int total = (int) snapshot.getChildrenCount();
+                    final int[] counter = {0};
+
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        child.getRef().removeValue().addOnCompleteListener(task -> {
+                            counter[0]++;
+                            if (counter[0] == total && onComplete != null) {
+                                onComplete.run();
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (onComplete != null) onComplete.run();
+                });
+    }
+
+
+    public void deleteByBudgetId(String budgetId, Runnable onComplete) {
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("reminders");
+
+        ref.orderByChild("linkedBudgetId").equalTo(budgetId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    if (!snapshot.exists()) {
+                        if (onComplete != null) onComplete.run();
+                        return;
+                    }
+
+                    int total = (int) snapshot.getChildrenCount();
+                    final int[] counter = {0};
+
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        child.getRef().removeValue().addOnCompleteListener(task -> {
+                            counter[0]++;
+                            if (counter[0] == total && onComplete != null) {
+                                onComplete.run();
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (onComplete != null) onComplete.run();
+                });
+    }
     /**
      * ✏️ Actualiza completamente un recordatorio
      */

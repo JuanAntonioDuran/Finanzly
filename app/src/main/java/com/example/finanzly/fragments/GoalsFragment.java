@@ -20,7 +20,9 @@ import com.example.finanzly.dialogs.GoalDialog;
 import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Reminder;
 import com.example.finanzly.services.GoalService;
+import com.example.finanzly.services.InvitationService;
 import com.example.finanzly.services.MovementService;
+import com.example.finanzly.services.ReminderService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
@@ -142,7 +144,7 @@ public class GoalsFragment extends Fragment {
 
                             if (reminder == null) continue;
 
-                            // 🔴 IMPORTANTE
+
                             if (reminder.getLinkedGoalId() == null)
                                 continue;
 
@@ -293,13 +295,34 @@ public class GoalsFragment extends Fragment {
 
         if (goal == null || goal.getId() == null) return;
 
-        MovementService movementService =
-                new MovementService(getContext());
+        new AlertDialog.Builder(getContext())
+                .setTitle("¿Eliminar meta?")
+                .setMessage("Se eliminarán también los movimientos, invitaciones y recordatorios asociados.")
+                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
 
-        movementService.deleteByGoalId(goal.getId());
-        goalService.delete(goal.getId());
+                    MovementService movementService = new MovementService(getContext());
+                    InvitationService invitationService = new InvitationService();
+                    ReminderService reminderService = new ReminderService(getContext());
 
-        loadGoals();
+                    movementService.deleteByGoalId(goal.getId(), () -> {
+
+                        invitationService.deleteByGoalId(goal.getId(), () -> {
+
+                            reminderService.deleteByGoalId(goal.getId(), () -> {
+
+                                goalService.delete(goal.getId());
+
+                                Toast.makeText(getContext(), "Meta eliminada correctamente", Toast.LENGTH_SHORT).show();
+
+                                loadGoals();
+                            });
+                        });
+                    });
+
+                })
+                .setNegativeButton("Cancelar", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     private void goToGoalMovements(Goal goal) {

@@ -17,10 +17,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.finanzly.R;
 import com.example.finanzly.activities.BudgetMovements;
 import com.example.finanzly.adapters.BudgetAdapter;
+import com.example.finanzly.dialogs.BudgetDialog;
 import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.Reminder;
 import com.example.finanzly.services.BudgetService;
+import com.example.finanzly.services.InvitationService;
 import com.example.finanzly.services.MovementService;
+import com.example.finanzly.services.ReminderService;
+import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
@@ -242,9 +246,19 @@ public class BudgetsFragment extends Fragment {
     }
 
     private void openBudgetDialog(Budget budgetToEdit) {
-        Toast.makeText(getContext(),
-                "Aquí abrirías tu BudgetDialog",
-                Toast.LENGTH_SHORT).show();
+
+        BudgetDialog dialog = new BudgetDialog(
+                requireContext(),
+                currentUserId,
+                budgetService,
+                new UserService(getContext()),
+                () -> {
+                    // 🔥 Esto se ejecuta al guardar
+                    loadBudgets();
+                }
+        );
+
+        dialog.show(budgetToEdit);
     }
 
     private void onDeleteBudget(Budget budget) {
@@ -253,22 +267,38 @@ public class BudgetsFragment extends Fragment {
             return;
 
         new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setTitle("Eliminar presupuesto")
-                .setMessage("También se eliminarán los movimientos asociados.")
-                .setPositiveButton("Sí", (dialog, which) -> {
+                .setTitle("¿Eliminar presupuesto?")
+                .setMessage("Se eliminarán también los movimientos, invitaciones y recordatorios asociados.")
+                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
 
-                    MovementService movementService =
-                            new MovementService(getContext());
+                    MovementService movementService = new MovementService(getContext());
+                    InvitationService invitationService = new InvitationService();
+                    ReminderService reminderService = new ReminderService(getContext());
 
-                    movementService.deleteByBudgetId(
-                            budget.getId()
-                    );
+                    String budgetId = budget.getId();
 
-                    budgetService.delete(budget.getId());
+                    //
+                    reminderService.deleteByBudgetId(budgetId, () -> {
 
-                    loadBudgets();
+                        invitationService.deleteByBudgetId(budgetId, () -> {
+
+                            movementService.deleteByBudgetId(budgetId, () -> {
+
+
+                                budgetService.delete(budgetId);
+
+                                Toast.makeText(getContext(), "Presupuesto eliminado correctamente", Toast.LENGTH_SHORT).show();
+
+                                loadBudgets();
+                            });
+
+                        });
+
+                    });
+
                 })
                 .setNegativeButton("Cancelar", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
 

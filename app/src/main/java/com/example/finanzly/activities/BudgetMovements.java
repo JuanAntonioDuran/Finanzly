@@ -89,7 +89,7 @@ public class BudgetMovements extends AppCompatActivity {
         fabEditBudget = findViewById(R.id.fabEditBudget);
         fabAddReminder = findViewById(R.id.fabAddReminder);
 
-        // Suponiendo que tienes el budget y el currentUserId
+       
         FloatingActionButton fabEditBudget = findViewById(R.id.fabEditBudget);
         FloatingActionButton fabAddReminder = findViewById(R.id.fabAddReminder);
 

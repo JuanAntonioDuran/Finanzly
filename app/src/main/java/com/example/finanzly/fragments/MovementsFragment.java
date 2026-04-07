@@ -84,6 +84,8 @@ public class MovementsFragment extends Fragment {
         return view;
     }
 
+
+    // Cargar los movimientos
     private void loadMovements() {
         movementsRef.orderByChild("userId").equalTo(uid)
                 .addValueEventListener(new ValueEventListener() {
@@ -111,6 +113,8 @@ public class MovementsFragment extends Fragment {
                 });
     }
 
+
+    //Metodo para aplicar filtros
     private void applyFilter() {
         filteredList.clear();
 
@@ -121,11 +125,11 @@ public class MovementsFragment extends Fragment {
 
         for (Movement m : movementList) {
 
-            // 🔹 Filtro por categoría
+            //  Filtro por categoría
             boolean matchesCategory = categoryFilter.isEmpty() ||
                     (m.getCategory() != null && m.getCategory().toLowerCase().contains(categoryFilter));
 
-            // 🔹 Filtro por tipo (Gasto / Ingreso)
+            //  Filtro por tipo (Gasto / Ingreso)
             boolean matchesType = true;
 
             if (!typeFilter.equals("todos")) {
@@ -140,7 +144,7 @@ public class MovementsFragment extends Fragment {
                 }
             }
 
-            // 🔹 Filtro por fecha
+            //  Filtro por fecha
             boolean matchesDate = true;
 
             if (!startDate.isEmpty() || !endDate.isEmpty()) {
@@ -153,7 +157,7 @@ public class MovementsFragment extends Fragment {
                 }
             }
 
-            // ✅ Si cumple todo
+            //  Si cumple todo
             if (matchesCategory && matchesType && matchesDate) {
                 filteredList.add(m);
             }
@@ -165,6 +169,7 @@ public class MovementsFragment extends Fragment {
 
 
 
+    //Metodo para limpiar los filtros
     private void clearFilter() {
         etCategoryFilter.setText("");
         spinnerTypeFilter.setSelection(0);
@@ -177,6 +182,7 @@ public class MovementsFragment extends Fragment {
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
+    //Metodo auxiliar para parsear la fecha
     private void showDatePicker(EditText target) {
         Calendar calendar = Calendar.getInstance();
         try {

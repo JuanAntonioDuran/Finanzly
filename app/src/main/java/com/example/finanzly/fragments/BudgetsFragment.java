@@ -1,6 +1,5 @@
 package com.example.finanzly.fragments;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -113,7 +112,7 @@ public class BudgetsFragment extends Fragment {
         return root;
     }
 
-    // 🔥 CARGAR REMINDERS
+    //Metodo que carrga los reminders para inicializar el boton de viaje con filtros
     private void loadReminders() {
 
         FirebaseDatabase.getInstance()
@@ -158,6 +157,7 @@ public class BudgetsFragment extends Fragment {
                 });
     }
 
+    //Funcion para cargar los budgets
     private void loadBudgets() {
 
         budgetService.getReference()
@@ -194,6 +194,7 @@ public class BudgetsFragment extends Fragment {
                 });
     }
 
+    //Funcion que aplica los filtros y recarga la ui segun los filtros seleccionados
     private void applyFilters() {
 
         String categoryFilter =
@@ -239,12 +240,14 @@ public class BudgetsFragment extends Fragment {
         );
     }
 
+    //Funcion para resetear los filtros
     private void clearFilters() {
         etCategoryFilter.setText("");
         spinnerStatusFilter.setSelection(0);
         applyFilters();
     }
 
+    //Abre el dialog de creacion/edicion de budgets
     private void openBudgetDialog(Budget budgetToEdit) {
 
         BudgetDialog dialog = new BudgetDialog(
@@ -261,6 +264,7 @@ public class BudgetsFragment extends Fragment {
         dialog.show(budgetToEdit);
     }
 
+    //Funcion para borrar todos los budgets y sus asociados
     private void onDeleteBudget(Budget budget) {
 
         if (budget == null || budget.getId() == null)
@@ -302,6 +306,7 @@ public class BudgetsFragment extends Fragment {
                 .show();
     }
 
+    //Funcion para salir del movimiento si no eres el dueño
     private void leaveBudget(Budget budget) {
 
         List<String> updated =
@@ -317,6 +322,7 @@ public class BudgetsFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> loadBudgets());
     }
 
+    //Funcion para ir a movimientos cuando cliques en el movientos
     private void goToMovements(Budget budget) {
 
         Intent intent =
@@ -327,7 +333,7 @@ public class BudgetsFragment extends Fragment {
         startActivity(intent);
     }
 
-    // 🔥 NAVEGACIÓN A REMINDERS
+    //  NAVEGACIÓN A REMINDERS
     private void openRemindersFragment(String budgetId) {
 
         RemindersFragment fragment =

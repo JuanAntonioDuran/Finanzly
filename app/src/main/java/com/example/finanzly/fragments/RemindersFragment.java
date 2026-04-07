@@ -122,6 +122,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     }
 
 
+    //Carga los datos de los goals y budgets asociados a tus reminders
     private void loadLinkedResources() {
 
         linkedResourceNames.clear();
@@ -161,7 +162,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     }
                 }
 
-                // 2️⃣ Cargar SOLO esos goals
+                // 2 Cargar SOLO esos goals
                 goalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -177,7 +178,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                             }
                         }
 
-                        // 3️⃣ Cargar SOLO esos budgets
+                        //  Cargar SOLO esos budgets
                         budgetsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -193,7 +194,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                                     }
                                 }
 
-                                // 4️⃣ Set adapter
+                                //  Set adapter
                                 ArrayAdapter<String> adapter = new ArrayAdapter<>(
                                         requireContext(),
                                         android.R.layout.simple_spinner_item,
@@ -235,6 +236,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     }
 
 
+    //Aplicart filtros
     private void applyFilters() {
 
         String searchText = edtFilterSearch.getText().toString().trim().toLowerCase();
@@ -312,6 +314,8 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         adapter.updateList(filtered);
     }
 
+
+    //Funcion para marcar si el remider esta expirado
     private boolean isReminderExpired(Reminder r) {
 
         if (r.getDate() == null || r.getTime() == null) return false;
@@ -325,6 +329,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         }
     }
 
+    //Funcion para limpiar filtros
     private void cleanFilters() {
 
         edtFilterSearch.setText("");
@@ -396,7 +401,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     if (!accepted) continue;
 
-                    // 🔥 CALCULAR EXPIRACIÓN
+                    //  CALCULAR EXPIRACIÓN
                     try {
                         String dateTimeString = r.getDate() + "T" + (r.getTime() != null ? r.getTime() : "00:00");
                         Date reminderDate = sdf.parse(dateTimeString);
@@ -418,7 +423,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                         Log.e("RemindersFragment", "Error parseando fecha: " + e.getMessage());
                     }
 
-                    // 🔗 Usuarios compartidos
+                    //  Usuarios compartidos
                     List<String> names = new ArrayList<>();
 
                     for (String uid : r.getSharedUserIds()) {
@@ -434,7 +439,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     sharedUsersMap.put(r.getId(), names);
 
-                    // 🎯 Filtro por goal
+                    //  Filtro por goal
                     if (filterGoalId != null) {
                         if (r.getLinkedGoalId() == null || !r.getLinkedGoalId().equals(filterGoalId)) {
                             continue;
@@ -464,7 +469,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     }
 
     // =====================================================================================
-    //  ✔ BOTÓN EDITAR → ahora espera a tener usersMap cargado (loadUsers fue llamado antes)
+    //   BOTÓN EDITAR → ahora espera a tener usersMap cargado (loadUsers fue llamado antes)
     // =====================================================================================
     @Override
     public void onEdit(Reminder reminder) {
@@ -543,7 +548,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
 
     // =====================================================================================
-    //  ✔ BOTÓN BORRAR — AHORA CON CONFIRMACIÓN
+    // BOTÓN BORRAR — AHORA CON CONFIRMACIÓN
     // =====================================================================================
     @Override
     public void onDelete(Reminder reminder) {
@@ -563,7 +568,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     }
 
     // =====================================================================================
-    //  ✔ BOTÓN COMPLETE / PENDING → TOGGLE
+    //   BOTÓN COMPLETE / PENDING → TOGGLE
     // =====================================================================================
     @Override
     public void onToggleComplete(Reminder reminder) {
@@ -613,7 +618,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
 
     // =====================================================================================
-    //  ✔ BOTÓN LEAVE — AHORA CON CONFIRMACIÓN
+    //   BOTÓN LEAVE — AHORA CON CONFIRMACIÓN
     // =====================================================================================
     @Override
     public void onLeave(Reminder reminder) {

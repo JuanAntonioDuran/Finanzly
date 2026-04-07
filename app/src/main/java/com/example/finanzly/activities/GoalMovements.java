@@ -202,17 +202,17 @@ public class GoalMovements extends AppCompatActivity {
 
         HashSet<String> userIds = new HashSet<>();
 
-        // 🔹 Owner
+        //  Owner
         if (currentGoal.getUserId() != null) {
             userIds.add(currentGoal.getUserId());
         }
 
-        // 🔹 Shared users
+        // Shared users
         if (currentGoal.getSharedUserIds() != null) {
             userIds.addAll(currentGoal.getSharedUserIds());
         }
 
-        // 🔹 Usuarios que aparecen en movimientos
+        //  Usuarios que aparecen en movimientos
         for (Movement m : movementList) {
             if (m.getUserId() != null) {
                 userIds.add(m.getUserId());
@@ -258,15 +258,7 @@ public class GoalMovements extends AppCompatActivity {
         });
     }
 
-
-
-
-
-
-
-
-
-
+    // Abre un diálogo para crear o editar un movimiento y actualiza la lista al guardarlo
     private void openMovementDialog(Movement movement) {
         MovementDialog dialog = new MovementDialog(this, savedMovement -> {
             if (!movementList.contains(savedMovement)) movementList.add(savedMovement);
@@ -277,6 +269,8 @@ public class GoalMovements extends AppCompatActivity {
         dialog.open(movement);
     }
 
+
+    // Muestra un selector de fecha y coloca la fecha seleccionada en el campo de texto
     private void showDatePicker(EditText target) {
         Calendar c = Calendar.getInstance();
         new DatePickerDialog(this, (vw, y, m, d) ->
@@ -285,6 +279,7 @@ public class GoalMovements extends AppCompatActivity {
         ).show();
     }
 
+    // Carga los movimientos asociados a un objetivo desde Firebase, obtiene los nombres de usuario y actualiza la lista
     private void loadMovements() {
         movementService.getReference()
                 .orderByChild("linkedGoalId")
@@ -327,7 +322,7 @@ public class GoalMovements extends AppCompatActivity {
                     @Override public void onCancelled(DatabaseError error) {}
                 });
     }
-
+    // Actualiza el adaptador con los nombres de usuario, aplica filtros y recalcula el total del objetivo
     private void refreshAdapter() {
 
         for (Movement mv : movementList) {
@@ -335,11 +330,12 @@ public class GoalMovements extends AppCompatActivity {
             adapter.setUserNameForMovement(mv.getId(), name != null ? name : "Desconocido");
         }
 
-        setupUserFilterSpinner();   // 🔥 IMPORTANTE
+        setupUserFilterSpinner();
         applyFilters();
         recalculateGoalCurrentAmount();
     }
 
+    // Aplica los filtros de fecha y usuario a la lista de movimientos y actualiza la vista
     private void applyFilters() {
 
         String startDate = etStartDateFilter.getText().toString().trim();
@@ -351,21 +347,21 @@ public class GoalMovements extends AppCompatActivity {
 
             boolean matches = true;
 
-            // 🔹 Filtro fecha inicio
+            //  Filtro fecha inicio
             if (!startDate.isEmpty() && m.getDate() != null) {
                 if (m.getDate().compareTo(startDate) < 0) {
                     matches = false;
                 }
             }
 
-            // 🔹 Filtro fecha fin
+            //  Filtro fecha fin
             if (!endDate.isEmpty() && m.getDate() != null) {
                 if (m.getDate().compareTo(endDate) > 0) {
                     matches = false;
                 }
             }
 
-            // 🔹 Filtro usuario por userId
+            // Filtro usuario por userId
             if (!filterUser.isEmpty()) {
                 if (m.getUserId() == null || !m.getUserId().equals(filterUser)) {
                     matches = false;
@@ -386,6 +382,9 @@ public class GoalMovements extends AppCompatActivity {
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
+
+
+    // Muestra un diálogo de confirmación y elimina el movimiento si el usuario acepta
     private void deleteMovement(Movement movement) {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Eliminar movimiento")
@@ -400,7 +399,7 @@ public class GoalMovements extends AppCompatActivity {
                 .show();
     }
 
-
+//Metodo para recalcular la cantidad total del goal
     private void recalculateGoalCurrentAmount() {
         movementService.getReference()
                 .orderByChild("linkedGoalId")
@@ -426,13 +425,14 @@ public class GoalMovements extends AppCompatActivity {
                 });
     }
 
+    //Metodo auxiliar para actualizar el texto de la ui
     private void updateRemainingText() {
         if (currentGoal != null) {
             double remaining = currentGoal.getTargetAmount() - currentGoal.getCurrentAmount();
             tvRemaining.setText(" — Te faltan " + remaining + "€");
         }
     }
-
+// Metodo auxiliar para actualizar la barra de progreso de la ui
     private void updateProgressBar() {
         if (currentGoal == null) return;
         double percent = (currentGoal.getCurrentAmount() / currentGoal.getTargetAmount()) * 100;
@@ -441,6 +441,7 @@ public class GoalMovements extends AppCompatActivity {
         tvPercent.setText((int) percent + "%");
     }
 
+    //Metodo apra abrir el dialog de creacion de Recordatorios
     private void openReminderDialog(Reminder existingReminder) {
         // Primero cargamos los nombres de todos los usuarios
         loadUsersForGoal(() -> {

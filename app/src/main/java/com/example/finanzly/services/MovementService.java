@@ -30,7 +30,7 @@ public class MovementService {
     }
 
     /**
-     * ➕ Inserta un nuevo movimiento
+     * Inserta un nuevo movimiento
      */
     public String insert(@NonNull Movement movement) {
         DatabaseReference newRef = reference.push();
@@ -48,78 +48,29 @@ public class MovementService {
     }
 
     /**
-     * ✏️ Actualiza completamente un movimiento
+     *  Actualiza completamente un movimiento
      */
     public void update(@NonNull String id, @NonNull Movement movement) {
         reference.child(id).setValue(movement);
     }
 
-    /**
-     * 🔄 Actualiza solo algunos campos del movimiento
-     */
-    public void updatePartial(@NonNull String id, @NonNull Map<String, Object> updates) {
-        reference.child(id).updateChildren(updates);
-    }
+
 
     /**
-     * ❌ Elimina un movimiento por su ID
+     *  Elimina un movimiento por su ID
      */
     public void delete(@NonNull String id) {
         reference.child(id).removeValue();
     }
 
     /**
-     * 📋 Devuelve la referencia principal (todos los movimientos)
+     *  Devuelve la referencia principal (todos los movimientos)
      */
     public DatabaseReference getReference() {
         return reference;
     }
 
-    /**
-     * 🔍 Devuelve la referencia de un movimiento por ID
-     */
-    public DatabaseReference getById(@NonNull String id) {
-        return reference.child(id);
-    }
 
-    /**
-     * 🔎 Obtiene movimientos relacionados con un presupuesto específico
-     */
-    public DatabaseReference getByBudgetId(@NonNull String budgetId) {
-        return reference.orderByChild("linkedBudgetId").equalTo(budgetId).getRef();
-    }
-
-    /**
-     * 🔎 Obtiene movimientos relacionados con una meta específica
-     */
-    public DatabaseReference getByGoalId(@NonNull String goalId) {
-        return reference.orderByChild("linkedGoalId").equalTo(goalId).getRef();
-    }
-
-    /**
-     * 🔎 Obtiene movimientos de un usuario específico
-     */
-    public DatabaseReference getByUserId(@NonNull String userId) {
-        return reference.orderByChild("userId").equalTo(userId).getRef();
-    }
-
-    /**
-     * 💰 Calcula el gasto total de un usuario (desde Firebase)
-     */
-    public void calculateUserTotalSpent(@NonNull String userId, @NonNull OnTotalCalculatedListener listener) {
-        reference.orderByChild("userId").equalTo(userId).get()
-                .addOnSuccessListener(snapshot -> {
-                    double total = 0;
-                    for (DataSnapshot child : snapshot.getChildren()) {
-                        Movement m = child.getValue(Movement.class);
-                        if (m != null && "expense".equalsIgnoreCase(m.getType())) {
-                            total += m.getAmount();
-                        }
-                    }
-                    listener.onTotalCalculated(total);
-                })
-                .addOnFailureListener(e -> listener.onError(e.getMessage()));
-    }
 
     public void deleteByGoalId(String goalId, Runnable onComplete) {
 
@@ -172,13 +123,6 @@ public class MovementService {
     }
 
 
-    /**
-     * 🧩 Interfaz callback para cálculos asíncronos
-     */
-    public interface OnTotalCalculatedListener {
-        void onTotalCalculated(double total);
-        void onError(String error);
-    }
 
 
 

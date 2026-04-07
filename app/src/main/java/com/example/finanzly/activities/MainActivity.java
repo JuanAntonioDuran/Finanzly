@@ -26,10 +26,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 🔐 Inicializar FirebaseAuth
+        //  Inicializar FirebaseAuth
         mAuth = FirebaseAuth.getInstance();
 
-        // 🧭 Verificar sesión del usuario
+        //  Verificar sesión del usuario
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             // Si no hay usuario logueado, redirigir a LoginActivity
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // ✅ Si hay sesión activa, cargar la interfaz normal
+        //  Si hay sesión activa, cargar la interfaz normal
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;

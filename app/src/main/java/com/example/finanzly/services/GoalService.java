@@ -25,7 +25,7 @@ public class GoalService {
     }
 
     /**
-     * ➕ Crea una nueva meta
+     *  Crea una nueva meta
      */
     public String insert(@NonNull Goal goal) {
         DatabaseReference newRef = reference.push();
@@ -42,68 +42,40 @@ public class GoalService {
     }
 
     /**
-     * ✏️ Actualiza toda la meta
+     * ✏ Actualiza toda la meta
      */
     public void update(@NonNull String id, @NonNull Goal goal) {
         reference.child(id).setValue(goal);
     }
 
     /**
-     * 🔄 Actualiza solo campos específicos sin sobrescribir todo el objeto
+     *  Actualiza solo campos específicos sin sobrescribir todo el objeto
      */
     public void updatePartial(@NonNull String id, @NonNull Map<String, Object> updates) {
         reference.child(id).updateChildren(updates);
     }
 
     /**
-     * ❌ Elimina una meta por su ID
+     *  Elimina una meta por su ID
      */
     public void delete(@NonNull String id) {
         reference.child(id).removeValue();
     }
 
     /**
-     * 📋 Devuelve la referencia principal (todas las metas)
+     *  Devuelve la referencia principal (todas las metas)
      */
     public DatabaseReference getReference() {
         return reference;
     }
 
     /**
-     * 🔍 Devuelve la referencia a una meta específica
+     *  Devuelve la referencia a una meta específica
      */
     public DatabaseReference getById(@NonNull String id) {
         return reference.child(id);
     }
 
-    /**
-     * ➕ Añade un colaborador (usuario compartido)
-     */
-    public void addSharedUser(@NonNull String goalId, @NonNull String userId) {
-        reference.child(goalId)
-                .child("sharedUserIds")
-                .push()
-                .setValue(userId);
-    }
-
-    /**
-     * ➖ Elimina un colaborador
-     */
-    public void removeSharedUser(@NonNull String goalId, @NonNull String userId) {
-        reference.child(goalId)
-                .child("sharedUserIds")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (snapshot.exists()) {
-                        for (DataSnapshot child : snapshot.getChildren()) {
-                            if (userId.equals(child.getValue(String.class))) {
-                                child.getRef().removeValue();
-                                break;
-                            }
-                        }
-                    }
-                });
-    }
 
 
 
@@ -111,37 +83,10 @@ public class GoalService {
 
 
 
-    /**
-     * 📊 Incrementa el progreso de la meta (currentAmount)
-     */
-    public void addProgress(@NonNull String goalId, double amountToAdd) {
-        reference.child(goalId)
-                .child("currentAmount")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    Double current = snapshot.getValue(Double.class);
-                    if (current == null) current = 0.0;
-                    double newAmount = current + amountToAdd;
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("currentAmount", newAmount);
-                    reference.child(goalId).updateChildren(updates);
-                });
-    }
 
-    /**
-     * 📉 Reduce el progreso (por si se retira dinero del ahorro)
-     */
-    public void subtractProgress(@NonNull String goalId, double amountToSubtract) {
-        reference.child(goalId)
-                .child("currentAmount")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    Double current = snapshot.getValue(Double.class);
-                    if (current == null) current = 0.0;
-                    double newAmount = Math.max(0, current - amountToSubtract);
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("currentAmount", newAmount);
-                    reference.child(goalId).updateChildren(updates);
-                });
-    }
+
+
+
+
+
 }

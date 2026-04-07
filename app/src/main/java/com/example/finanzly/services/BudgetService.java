@@ -25,7 +25,7 @@ public class BudgetService {
     }
 
     /**
-     * ➕ Inserta un nuevo presupuesto
+     *  Inserta un nuevo presupuesto
      */
     public String insert(@NonNull Budget budget) {
         DatabaseReference newRef = reference.push();
@@ -47,7 +47,7 @@ public class BudgetService {
 
 
     /**
-     * ✏️ Actualiza completamente un presupuesto
+     *  Actualiza completamente un presupuesto
      */
     public void update(@NonNull String id, @NonNull Budget budget) {
         String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(new Date());
@@ -55,61 +55,23 @@ public class BudgetService {
         reference.child(id).setValue(budget);
     }
 
-    /**
-     * 🔄 Actualiza solo campos específicos sin sobrescribir todo el objeto
-     */
-    public void updatePartial(@NonNull String id, @NonNull Map<String, Object> updates) {
-        String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(new Date());
-        updates.put("updatedAt", now);
-        reference.child(id).updateChildren(updates);
-    }
 
     /**
-     * ❌ Elimina un presupuesto por su ID
+     *  Elimina un presupuesto por su ID
      */
     public void delete(@NonNull String id) {
         reference.child(id).removeValue();
     }
 
     /**
-     * 📋 Obtiene la referencia principal (todos los presupuestos)
+     *  Obtiene la referencia principal (todos los presupuestos)
      */
     public DatabaseReference getReference() {
         return reference;
     }
 
-    /**
-     * 🔍 Obtiene una referencia a un presupuesto por su ID
-     */
-    public DatabaseReference getById(@NonNull String id) {
-        return reference.child(id);
-    }
 
-    /**
-     * ➕ Añade un colaborador al presupuesto
-     */
-    public void addCollaborator(@NonNull String budgetId, @NonNull String userId) {
-        reference.child(budgetId)
-                .child("sharedUserIds")
-                .push()
-                .setValue(userId);
-    }
 
-    /**
-     * ➖ Elimina un colaborador del presupuesto
-     */
-    public void removeCollaborator(@NonNull String budgetId, @NonNull String userId) {
-        // Buscar y eliminar el ID dentro de sharedUserIds
-        reference.child(budgetId).child("sharedUserIds")
-                .get().addOnSuccessListener(snapshot -> {
-                    if (snapshot.exists()) {
-                        for (DataSnapshot child : snapshot.getChildren()) {
-                            if (userId.equals(child.getValue(String.class))) {
-                                child.getRef().removeValue();
-                                break;
-                            }
-                        }
-                    }
-                });
-    }
+
+
 }

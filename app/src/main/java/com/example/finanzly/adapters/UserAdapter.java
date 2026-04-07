@@ -64,7 +64,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             tvName.setText(user.getName());
             tvEmail.setText(user.getEmail());
 
-            // ⭐⭐ FIX IMPORTANTE ⭐⭐
+
             btnRemove.setOnClickListener(v -> {
                 if (getAdapterPosition() != RecyclerView.NO_POSITION) {
                     removeListener.onRemove(user);

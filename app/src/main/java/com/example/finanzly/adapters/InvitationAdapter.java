@@ -58,7 +58,7 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
     public void onBindViewHolder(@NonNull InvitationViewHolder holder, int position) {
         Invitation inv = invitations.get(position);
 
-        // 🔎 Obtener nombre del usuario
+        //  Obtener nombre del usuario
         userService.getById(inv.getFromUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -72,7 +72,7 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
                     }
                 }
 
-                // 🔥 AQUÍ CAMBIA EL TEXTO SEGÚN SI ES RECIBIDA O ENVIADA
+                //  AQUÍ CAMBIA EL TEXTO SEGÚN SI ES RECIBIDA O ENVIADA
                 if (received) {
                     holder.tvTitle.setText("Has recibido una invitación de " + userName);
                 } else {
@@ -90,7 +90,7 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
             }
         });
 
-        // 📌 Tipo de recurso
+        //  Tipo de recurso
         String type = inv.getResourceType();
 
         if ("budget".equals(type)) {
@@ -104,7 +104,7 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
         holder.tvDate.setText(inv.getCreatedAt());
         holder.tvMessage.setText(inv.getMessage());
 
-        // 🔄 Reset botones
+        //  Reset botones
         holder.btnAccept.setVisibility(View.GONE);
         holder.btnDecline.setVisibility(View.GONE);
         holder.btnCancel.setVisibility(View.GONE);

@@ -23,7 +23,7 @@ public class InvitationService {
         invitationsRef = db.getReference("invitations"); // 🔥 Tabla en Realtime DB
     }
 
-    // ✅ CREATE (con ID autogenerado)
+    //  CREATE (con ID autogenerado)
     public void createInvitation(Invitation invitation,
                                  OnSuccessListener<String> successListener,
                                  OnFailureListener failureListener) {
@@ -42,37 +42,8 @@ public class InvitationService {
                 .addOnFailureListener(failureListener);
     }
 
-    // ✅ READ – Obtener invitación por ID
-    public void getInvitationById(String id,
-                                  OnSuccessListener<Invitation> successListener,
-                                  OnFailureListener failureListener) {
 
-        invitationsRef.child(id).get()
-                .addOnSuccessListener(dataSnapshot -> {
-                    Invitation invitation = dataSnapshot.getValue(Invitation.class);
-                    successListener.onSuccess(invitation);
-                })
-                .addOnFailureListener(failureListener);
-    }
 
-    // ✅ READ – Obtener invitaciones recibidas por un usuario
-    public void getInvitationsForUser(String userId,
-                                      OnSuccessListener<Iterable<Invitation>> successListener,
-                                      OnFailureListener failureListener) {
-
-        invitationsRef.orderByChild("toUserId")
-                .equalTo(userId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<Invitation> list = new ArrayList<>();
-                    for (DataSnapshot child : snapshot.getChildren()) {
-                        Invitation inv = child.getValue(Invitation.class);
-                        list.add(inv);
-                    }
-                    successListener.onSuccess(list);
-                })
-                .addOnFailureListener(failureListener);
-    }
 
     public void deleteByBudgetId(String budgetId, Runnable onComplete) {
 
@@ -115,7 +86,7 @@ public class InvitationService {
             }
         };
 
-        // 🔴 Query 1
+        //  Query 1
         invitationsRef.orderByChild("resourceIdGoal").equalTo(goalId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -139,7 +110,7 @@ public class InvitationService {
                 })
                 .addOnFailureListener(e -> checkComplete.run());
 
-        // 🔴 Query 2 (por si usas otro campo)
+        //  Query 2 (por si usas otro campo)
         invitationsRef.orderByChild("linkedGoalId").equalTo(goalId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -165,45 +136,5 @@ public class InvitationService {
     }
 
 
-    // ✅ UPDATE
-    public void updateInvitation(String id,
-                                 Invitation invitation,
-                                 OnSuccessListener<Void> successListener,
-                                 OnFailureListener failureListener) {
-
-        invitationsRef.child(id)
-                .setValue(invitation)
-                .addOnSuccessListener(successListener)
-                .addOnFailureListener(failureListener);
-    }
-
-    // ✅ DELETE
-    public void deleteInvitation(String id,
-                                 OnSuccessListener<Void> successListener,
-                                 OnFailureListener failureListener) {
-
-        invitationsRef.child(id)
-                .removeValue()
-                .addOnSuccessListener(successListener)
-                .addOnFailureListener(failureListener);
-    }
-
-
-    public void getInvitationsSentByUser(String userId,
-                                         OnSuccessListener<Iterable<Invitation>> successListener,
-                                         OnFailureListener failureListener) {
-        invitationsRef.orderByChild("fromUserId")
-                .equalTo(userId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<Invitation> list = new ArrayList<>();
-                    for (DataSnapshot child : snapshot.getChildren()) {
-                        Invitation inv = child.getValue(Invitation.class);
-                        list.add(inv);
-                    }
-                    successListener.onSuccess(list);
-                })
-                .addOnFailureListener(failureListener);
-    }
 
 }

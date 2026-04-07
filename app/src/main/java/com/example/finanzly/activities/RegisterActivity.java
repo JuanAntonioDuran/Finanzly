@@ -62,16 +62,17 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvLoginLink = findViewById(R.id.tvLoginLink);
 
-        // 🔹 Acción de registro
+        //  Acción de registro
         btnRegister.setOnClickListener(v -> registerUser());
 
-        // 🔹 Enlace a login
+        //  Enlace a login
         tvLoginLink.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
             finish();
         });
     }
 
+    //Metodo para registrar el usuario en auth y en la base de datos
     private void registerUser() {
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
@@ -141,6 +142,7 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    //Guardar el usuario en la base de datos
     private void saveUserToDatabase(String uid, String name, String email) {
 
         String createdAt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())

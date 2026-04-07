@@ -228,7 +228,7 @@ public class AddEditReminderDialog {
     }
 
     // =====================================================
-    // Poblar usuarios vinculados (VERSIÓN SEGURA)
+    // Poblar usuarios vinculados
     // =====================================================
     private void populateLinkedUsers(LinearLayout usersContainer, Reminder existing) {
 

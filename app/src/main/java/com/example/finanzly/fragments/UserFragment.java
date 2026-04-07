@@ -79,6 +79,7 @@ public class UserFragment extends Fragment {
         return view;
     }
 
+    //funcion para cargar los datos del usuairo
     private void loadUserData() {
         if (TextUtils.isEmpty(uid)) return;
 
@@ -97,6 +98,7 @@ public class UserFragment extends Fragment {
         );
     }
 
+    //Funcion para actualizar nombre
     private void updateName() {
         String newName = etName.getText().toString().trim();
         if (TextUtils.isEmpty(newName)) {
@@ -109,6 +111,7 @@ public class UserFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(requireContext(), "Error al actualizar nombre", Toast.LENGTH_SHORT).show());
     }
 
+    //Funcionpara mandar un correo electronico para reiniciarr contraseña
     private void sendPasswordResetEmail() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null && user.getEmail() != null) {
@@ -122,6 +125,7 @@ public class UserFragment extends Fragment {
         }
     }
 
+    //Funcion para delogearse
     private void logout() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Cerrar sesión")

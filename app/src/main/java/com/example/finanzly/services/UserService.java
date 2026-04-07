@@ -21,51 +21,25 @@ public class UserService {
         reference = db.getReference("users");
     }
 
-    /**
-     * ➕ Crea un nuevo usuario
-     */
-    public String insert(@NonNull User user) {
-        DatabaseReference newRef = reference.push();
-        String id = newRef.getKey();
 
-        String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(new Date());
-        user.setUid(id);
-        user.setCreatedAt(now);
-
-        newRef.setValue(user);
-        return id;
-    }
 
     /**
-     * ✏️ Actualiza completamente un usuario
+     *  Actualiza completamente un usuario
      */
     public void update(@NonNull String uid, @NonNull User user) {
         reference.child(uid).setValue(user);
     }
 
-    /**
-     * 🔄 Actualiza solo campos específicos del usuario
-     */
-    public void updatePartial(@NonNull String uid, @NonNull java.util.Map<String, Object> updates) {
-        reference.child(uid).updateChildren(updates);
-    }
 
     /**
-     * ❌ Elimina un usuario
-     */
-    public void delete(@NonNull String uid) {
-        reference.child(uid).removeValue();
-    }
-
-    /**
-     * 📋 Devuelve la referencia principal de usuarios
+     *  Devuelve la referencia principal de usuarios
      */
     public DatabaseReference getReference() {
         return reference;
     }
 
     /**
-     * 🔍 Devuelve la referencia a un usuario específico
+     *  Devuelve la referencia a un usuario específico
      */
     public DatabaseReference getById(@NonNull String uid) {
         return reference.child(uid);

@@ -76,6 +76,7 @@ public class InvitationFragment extends Fragment {
         return view;
     }
 
+    //Muestra las invitaciones recibidas
     private void showReceived() {
         showingReceived = true;
         recyclerReceived.setVisibility(View.VISIBLE);
@@ -84,6 +85,7 @@ public class InvitationFragment extends Fragment {
         updateButtonColors();
     }
 
+    //Muestra las invitaciones enviadas
     private void showSent() {
         showingReceived = false;
         recyclerReceived.setVisibility(View.GONE);
@@ -92,6 +94,7 @@ public class InvitationFragment extends Fragment {
         updateButtonColors();
     }
 
+    //Mostrar el mensaje vacio si no hay nada
     private void updateEmptyMessage() {
         if (showingReceived) {
             tvEmptyMessage.setVisibility(receivedInvitations.isEmpty() ? View.VISIBLE : View.GONE);
@@ -100,6 +103,7 @@ public class InvitationFragment extends Fragment {
         }
     }
 
+    //funcion para cambiar los botones
     private void updateButtonColors() {
         if (showingReceived) {
             btnReceived.setBackgroundColor(getResources().getColor(R.color.green_primary, null));
@@ -114,6 +118,7 @@ public class InvitationFragment extends Fragment {
         }
     }
 
+    // Cargar las invitaciones
     private void loadInvitations() {
         if (currentUserId == null) return;
 
@@ -150,6 +155,8 @@ public class InvitationFragment extends Fragment {
         });
     }
 
+
+    // Cargar las invitaciones y sus acciones
     private void setupInvitationActions() {
         // Acciones para invitaciones recibidas
         receivedAdapter.setOnInvitationActionListener(new InvitationAdapter.OnInvitationActionListener() {
@@ -182,6 +189,8 @@ public class InvitationFragment extends Fragment {
         });
     }
 
+
+    //Botones para acceptar rechazar y borrar las invitaciones
     private void acceptInvitation(Invitation invitation) {
         DatabaseReference resourceRef = null;
         String userIdToAdd = invitation.getToUserId();

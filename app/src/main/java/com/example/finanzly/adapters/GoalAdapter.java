@@ -66,7 +66,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.tvCurrent.setText("Progreso: €" + goal.getCurrentAmount());
         holder.tvDeadLine.setText("Fecha límite: " + goal.getDeadline());
 
-        // 🔵 Estado por fecha
+        //  Estado por fecha
         boolean isFailed = false;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -104,7 +104,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(!isOwner ? View.VISIBLE : View.GONE);
 
-        // 🔔 LÓGICA REMINDERS (IGUAL QUE BUDGET)
+        //  LÓGICA REMINDERS (IGUAL QUE BUDGET)
         List<Reminder> reminders =
                 remindersByGoal != null
                         ? remindersByGoal.get(goal.getId())
@@ -138,7 +138,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
                 holder.btnReminder.setVisibility(View.VISIBLE);
 
-                // 🎨 COLORES
+                //  COLORES
                 if (hasExpired) {
                     holder.btnReminder.setBackgroundColor(
                             context.getColor(R.color.red_error)

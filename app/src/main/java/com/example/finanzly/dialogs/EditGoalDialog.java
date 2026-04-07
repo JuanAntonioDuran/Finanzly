@@ -109,7 +109,7 @@ public class EditGoalDialog {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        // 🔥 Añadir colaborador con validaciones
+        //  Añadir colaborador con validaciones
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
 
@@ -127,14 +127,14 @@ public class EditGoalDialog {
                     if (invitedUser != null && invitedUser.getEmail().equalsIgnoreCase(email)) {
                         found = true;
 
-                        // ✅ Ya está dentro del goal
+                        //  Ya está dentro del goal
                         if (goal.getSharedUserIds().contains(invitedUser.getUid())) {
                             Toast.makeText(context, "Usuario ya es colaborador", Toast.LENGTH_SHORT).show();
                             etEmail.setText("");
                             return;
                         }
 
-                        // 🔍 Comprobar invitación pendiente
+                        //  Comprobar invitación pendiente
                         checkExistingInvitation(invitedUser.getUid(), goal.getId(), exists -> {
 
                             if (exists) {
@@ -225,7 +225,7 @@ public class EditGoalDialog {
         dialog.show();
     }
 
-    // 🔍 Comprobar invitaciones duplicadas
+    //  Comprobar invitaciones duplicadas
     private void checkExistingInvitation(String toUserId, String goalId, OnCheckInvitation callback) {
         invitationsRef.get().addOnSuccessListener(snapshot -> {
             boolean exists = false;

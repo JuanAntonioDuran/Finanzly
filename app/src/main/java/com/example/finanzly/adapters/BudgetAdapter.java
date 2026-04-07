@@ -85,12 +85,12 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         boolean isOwner =
                 budget.getUserId().equals(currentUserId);
 
-        // 🔐 Botones owner / shared
+        //  Botones owner / shared
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(isOwner ? View.GONE : View.VISIBLE);
         holder.btnViewMovements.setVisibility(View.VISIBLE);
 
-        // 🔔 LÓGICA REMINDERS
+        //  LÓGICA REMINDERS
         List<Reminder> reminders =
                 remindersByBudget.get(budget.getId());
 
@@ -122,7 +122,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
                 holder.btnReminder.setVisibility(View.VISIBLE);
 
-                // 🎨 PRIORIDAD COLORES
+                //  PRIORIDAD COLORES
                 if (hasExpired) {
                     holder.btnReminder.setBackgroundColor(
                             context.getColor(R.color.red_error)

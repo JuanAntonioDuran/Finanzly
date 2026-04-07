@@ -41,21 +41,21 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
     public void onBindViewHolder(@NonNull MovementViewHolder holder, int position) {
         Movement movement = movementList.get(position);
 
-        // 📝 Descripción
+        //  Descripción
         holder.tvDescription.setText(
                 movement.getDescription() != null && !movement.getDescription().isEmpty()
                         ? movement.getDescription()
                         : "Sin descripción"
         );
 
-        // 🏷️ Categoría
+        // 🏷 Categoría
         holder.tvCategory.setText(
                 movement.getCategory() != null && !movement.getCategory().isEmpty()
                         ? movement.getCategory()
                         : "-"
         );
 
-        // 📅 Fecha
+        //  Fecha
         holder.tvDate.setText(
                 movement.getDate() != null && !movement.getDate().isEmpty()
                         ? movement.getDate()
@@ -64,7 +64,7 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
 
         double amount = movement.getAmount();
 
-        // 💰 Tipo + color
+        // Tipo + color
         if ("income".equalsIgnoreCase(movement.getType())) {
 
             holder.tvAmount.setText(String.format("+%.2f €", amount));
@@ -84,7 +84,7 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
             holder.tvType.setTextColor(Color.WHITE);
         }
 
-        // 🔗 Vinculación (texto)
+        //  Vinculación (texto)
         if (movement.getLinkedBudgetId() != null && !movement.getLinkedBudgetId().isEmpty()) {
 
             holder.tvLink.setText("Presupuesto");
@@ -99,10 +99,10 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
             holder.tvLink.setVisibility(View.GONE);
         }
 
-        // 🚀 CLICK EN EL ITEM
+        //  CLICK EN EL ITEM
         holder.itemView.setOnClickListener(v -> {
 
-            // 👉 Si tiene presupuesto
+            //  Si tiene presupuesto
             if (movement.getLinkedBudgetId() != null && !movement.getLinkedBudgetId().isEmpty()) {
 
                 Intent intent = new Intent(context, BudgetMovements.class);
@@ -110,7 +110,7 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
                 context.startActivity(intent);
 
             }
-            // 👉 Si tiene meta
+            //  Si tiene meta
             else if (movement.getLinkedGoalId() != null && !movement.getLinkedGoalId().isEmpty()) {
 
                 Intent intent = new Intent(context, GoalMovements.class);
@@ -118,7 +118,7 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
                 context.startActivity(intent);
 
             }
-            // 👉 Si no tiene nada
+            //  Si no tiene nada
             else {
                 Toast.makeText(context, "Este movimiento no está vinculado", Toast.LENGTH_SHORT).show();
             }

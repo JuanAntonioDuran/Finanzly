@@ -67,6 +67,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    //Metodo para loguear
     private void loginUser() {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();

@@ -125,7 +125,7 @@ public class GoalsFragment extends Fragment {
         return root;
     }
 
-    // 🔥 COPIADO DE BUDGET PERO PARA GOALS
+   // Cargar los reminders para el boton de reminders
     private void loadReminders() {
 
         FirebaseDatabase.getInstance()
@@ -171,6 +171,7 @@ public class GoalsFragment extends Fragment {
                 });
     }
 
+    // Cargar los goals
     private void loadGoals() {
 
         goalService.getReference().addValueEventListener(new ValueEventListener() {
@@ -204,6 +205,7 @@ public class GoalsFragment extends Fragment {
         });
     }
 
+    //Funcion para aplicar filtros seleccionados
     private void applyFilters() {
 
         String titleFilter =
@@ -249,6 +251,7 @@ public class GoalsFragment extends Fragment {
                 filteredGoals.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
+    // Metodo auxiliar para asignar el estado del goal
     private String getGoalStatus(Goal goal) {
 
         String deadline = goal.getDeadline();
@@ -265,17 +268,21 @@ public class GoalsFragment extends Fragment {
         return "en_progreso";
     }
 
+    //Metodo auxiliarr para obtener la fecha y formatearla
     private String getCurrentDate() {
         SimpleDateFormat sdf =
                 new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         return sdf.format(new Date());
     }
 
+    // Metodo para limpiar filtros
     private void clearFilters() {
         etTitleFilter.setText("");
         applyFilters();
     }
 
+
+    //Metodo para salir del goal
     private void leaveGoal(Goal goal) {
 
         List<String> updated =
@@ -291,6 +298,8 @@ public class GoalsFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> loadGoals());
     }
 
+
+    //Metodo para borrar el goal y todos los asociados
     private void onDeleteGoal(Goal goal) {
 
         if (goal == null || goal.getId() == null) return;
@@ -325,6 +334,8 @@ public class GoalsFragment extends Fragment {
                 .show();
     }
 
+
+    //Metodo para ir a movimientos
     private void goToGoalMovements(Goal goal) {
 
         Intent intent =
@@ -334,6 +345,7 @@ public class GoalsFragment extends Fragment {
         startActivity(intent);
     }
 
+    //MMeetodo para ir a los fragments de reminders
     private void openRemindersFragment(String goalId) {
 
         RemindersFragment fragment =

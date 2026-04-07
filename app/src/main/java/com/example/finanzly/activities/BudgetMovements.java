@@ -161,7 +161,7 @@ public class BudgetMovements extends AppCompatActivity {
 
         fabAddReminder.setOnClickListener(v -> {
 
-            // ⚠️ Verificar que el presupuesto esté cargado
+            //  Verificar que el presupuesto esté cargado
             if (currentBudget == null) {
                 Toast.makeText(this, "Presupuesto no cargado", Toast.LENGTH_SHORT).show();
                 return;
@@ -309,7 +309,7 @@ public class BudgetMovements extends AppCompatActivity {
         spUserFilter.setAdapter(adapterSpinner);
         spUserFilter.setOnItemSelectedListener(spinnerListener());
 
-        // Si filterUser ya tenía un value (p.e. se había seleccionado algo antes), intentar reaplicar selección
+
         if (filterUser != null && !filterUser.isEmpty()) {
             // buscar la posición del nombre que corresponde al userId
             String desiredName = null;
@@ -345,7 +345,7 @@ public class BudgetMovements extends AppCompatActivity {
                     }
                 }
 
-                // 🔥 YA NO LLAMAMOS applyFilters() AQUÍ
+
             }
 
             @Override
@@ -401,9 +401,7 @@ public class BudgetMovements extends AppCompatActivity {
                         .setMessage("¿Estás seguro de que quieres eliminar este movimiento?")
                         .setPositiveButton("Sí", (dialog, which) -> {
                             try {
-                                // Llamamos al servicio para borrar en Firebase.
-                                // NO eliminamos localmente de movementList para evitar inconsistencias/duplicados:
-                                // el ValueEventListener se encargará de actualizar la lista cuando Firebase confirme el cambio.
+
                                 movementService.delete(movement.getId());
                                 // Si movementService tiene callbacks, deberías usarlos para notificar éxito/fracaso.
                                 Toast.makeText(BudgetMovements.this, "Eliminando movimiento...", Toast.LENGTH_SHORT).show();
@@ -542,8 +540,7 @@ public class BudgetMovements extends AppCompatActivity {
     private void loadMovements() {
         if (budgetId == null) return;
 
-        // No borramos userIdToNameMap aquí: podemos reutilizar caché si ya cargamos usuarios.
-        // Reiniciamos sólo las listas de movimientos para evitar duplicados.
+
         movementList.clear();
         filteredList.clear();
 
@@ -672,7 +669,7 @@ public class BudgetMovements extends AppCompatActivity {
     // ----------------------------
 
     private void clearFilters() {
-        // si tenías etUserFilter (ahora usas Spinner), no la usamos
+
         if (spUserFilter != null) {
             spUserFilter.setSelection(0);
         }
@@ -699,21 +696,21 @@ public class BudgetMovements extends AppCompatActivity {
 
             boolean ok = true;
 
-            // 🔹 FILTRO POR USUARIO (POR userId)
+            //  FILTRO POR USUARIO (POR userId)
             if (filterUser != null && !filterUser.isEmpty()) {
                 if (m.getUserId() == null || !m.getUserId().equals(filterUser)) {
                     ok = false;
                 }
             }
 
-            // 🔹 FILTRO POR FECHA DESDE
+            //  FILTRO POR FECHA DESDE
             if (ok && !filterDateFrom.isEmpty()) {
                 if (m.getDate() == null || m.getDate().compareTo(filterDateFrom) < 0) {
                     ok = false;
                 }
             }
 
-            // 🔹 FILTRO POR FECHA HASTA
+            //  FILTRO POR FECHA HASTA
             if (ok && !filterDateTo.isEmpty()) {
                 if (m.getDate() == null || m.getDate().compareTo(filterDateTo) > 0) {
                     ok = false;
@@ -725,7 +722,7 @@ public class BudgetMovements extends AppCompatActivity {
             }
         }
 
-        // 🔹 Actualizar nombres en adapter
+        //  Actualizar nombres en adapter
         if (adapter != null) {
 
             for (Movement mv : filteredList) {
@@ -778,15 +775,14 @@ public class BudgetMovements extends AppCompatActivity {
         progressTop.setProgress((int) percent);
         tvPercent.setText(String.format(Locale.getDefault(), "%.0f%%", percent));
 
-        // 🔥 ACTUALIZAR EN FIREBASE
+        //  ACTUALIZAR EN FIREBASE
         DatabaseReference ref = FirebaseDatabase.getInstance()
                 .getReference("budgets")
                 .child(currentBudget.getId()); // o budgetId
 
         ref.setValue(currentBudget)
                 .addOnSuccessListener(aVoid -> {
-                    // Opcional: Log o Toast silencioso
-                    // Log.d("Budget", "Presupuesto actualizado correctamente en Firebase");
+
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Error al actualizar el presupuesto", Toast.LENGTH_SHORT).show()

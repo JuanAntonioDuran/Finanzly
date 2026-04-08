@@ -33,8 +33,11 @@ import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -70,6 +73,7 @@ public class GoalMovements extends AppCompatActivity {
     private Goal currentGoal;
     private String uid;
     private String filterUser = "";
+
     private HashMap<String, String> userNameToIdMap = new HashMap<>();
     private ImageButton btnBack;
     private FloatingActionButton fabAddMovement, fabEditGoal, fabAddReminder;
@@ -102,7 +106,7 @@ public class GoalMovements extends AppCompatActivity {
 
         movementList = new ArrayList<>();
         filteredList = new ArrayList<>();
-        adapter = new MovementAdapter(this, filteredList, uid, null);
+        adapter = new MovementAdapter(this, filteredList, uid, currentGoal != null ? currentGoal.getUserId() : uid);
         recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewMovements.setAdapter(adapter);
 
@@ -139,35 +143,49 @@ public class GoalMovements extends AppCompatActivity {
         fabAddMovement.setOnClickListener(v -> openMovementDialog(null));
         fabAddReminder.setOnClickListener(v -> openReminderDialog(null));
 
-        // FAB Editar Goal
         fabEditGoal.setOnClickListener(v -> {
             if (currentGoal == null) return;
 
-            EditGoalDialog editGoalDialog = new EditGoalDialog(
-                    this,
-                    currentGoal,
-                    uid.equals(currentGoal.getUserId()), // Solo el dueño puede editar
-                    uid,
-                    "", // nombre del usuario actual (si quieres mostrarlo en invitación)
-                    updatedGoal -> {
-                        // Actualizamos el Goal local
-                        currentGoal.setTitle(updatedGoal.getTitle());
-                        currentGoal.setTargetAmount(updatedGoal.getTargetAmount());
-                        currentGoal.setDeadline(updatedGoal.getDeadline());
-                        currentGoal.setSharedUserIds(updatedGoal.getSharedUserIds());
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-                        // Actualizamos en Firebase
-                        new GoalService(this).update(currentGoal.getId(), updatedGoal);
+            if (firebaseUser == null) return;
 
-                        // Actualizamos UI
-                        tvTitle.setText("Movimientos de \"" + currentGoal.getTitle() + "\"");
-                        recalculateGoalCurrentAmount();
+            String uid = firebaseUser.getUid();
 
-                        Toast.makeText(this, "Goal actualizado", Toast.LENGTH_SHORT).show();
-                    }
-            );
+            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-            editGoalDialog.show();
+            usersRef.child(uid).get().addOnSuccessListener(snapshot -> {
+                User user = snapshot.getValue(User.class);
+
+                // ✅ Variable final dentro de la lambda
+                final String currentUserName = (user != null && user.getName() != null)
+                        ? user.getName()
+                        : "Usuario";
+
+                EditGoalDialog editGoalDialog = new EditGoalDialog(
+                        this,
+                        currentGoal,
+                        uid.equals(currentGoal.getUserId()),
+                        uid,
+                        currentUserName,
+                        updatedGoal -> {
+
+                            currentGoal.setTitle(updatedGoal.getTitle());
+                            currentGoal.setTargetAmount(updatedGoal.getTargetAmount());
+                            currentGoal.setDeadline(updatedGoal.getDeadline());
+                            currentGoal.setSharedUserIds(updatedGoal.getSharedUserIds());
+
+                            new GoalService(this).update(currentGoal.getId(), updatedGoal);
+
+                            tvTitle.setText("Movimientos de \"" + currentGoal.getTitle() + "\"");
+                            recalculateGoalCurrentAmount();
+
+                            Toast.makeText(this, "Goal actualizado", Toast.LENGTH_SHORT).show();
+                        }
+                );
+
+                editGoalDialog.show();
+            });
         });
 
 

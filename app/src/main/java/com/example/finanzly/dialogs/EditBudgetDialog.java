@@ -2,6 +2,8 @@ package com.example.finanzly.dialogs;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
@@ -15,9 +17,9 @@ import com.example.finanzly.models.Budget;
 import com.example.finanzly.models.Invitation;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.InvitationService;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.*;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,7 +33,7 @@ public class EditBudgetDialog {
     private final Context context;
     private final Budget budget;
     private final boolean isOwner;
-    private final String currentUserId;
+    private String currentUserId;
     private final String currentUserName;
     private final OnBudgetEditedListener listener;
 
@@ -51,11 +53,23 @@ public class EditBudgetDialog {
         this.budget = budget;
         this.isOwner = isOwner;
         this.currentUserId = currentUserId;
-        this.currentUserName = currentUserName;
+        this.currentUserName = currentUserName != null ? currentUserName : "Usuario";
         this.listener = listener;
     }
 
     public void show() {
+
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (firebaseUser != null) {
+            currentUserId = firebaseUser.getUid();
+        }
+
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Toast.makeText(context, "Error: usuario no autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_budget, null);
 
         EditText etCategory = view.findViewById(R.id.etCategory);
@@ -75,16 +89,43 @@ public class EditBudgetDialog {
         }
 
         collaboratorList = new ArrayList<>();
+
         adapter = new UserAdapter(collaboratorList, user -> {
+
+            // 1. Eliminar de lista local
             collaboratorList.remove(user);
             budget.getSharedUserIds().remove(user.getUid());
+
             adapter.notifyDataSetChanged();
+            updateRecyclerVisibility(rvCollaborators);
+
+            // 2. 🔥 ACTUALIZAR FIREBASE AL INSTANTE
+            DatabaseReference budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("sharedUserIds", budget.getSharedUserIds());
+
+            budgetsRef.child(budget.getId())
+                    .updateChildren(updates)
+                    .addOnSuccessListener(aVoid ->
+                            Toast.makeText(context, "Colaborador eliminado", Toast.LENGTH_SHORT).show()
+                    )
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Error al eliminar colaborador", Toast.LENGTH_SHORT).show();
+
+                        //  Revertir si falla
+                        collaboratorList.add(user);
+                        budget.getSharedUserIds().add(user.getUid());
+                        adapter.notifyDataSetChanged();
+                        updateRecyclerVisibility(rvCollaborators);
+                    });
         });
 
         rvCollaborators.setLayoutManager(new LinearLayoutManager(context));
         rvCollaborators.setAdapter(adapter);
+        rvCollaborators.setVisibility(View.GONE);
 
-        // Cargar colaboradores existentes
+        // 🔹 Cargar SOLO colaboradores reales
         if (!budget.getSharedUserIds().isEmpty()) {
             usersRef.get().addOnSuccessListener(snapshot -> {
                 for (String uid : budget.getSharedUserIds()) {
@@ -97,16 +138,15 @@ public class EditBudgetDialog {
                     }
                 }
                 adapter.notifyDataSetChanged();
-            }).addOnFailureListener(e ->
-                    Toast.makeText(context, "Error cargando colaboradores: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-            );
+                updateRecyclerVisibility(rvCollaborators);
+            });
         }
 
         if (!isOwner) {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        // 🔍 Comprobar si ya existe invitación pendiente
+        // ➕ INVITAR (SIN añadir colaborador)
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
 
@@ -124,14 +164,16 @@ public class EditBudgetDialog {
                     if (invitedUser != null && invitedUser.getEmail().equalsIgnoreCase(email)) {
                         found = true;
 
-                        // Ya está en el budget
-                        if (budget.getSharedUserIds().contains(invitedUser.getUid())) {
-                            Toast.makeText(context, "Usuario ya agregado", Toast.LENGTH_SHORT).show();
-                            etEmail.setText("");
+                        if (invitedUser.getUid().equals(currentUserId)) {
+                            Toast.makeText(context, "No puedes invitarte a ti mismo", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        // 🔍 Comprobar invitación existente
+                        if (budget.getSharedUserIds().contains(invitedUser.getUid())) {
+                            Toast.makeText(context, "Usuario ya es colaborador", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
                         checkExistingInvitation(invitedUser.getUid(), budget.getId(), exists -> {
 
                             if (exists) {
@@ -139,14 +181,7 @@ public class EditBudgetDialog {
                                 return;
                             }
 
-                            // Añadir colaborador localmente
-                            collaboratorList.add(invitedUser);
-                            budget.getSharedUserIds().add(invitedUser.getUid());
-                            adapter.notifyDataSetChanged();
-
-                            // Crear invitación
-                            String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-                                    .format(new Date());
+                            String now = getCurrentUTCDate();
 
                             Invitation invitation = new Invitation();
                             invitation.setFromUserId(currentUserId);
@@ -155,10 +190,13 @@ public class EditBudgetDialog {
                             invitation.setResourceIdBudget(budget.getId());
                             invitation.setCreatedAt(now);
                             invitation.setStatus("pending");
-                            invitation.setMessage(currentUserName + " te ha invitado al presupuesto \"" + budget.getCategory() + "\"");
+
+                            invitation.setMessage(
+                                    currentUserName + " te ha invitado al presupuesto \"" + budget.getCategory() + "\""
+                            );
 
                             invitationService.createInvitation(invitation,
-                                    id -> Toast.makeText(context, "Invitación enviada a " + invitedUser.getName(), Toast.LENGTH_SHORT).show(),
+                                    id -> Toast.makeText(context, "Invitación enviada", Toast.LENGTH_SHORT).show(),
                                     e -> Toast.makeText(context, "Error al enviar invitación", Toast.LENGTH_SHORT).show()
                             );
 
@@ -170,24 +208,21 @@ public class EditBudgetDialog {
                 }
 
                 if (!found) {
-                    Toast.makeText(context, "No existe usuario con email: " + email, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No existe usuario con ese email", Toast.LENGTH_SHORT).show();
                 }
-
-            }).addOnFailureListener(e ->
-                    Toast.makeText(context, "Error cargando usuarios: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-            );
+            });
         });
 
         btnSave.setOnClickListener(v -> {
             String category = etCategory.getText().toString().trim();
             String limitStr = etLimit.getText().toString().trim();
 
-            if (category.isEmpty()) {
+            if (TextUtils.isEmpty(category)) {
                 etCategory.setError("Requerido");
                 return;
             }
 
-            if (limitStr.isEmpty()) {
+            if (TextUtils.isEmpty(limitStr)) {
                 etLimit.setError("Requerido");
                 return;
             }
@@ -200,11 +235,14 @@ public class EditBudgetDialog {
                 return;
             }
 
-            String currentDate = getCurrentUTCDate();
+            if (limit < 0) {
+                etLimit.setError("No puede ser menor a 0");
+                return;
+            }
 
             budget.setCategory(category);
             budget.setLimit(limit);
-            budget.setUpdatedAt(currentDate);
+            budget.setUpdatedAt(getCurrentUTCDate());
 
             listener.onBudgetEdited(budget);
             dialog.dismiss();
@@ -220,7 +258,14 @@ public class EditBudgetDialog {
         dialog.show();
     }
 
-    // 🔍 Método para comprobar invitaciones duplicadas
+    private void updateRecyclerVisibility(RecyclerView rv) {
+        if (collaboratorList != null && !collaboratorList.isEmpty()) {
+            rv.setVisibility(View.VISIBLE);
+        } else {
+            rv.setVisibility(View.GONE);
+        }
+    }
+
     private void checkExistingInvitation(String toUserId, String budgetId, OnCheckInvitation callback) {
         invitationsRef.get().addOnSuccessListener(snapshot -> {
             boolean exists = false;

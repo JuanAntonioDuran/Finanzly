@@ -3,6 +3,7 @@ package com.example.finanzly.dialogs;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
@@ -16,9 +17,9 @@ import com.example.finanzly.models.Goal;
 import com.example.finanzly.models.Invitation;
 import com.example.finanzly.models.User;
 import com.example.finanzly.services.InvitationService;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.*;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -32,7 +33,7 @@ public class EditGoalDialog {
     private final Context context;
     private final Goal goal;
     private final boolean isOwner;
-    private final String currentUserId;
+    private String currentUserId;
     private final String currentUserName;
     private final OnGoalEditedListener listener;
 
@@ -52,11 +53,23 @@ public class EditGoalDialog {
         this.goal = goal;
         this.isOwner = isOwner;
         this.currentUserId = currentUserId;
-        this.currentUserName = currentUserName;
+        this.currentUserName = currentUserName != null ? currentUserName : "";
         this.listener = listener;
     }
 
     public void show() {
+
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (firebaseUser != null) {
+            currentUserId = firebaseUser.getUid();
+        }
+
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Toast.makeText(context, "Error: usuario no autenticado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_goal, null);
 
         EditText etTitle = view.findViewById(R.id.etTitle);
@@ -78,16 +91,43 @@ public class EditGoalDialog {
         }
 
         collaboratorList = new ArrayList<>();
+
         adapter = new UserAdapter(collaboratorList, user -> {
+
+            // 1. Eliminar de lista local
             collaboratorList.remove(user);
             goal.getSharedUserIds().remove(user.getUid());
+
             adapter.notifyDataSetChanged();
+            updateRecyclerVisibility(rvCollaborators);
+
+            // 2. 🔥 ACTUALIZAR FIREBASE AL INSTANTE
+            DatabaseReference goalsRef = FirebaseDatabase.getInstance().getReference("goals");
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("sharedUserIds", goal.getSharedUserIds());
+
+            goalsRef.child(goal.getId())
+                    .updateChildren(updates)
+                    .addOnSuccessListener(aVoid ->
+                            Toast.makeText(context, "Colaborador eliminado", Toast.LENGTH_SHORT).show()
+                    )
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Error al eliminar colaborador", Toast.LENGTH_SHORT).show();
+
+
+                        collaboratorList.add(user);
+                        goal.getSharedUserIds().add(user.getUid());
+                        adapter.notifyDataSetChanged();
+                        updateRecyclerVisibility(rvCollaborators);
+                    });
         });
 
         rvCollaborators.setLayoutManager(new LinearLayoutManager(context));
         rvCollaborators.setAdapter(adapter);
+        rvCollaborators.setVisibility(View.GONE);
 
-        // Cargar colaboradores existentes
+        // 🔹 Cargar SOLO colaboradores reales
         if (!goal.getSharedUserIds().isEmpty()) {
             usersRef.get().addOnSuccessListener(snapshot -> {
                 for (String uid : goal.getSharedUserIds()) {
@@ -100,16 +140,15 @@ public class EditGoalDialog {
                     }
                 }
                 adapter.notifyDataSetChanged();
-            }).addOnFailureListener(e ->
-                    Toast.makeText(context, "Error cargando colaboradores: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-            );
+                updateRecyclerVisibility(rvCollaborators);
+            });
         }
 
         if (!isOwner) {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        //  Añadir colaborador con validaciones
+        // ➕ Invitar usuario (SIN añadirlo aún como colaborador)
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
 
@@ -127,14 +166,16 @@ public class EditGoalDialog {
                     if (invitedUser != null && invitedUser.getEmail().equalsIgnoreCase(email)) {
                         found = true;
 
-                        //  Ya está dentro del goal
-                        if (goal.getSharedUserIds().contains(invitedUser.getUid())) {
-                            Toast.makeText(context, "Usuario ya es colaborador", Toast.LENGTH_SHORT).show();
-                            etEmail.setText("");
+                        if (invitedUser.getUid().equals(currentUserId)) {
+                            Toast.makeText(context, "No puedes invitarte a ti mismo", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        //  Comprobar invitación pendiente
+                        if (goal.getSharedUserIds().contains(invitedUser.getUid())) {
+                            Toast.makeText(context, "Usuario ya es colaborador", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
                         checkExistingInvitation(invitedUser.getUid(), goal.getId(), exists -> {
 
                             if (exists) {
@@ -142,9 +183,7 @@ public class EditGoalDialog {
                                 return;
                             }
 
-                            // Crear invitación
-                            String now = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-                                    .format(new Date());
+                            String now = getCurrentUTCDate();
 
                             Invitation invitation = new Invitation();
                             invitation.setFromUserId(currentUserId);
@@ -153,10 +192,13 @@ public class EditGoalDialog {
                             invitation.setResourceIdGoal(goal.getId());
                             invitation.setCreatedAt(now);
                             invitation.setStatus("pending");
-                            invitation.setMessage(currentUserName + " te ha invitado al objetivo \"" + goal.getTitle() + "\"");
+
+                            invitation.setMessage(
+                                    currentUserName + " te ha invitado al objetivo \"" + goal.getTitle() + "\""
+                            );
 
                             invitationService.createInvitation(invitation,
-                                    id -> Toast.makeText(context, "Invitación enviada a " + invitedUser.getName(), Toast.LENGTH_SHORT).show(),
+                                    id -> Toast.makeText(context, "Invitación enviada", Toast.LENGTH_SHORT).show(),
                                     e -> Toast.makeText(context, "Error al enviar invitación", Toast.LENGTH_SHORT).show()
                             );
 
@@ -168,12 +210,9 @@ public class EditGoalDialog {
                 }
 
                 if (!found) {
-                    Toast.makeText(context, "No existe usuario con email: " + email, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No existe usuario con ese email", Toast.LENGTH_SHORT).show();
                 }
-
-            }).addOnFailureListener(e ->
-                    Toast.makeText(context, "Error cargando usuarios: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-            );
+            });
         });
 
         btnSave.setOnClickListener(v -> {
@@ -204,12 +243,10 @@ public class EditGoalDialog {
                 return;
             }
 
-            String currentDate = getCurrentUTCDate();
-
             goal.setTitle(title);
             goal.setTargetAmount(targetAmount);
             goal.setDeadline(!deadline.isEmpty() ? deadline : null);
-            goal.setUpdatedAt(currentDate);
+            goal.setUpdatedAt(getCurrentUTCDate());
 
             listener.onGoalEdited(goal);
             dialog.dismiss();
@@ -225,7 +262,14 @@ public class EditGoalDialog {
         dialog.show();
     }
 
-    //  Comprobar invitaciones duplicadas
+    private void updateRecyclerVisibility(RecyclerView rv) {
+        if (collaboratorList != null && !collaboratorList.isEmpty()) {
+            rv.setVisibility(View.VISIBLE);
+        } else {
+            rv.setVisibility(View.GONE);
+        }
+    }
+
     private void checkExistingInvitation(String toUserId, String goalId, OnCheckInvitation callback) {
         invitationsRef.get().addOnSuccessListener(snapshot -> {
             boolean exists = false;

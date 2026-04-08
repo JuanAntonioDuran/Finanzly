@@ -22,6 +22,7 @@ import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 
 import java.util.*;
@@ -134,31 +135,44 @@ public class BudgetMovements extends AppCompatActivity {
         fabEditBudget.setOnClickListener(v -> {
             if (currentBudget == null) return;
 
-            EditBudgetDialog dialog = new EditBudgetDialog(
-                    BudgetMovements.this,
-                    currentBudget,
-                    true, // Asumimos que el usuario es owner aquí
-                    FirebaseAuth.getInstance().getUid(),
-                    FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),
-                    updatedBudget -> {
-                        // Callback: actualizamos budget local y en Firebase
-                        currentBudget.setCategory(updatedBudget.getCategory());
-                        currentBudget.setLimit(updatedBudget.getLimit());
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (firebaseUser == null) return;
 
-                        // Actualizar en Firebase
-                        budgetsRef.child(currentBudget.getId())
-                                .setValue(currentBudget)
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(BudgetMovements.this, "Presupuesto actualizado", Toast.LENGTH_SHORT).show();
-                                    recalculateBudgetSpent();
-                                })
-                                .addOnFailureListener(e ->
-                                        Toast.makeText(BudgetMovements.this, "Error al actualizar presupuesto", Toast.LENGTH_SHORT).show());
-                    });
+            String uid = firebaseUser.getUid();
 
-            dialog.show();
+            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+
+            usersRef.child(uid).get().addOnSuccessListener(snapshot -> {
+                User user = snapshot.getValue(User.class);
+
+                final String currentUserName = (user != null && user.getName() != null)
+                        ? user.getName()
+                        : "Usuario";
+
+                EditBudgetDialog dialog = new EditBudgetDialog(
+                        BudgetMovements.this,
+                        currentBudget,
+                        true,
+                        uid,
+                        currentUserName,
+                        updatedBudget -> {
+
+                            currentBudget.setCategory(updatedBudget.getCategory());
+                            currentBudget.setLimit(updatedBudget.getLimit());
+
+                            budgetsRef.child(currentBudget.getId())
+                                    .setValue(currentBudget)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(BudgetMovements.this, "Presupuesto actualizado", Toast.LENGTH_SHORT).show();
+                                        recalculateBudgetSpent();
+                                    })
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(BudgetMovements.this, "Error al actualizar presupuesto", Toast.LENGTH_SHORT).show());
+                        });
+
+                dialog.show();
+            });
         });
-
         fabAddReminder.setOnClickListener(v -> {
 
             //  Verificar que el presupuesto esté cargado

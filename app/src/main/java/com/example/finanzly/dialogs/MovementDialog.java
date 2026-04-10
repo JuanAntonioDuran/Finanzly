@@ -17,6 +17,7 @@ import com.example.finanzly.services.MovementService;
 import com.example.finanzly.services.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class MovementDialog {
@@ -65,7 +66,6 @@ public class MovementDialog {
         Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         Button btnType = dialogView.findViewById(R.id.btnType);
 
-        // 👤 NUEVO
         Spinner spUserAssign = dialogView.findViewById(R.id.spUserAssign);
         TextView tvUserLabel = dialogView.findViewById(R.id.tvUserLabel);
 
@@ -78,6 +78,12 @@ public class MovementDialog {
         if (isNew) {
             tvDialogTitle.setText("Nuevo movimiento");
             btnSave.setText("Guardar");
+
+            // 🔥 FECHA POR DEFECTO (HOY)
+            String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .format(new Date());
+            etDate.setText(today);
+
         } else {
             tvDialogTitle.setText("Editar movimiento");
             btnSave.setText("Actualizar");
@@ -135,7 +141,7 @@ public class MovementDialog {
             tvUserLabel.setVisibility(View.GONE);
         }
 
-        // 📅 FECHA
+        // 📅 DATE PICKER
         etDate.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
 
@@ -244,7 +250,6 @@ public class MovementDialog {
                         names.add(u.getName());
                         map.put(u.getName(), u.getUid());
 
-                        // 🔥 Cuando ya cargaron todos
                         if (names.size() == userIds.size()) {
 
                             ArrayAdapter<String> adapter =
@@ -260,8 +265,6 @@ public class MovementDialog {
 
                             spinner.setAdapter(adapter);
 
-                            // 🔥 AQUI ESTÁ LA CLAVE
-                            // Buscar posición del user actual del movimiento
                             for (int i = 0; i < names.size(); i++) {
 
                                 String name = names.get(i);

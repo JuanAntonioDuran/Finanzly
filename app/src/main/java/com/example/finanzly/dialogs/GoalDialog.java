@@ -30,22 +30,55 @@ public class GoalDialog {
     private GoalService goalService;
     private OnGoalCreatedListener listener;
 
-    public GoalDialog(Context context, String currentUserId, GoalService goalService, OnGoalCreatedListener listener) {
+    private Goal existingGoal;
+
+    public GoalDialog(Context context,
+                      String currentUserId,
+                      GoalService goalService,
+                      OnGoalCreatedListener listener) {
+
         this.context = context;
         this.currentUserId = currentUserId;
         this.goalService = goalService;
         this.listener = listener;
     }
 
+    public void setGoal(Goal goal) {
+        this.existingGoal = goal;
+    }
+
     public void show() {
 
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_goal, null);
+        View dialogView = LayoutInflater.from(context)
+                .inflate(R.layout.dialog_goal, null);
 
         EditText etTitle = dialogView.findViewById(R.id.etTitle);
         EditText etTargetAmount = dialogView.findViewById(R.id.etTargetAmount);
         EditText etDeadline = dialogView.findViewById(R.id.etDeadline);
 
-        // DatePicker para fecha límite
+        boolean isEdit = existingGoal != null;
+
+        // -----------------------------
+        // 🔥 FECHA POR DEFECTO (SOLO CREAR)
+        // -----------------------------
+        if (!isEdit) {
+            String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .format(new Date());
+            etDeadline.setText(today);
+        }
+
+        // -----------------------------
+        // MODO EDICIÓN
+        // -----------------------------
+        if (isEdit) {
+            etTitle.setText(existingGoal.getTitle());
+            etTargetAmount.setText(String.valueOf(existingGoal.getTargetAmount()));
+            etDeadline.setText(existingGoal.getDeadline());
+        }
+
+        // -----------------------------
+        // DATE PICKER
+        // -----------------------------
         etDeadline.setFocusable(false);
         etDeadline.setClickable(true);
 
@@ -57,7 +90,13 @@ public class GoalDialog {
                     context,
                     (view, year, month, dayOfMonth) ->
                             etDeadline.setText(
-                                    String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                                    String.format(
+                                            Locale.getDefault(),
+                                            "%04d-%02d-%02d",
+                                            year,
+                                            month + 1,
+                                            dayOfMonth
+                                    )
                             ),
                     calendar.get(java.util.Calendar.YEAR),
                     calendar.get(java.util.Calendar.MONTH),
@@ -69,7 +108,7 @@ public class GoalDialog {
 
         AlertDialog dialog = new AlertDialog.Builder(context)
                 .setView(dialogView)
-                .setPositiveButton("Guardar", null)
+                .setPositiveButton(isEdit ? "Actualizar" : "Guardar", null)
                 .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
                 .create();
 
@@ -105,20 +144,31 @@ public class GoalDialog {
                 return;
             }
 
-            String currentDate = getCurrentUTCDate();
+            if (isEdit) {
+                existingGoal.setTitle(title);
+                existingGoal.setTargetAmount(target);
+                existingGoal.setDeadline(deadline);
 
-            Goal newGoal = new Goal();
-            newGoal.setTitle(title);
-            newGoal.setTargetAmount(target);
-            newGoal.setCurrentAmount(0);
-            newGoal.setUserId(currentUserId);
-            newGoal.setDeadline(deadline);
-            newGoal.setCreatedAt(currentDate);
-            newGoal.setSharedUserIds(List.of());
+                goalService.update(existingGoal.getId(), existingGoal);
 
-            goalService.insert(newGoal);
+                Toast.makeText(context, "Meta actualizada.", Toast.LENGTH_SHORT).show();
 
-            Toast.makeText(context, "Meta creada correctamente.", Toast.LENGTH_SHORT).show();
+            } else {
+                String currentDate = getCurrentUTCDate();
+
+                Goal newGoal = new Goal();
+                newGoal.setTitle(title);
+                newGoal.setTargetAmount(target);
+                newGoal.setCurrentAmount(0);
+                newGoal.setUserId(currentUserId);
+                newGoal.setDeadline(deadline);
+                newGoal.setCreatedAt(currentDate);
+                newGoal.setSharedUserIds(List.of());
+
+                goalService.insert(newGoal);
+
+                Toast.makeText(context, "Meta creada correctamente.", Toast.LENGTH_SHORT).show();
+            }
 
             if (listener != null) listener.onGoalCreated();
 

@@ -84,13 +84,32 @@ public class AddEditReminderDialog {
         Reminder working = existing != null ? existing : new Reminder();
 
         // -----------------------------
-        // Modo edición
+        // Modo edición / creación
         // -----------------------------
         if (existing != null) {
             edtTitle.setText(existing.getTitle());
             edtDesc.setText(existing.getDescription());
             edtDate.setText(existing.getDate());
             edtTime.setText(existing.getTime());
+        } else {
+            // 🔥 Fecha y hora actual por defecto
+            Calendar now = Calendar.getInstance();
+
+            String todayDate = String.format(Locale.getDefault(),
+                    "%04d-%02d-%02d",
+                    now.get(Calendar.YEAR),
+                    now.get(Calendar.MONTH) + 1,
+                    now.get(Calendar.DAY_OF_MONTH)
+            );
+
+            String currentTime = String.format(Locale.getDefault(),
+                    "%02d:%02d",
+                    now.get(Calendar.HOUR_OF_DAY),
+                    now.get(Calendar.MINUTE)
+            );
+
+            edtDate.setText(todayDate);
+            edtTime.setText(currentTime);
         }
 
         // -----------------------------
@@ -142,13 +161,10 @@ public class AddEditReminderDialog {
 
         AlertDialog dialog = builder.create();
 
-        // -----------------------------
-        // Cancelar
-        // -----------------------------
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         // -----------------------------
-        // Guardar
+        // GUARDAR
         // -----------------------------
         btnSave.setOnClickListener(v -> {
 
@@ -162,34 +178,47 @@ public class AddEditReminderDialog {
                 return;
             }
 
-            // -----------------------------
-            // Usuarios seleccionados
-            // -----------------------------
             List<String> userIds = new ArrayList<>();
             Map<String, Boolean> status = new HashMap<>();
 
-            for (int i = 0; i < usersContainer.getChildCount(); i++) {
-                View child = usersContainer.getChildAt(i);
-                if (!(child instanceof LinearLayout)) continue;
+            if (usersContainer.getVisibility() == View.GONE && existing != null) {
 
-                CheckBox cb = child.findViewById(R.id.checkbox_user_dynamic);
-                if (cb == null) continue;
+                if (existing.getSharedUserIds() != null) {
+                    userIds.addAll(existing.getSharedUserIds());
+                }
 
-                String uid = (String) cb.getTag();
+                if (existing.getSharedUsersStatus() != null) {
+                    status.putAll(existing.getSharedUsersStatus());
+                }
 
-                if (cb.isChecked()) {
-                    userIds.add(uid);
+            } else {
+                for (int i = 0; i < usersContainer.getChildCount(); i++) {
 
-                    boolean prev = existing != null &&
-                            existing.getSharedUsersStatus() != null &&
-                            existing.getSharedUsersStatus().getOrDefault(uid, false);
-                    status.put(uid, prev);
+                    View child = usersContainer.getChildAt(i);
+                    if (!(child instanceof LinearLayout)) continue;
+
+                    CheckBox cb = child.findViewById(R.id.checkbox_user_dynamic);
+                    if (cb == null) continue;
+
+                    String uid = (String) cb.getTag();
+
+                    if (cb.isChecked()) {
+                        userIds.add(uid);
+
+                        boolean prev = existing != null &&
+                                existing.getSharedUsersStatus() != null &&
+                                existing.getSharedUsersStatus().getOrDefault(uid, false);
+
+                        status.put(uid, prev);
+                    }
                 }
             }
 
-            // -----------------------------
-            // Crear o actualizar reminder
-            // -----------------------------
+            if (userIds.isEmpty()) {
+                Toast.makeText(context, "Debes seleccionar al menos un usuario", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (existing == null) {
                 String newId = remindersRef.push().getKey();
                 working.setId(newId);
@@ -227,14 +256,10 @@ public class AddEditReminderDialog {
         dialog.show();
     }
 
-    // =====================================================
-    // Poblar usuarios vinculados
-    // =====================================================
     private void populateLinkedUsers(LinearLayout usersContainer, Reminder existing) {
 
         usersContainer.removeAllViews();
 
-        // 🔐 Blindaje total contra null
         List<String> sourceUsers = linkedSharedUsers != null
                 ? new ArrayList<>(linkedSharedUsers)
                 : new ArrayList<>();
@@ -248,6 +273,7 @@ public class AddEditReminderDialog {
                 : new ArrayList<>();
 
         for (String uid : sourceUsers) {
+
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setPadding(8, 8, 8, 8);

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.*;
 
 import com.example.finanzly.R;
@@ -37,6 +38,9 @@ public class AddEditReminderDialog {
 
     private final DatabaseReference remindersRef =
             FirebaseDatabase.getInstance().getReference("reminders");
+
+    private final List<String> selectedUserIds = new ArrayList<>();
+    private final Map<String, Boolean> selectedStatus = new HashMap<>();
 
     public AddEditReminderDialog(Context ctx,
                                  Reminder existingReminder,
@@ -83,6 +87,18 @@ public class AddEditReminderDialog {
 
         Reminder working = existing != null ? existing : new Reminder();
 
+        // 🔥 Estado persistente
+        selectedUserIds.clear();
+        selectedStatus.clear();
+
+        if (existing != null && existing.getSharedUserIds() != null) {
+            selectedUserIds.addAll(existing.getSharedUserIds());
+        }
+
+        if (existing != null && existing.getSharedUsersStatus() != null) {
+            selectedStatus.putAll(existing.getSharedUsersStatus());
+        }
+
         // -----------------------------
         // Modo edición / creación
         // -----------------------------
@@ -92,7 +108,6 @@ public class AddEditReminderDialog {
             edtDate.setText(existing.getDate());
             edtTime.setText(existing.getTime());
         } else {
-            // 🔥 Fecha y hora actual por defecto
             Calendar now = Calendar.getInstance();
 
             String todayDate = String.format(Locale.getDefault(),
@@ -112,12 +127,10 @@ public class AddEditReminderDialog {
             edtTime.setText(currentTime);
         }
 
-        // -----------------------------
-        // Date picker
-        // -----------------------------
         Calendar c = Calendar.getInstance();
+
         edtDate.setOnClickListener(v -> {
-            DatePickerDialog dp = new DatePickerDialog(
+            new DatePickerDialog(
                     context,
                     (view1, year, month, dayOfMonth) ->
                             edtDate.setText(String.format(Locale.getDefault(),
@@ -125,15 +138,11 @@ public class AddEditReminderDialog {
                     c.get(Calendar.YEAR),
                     c.get(Calendar.MONTH),
                     c.get(Calendar.DAY_OF_MONTH)
-            );
-            dp.show();
+            ).show();
         });
 
-        // -----------------------------
-        // Time picker
-        // -----------------------------
         edtTime.setOnClickListener(v -> {
-            TimePickerDialog tp = new TimePickerDialog(
+            new TimePickerDialog(
                     context,
                     (view12, hourOfDay, minute) ->
                             edtTime.setText(String.format(Locale.getDefault(),
@@ -141,17 +150,13 @@ public class AddEditReminderDialog {
                     c.get(Calendar.HOUR_OF_DAY),
                     c.get(Calendar.MINUTE),
                     true
-            );
-            tp.show();
+            ).show();
         });
 
-        // -----------------------------
-        // Toggle usuarios
-        // -----------------------------
         btnToggleUsers.setOnClickListener(v -> {
             if (usersContainer.getVisibility() == View.GONE) {
                 usersContainer.setVisibility(View.VISIBLE);
-                populateLinkedUsers(usersContainer, working);
+                populateLinkedUsers(usersContainer);
                 btnToggleUsers.setText("Ocultar usuarios vinculados");
             } else {
                 usersContainer.setVisibility(View.GONE);
@@ -178,43 +183,23 @@ public class AddEditReminderDialog {
                 return;
             }
 
-            List<String> userIds = new ArrayList<>();
-            Map<String, Boolean> status = new HashMap<>();
+            // 🔥 VALIDACIÓN DE FECHA/HORA
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                Date selectedDateTime = sdf.parse(date + " " + time);
+                Date now = new Date();
 
-            if (usersContainer.getVisibility() == View.GONE && existing != null) {
-
-                if (existing.getSharedUserIds() != null) {
-                    userIds.addAll(existing.getSharedUserIds());
+                if (selectedDateTime != null && selectedDateTime.before(now)) {
+                    Toast.makeText(context, "No puedes seleccionar una fecha/hora pasada", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
-                if (existing.getSharedUsersStatus() != null) {
-                    status.putAll(existing.getSharedUsersStatus());
-                }
-
-            } else {
-                for (int i = 0; i < usersContainer.getChildCount(); i++) {
-
-                    View child = usersContainer.getChildAt(i);
-                    if (!(child instanceof LinearLayout)) continue;
-
-                    CheckBox cb = child.findViewById(R.id.checkbox_user_dynamic);
-                    if (cb == null) continue;
-
-                    String uid = (String) cb.getTag();
-
-                    if (cb.isChecked()) {
-                        userIds.add(uid);
-
-                        boolean prev = existing != null &&
-                                existing.getSharedUsersStatus() != null &&
-                                existing.getSharedUsersStatus().getOrDefault(uid, false);
-
-                        status.put(uid, prev);
-                    }
-                }
+            } catch (Exception e) {
+                Toast.makeText(context, "Fecha u hora inválida", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            if (userIds.isEmpty()) {
+            if (selectedUserIds.isEmpty()) {
                 Toast.makeText(context, "Debes seleccionar al menos un usuario", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -233,8 +218,8 @@ public class AddEditReminderDialog {
             working.setDate(date);
             working.setTime(time);
 
-            working.setSharedUserIds(userIds);
-            working.setSharedUsersStatus(status);
+            working.setSharedUserIds(new ArrayList<>(selectedUserIds));
+            working.setSharedUsersStatus(new HashMap<>(selectedStatus));
 
             working.setLinkedGoalId(isGoal ? linkedId : null);
             working.setLinkedBudgetId(!isGoal ? linkedId : null);
@@ -254,9 +239,14 @@ public class AddEditReminderDialog {
         });
 
         dialog.show();
+
+        dialog.getWindow().setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
     }
 
-    private void populateLinkedUsers(LinearLayout usersContainer, Reminder existing) {
+    private void populateLinkedUsers(LinearLayout usersContainer) {
 
         usersContainer.removeAllViews();
 
@@ -268,10 +258,6 @@ public class AddEditReminderDialog {
             sourceUsers.add(0, currentUserId);
         }
 
-        List<String> selected = existing != null && existing.getSharedUserIds() != null
-                ? existing.getSharedUserIds()
-                : new ArrayList<>();
-
         for (String uid : sourceUsers) {
 
             LinearLayout row = new LinearLayout(context);
@@ -279,7 +265,7 @@ public class AddEditReminderDialog {
             row.setPadding(8, 8, 8, 8);
 
             CheckBox cb = new CheckBox(context);
-            cb.setId(R.id.checkbox_user_dynamic);
+            cb.setId(View.generateViewId());
             cb.setTag(uid);
 
             String name = userIdToNameMap != null
@@ -287,8 +273,24 @@ public class AddEditReminderDialog {
                     : uid;
 
             cb.setText(name);
+            cb.setChecked(selectedUserIds.contains(uid));
 
-            if (selected.contains(uid)) cb.setChecked(true);
+            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
+                if (isChecked) {
+                    if (!selectedUserIds.contains(uid)) {
+                        selectedUserIds.add(uid);
+                    }
+                } else {
+                    selectedUserIds.remove(uid);
+                }
+
+                boolean prev = existing != null &&
+                        existing.getSharedUsersStatus() != null &&
+                        existing.getSharedUsersStatus().getOrDefault(uid, false);
+
+                selectedStatus.put(uid, prev);
+            });
 
             row.addView(cb);
             usersContainer.addView(row);

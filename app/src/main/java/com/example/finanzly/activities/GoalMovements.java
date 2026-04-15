@@ -107,6 +107,7 @@ public class GoalMovements extends AppCompatActivity {
         movementList = new ArrayList<>();
         filteredList = new ArrayList<>();
         adapter = new MovementAdapter(this, filteredList, uid, currentGoal != null ? currentGoal.getUserId() : uid);
+        recyclerViewMovements.setAdapter(adapter);
         recyclerViewMovements.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewMovements.setAdapter(adapter);
 
@@ -116,26 +117,43 @@ public class GoalMovements extends AppCompatActivity {
         goalId = getIntent().getStringExtra("goalId");
         if (goalId == null) { Toast.makeText(this, "No se recibió goalId", Toast.LENGTH_SHORT).show(); finish(); return; }
 
-        // Cargar Goal
         goalService.getById(goalId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     currentGoal = snapshot.getValue(Goal.class);
+
                     if (currentGoal != null) {
+
+                        // ✅ ADAPTER AQUÍ (YA TENEMOS OWNER REAL)
+                        adapter = new MovementAdapter(
+                                GoalMovements.this,
+                                filteredList,
+                                uid,
+                                currentGoal.getUserId()
+                        );
+
+                        recyclerViewMovements.setLayoutManager(new LinearLayoutManager(GoalMovements.this));
+                        recyclerViewMovements.setAdapter(adapter);
+
+                        adapter.setOnMovementActionListener(new MovementAdapter.OnMovementActionListener() {
+                            @Override public void onEdit(Movement movement) { openMovementDialog(movement); }
+                            @Override public void onDelete(Movement movement) { deleteMovement(movement); }
+                        });
+
                         tvTitle.setText("Movimientos de \"" + currentGoal.getTitle() + "\"");
 
                         updateRemainingText();
                         updateProgressBar();
                         loadMovements();
 
-                        // Solo el dueño ve los FABs de editar goal y añadir recordatorio
                         boolean isOwner = uid.equals(currentGoal.getUserId());
                         fabEditGoal.setVisibility(isOwner ? View.VISIBLE : View.GONE);
                         fabAddReminder.setVisibility(isOwner ? View.VISIBLE : View.GONE);
                     }
                 }
             }
+
             @Override public void onCancelled(DatabaseError error) {}
         });
 

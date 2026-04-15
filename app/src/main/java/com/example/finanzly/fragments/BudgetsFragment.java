@@ -309,17 +309,29 @@ public class BudgetsFragment extends Fragment {
     //Funcion para salir del movimiento si no eres el dueño
     private void leaveBudget(Budget budget) {
 
-        List<String> updated =
-                new ArrayList<>(budget.getSharedUserIds());
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle("Salir del presupuesto")
+                .setMessage("¿Seguro que quieres salir de este presupuesto?")
+                .setPositiveButton("Sí", (dialog, which) -> {
 
-        updated.remove(currentUserId);
+                    List<String> updated =
+                            new ArrayList<>(
+                                    budget.getSharedUserIds() != null
+                                            ? budget.getSharedUserIds()
+                                            : new ArrayList<>()
+                            );
 
-        FirebaseDatabase.getInstance()
-                .getReference("budgets")
-                .child(budget.getId())
-                .child("sharedUserIds")
-                .setValue(updated)
-                .addOnSuccessListener(aVoid -> loadBudgets());
+                    updated.remove(currentUserId);
+
+                    FirebaseDatabase.getInstance()
+                            .getReference("budgets")
+                            .child(budget.getId())
+                            .child("sharedUserIds")
+                            .setValue(updated)
+                            .addOnSuccessListener(aVoid -> loadBudgets());
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     //Funcion para ir a movimientos cuando cliques en el movientos

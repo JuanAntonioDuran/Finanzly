@@ -285,17 +285,25 @@ public class GoalsFragment extends Fragment {
     //Metodo para salir del goal
     private void leaveGoal(Goal goal) {
 
-        List<String> updated =
-                new ArrayList<>(goal.getSharedUserIds());
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle("Salir de la meta")
+                .setMessage("¿Seguro que quieres salir de esta meta?")
+                .setPositiveButton("Sí", (dialog, which) -> {
 
-        updated.remove(currentUserId);
+                    List<String> updated =
+                            new ArrayList<>(goal.getSharedUserIds());
 
-        FirebaseDatabase.getInstance()
-                .getReference("goals")
-                .child(goal.getId())
-                .child("sharedUserIds")
-                .setValue(updated)
-                .addOnSuccessListener(aVoid -> loadGoals());
+                    updated.remove(currentUserId);
+
+                    FirebaseDatabase.getInstance()
+                            .getReference("goals")
+                            .child(goal.getId())
+                            .child("sharedUserIds")
+                            .setValue(updated)
+                            .addOnSuccessListener(aVoid -> loadGoals());
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
 

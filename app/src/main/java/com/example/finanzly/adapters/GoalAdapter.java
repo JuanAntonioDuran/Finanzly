@@ -100,7 +100,6 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isOwner = goal.getUserId().equals(currentUserId);
 
-        holder.btnAddProgress.setVisibility(View.VISIBLE);
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(!isOwner ? View.VISIBLE : View.GONE);
 
@@ -162,9 +161,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         }
 
         // Clicks
-        holder.btnAddProgress.setOnClickListener(v -> {
-            if (listener != null) listener.onAddProgress(goal);
-        });
+
 
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(goal);
@@ -204,7 +201,6 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
             tvStatus = itemView.findViewById(R.id.tvGoalStatus);
             progressBar = itemView.findViewById(R.id.progressBarGoal);
 
-            btnAddProgress = itemView.findViewById(R.id.btnGoalAddProgress);
             btnDelete = itemView.findViewById(R.id.btnGoalDelete);
             btnLeave = itemView.findViewById(R.id.btnItemLeft);
             btnReminder = itemView.findViewById(R.id.btnItemReminder);

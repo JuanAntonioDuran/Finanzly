@@ -85,7 +85,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- ACCIONES -->
+
         <!-- ACCIONES -->
         <LinearLayout
             android:id="@+id/actionsLayout"
@@ -98,20 +98,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <Button
-                android:id="@+id/btnItemViewMovements"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" Mov."
-                android:drawableLeft="@drawable/ic_movement"
-                android:drawablePadding="6dp"
-                android:textAllCaps="false"
-                android:backgroundTint="@color/blueAccent"
-                android:textColor="@android:color/white"
-                android:drawableTint="@android:color/white"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="8dp"
-                android:layout_marginEnd="6dp" />
+
 
             <Button
                 android:id="@+id/btnItemDelete"

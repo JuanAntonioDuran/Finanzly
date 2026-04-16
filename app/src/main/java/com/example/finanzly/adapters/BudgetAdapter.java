@@ -88,7 +88,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         //  Botones owner / shared
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(isOwner ? View.GONE : View.VISIBLE);
-        holder.btnViewMovements.setVisibility(View.VISIBLE);
+
 
         //  LÓGICA REMINDERS
         List<Reminder> reminders =
@@ -156,10 +156,6 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
                 listener.onDelete(budget);
         });
 
-        holder.btnViewMovements.setOnClickListener(v -> {
-            if (listener != null)
-                listener.onViewMovements(budget);
-        });
 
         holder.btnLeave.setOnClickListener(v -> {
             if (listener != null)
@@ -194,7 +190,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             progressBar = itemView.findViewById(R.id.progressBarBudget);
 
             btnDelete = itemView.findViewById(R.id.btnItemDelete);
-            btnViewMovements = itemView.findViewById(R.id.btnItemViewMovements);
+
             btnLeave = itemView.findViewById(R.id.btnItemLeft);
             btnReminder = itemView.findViewById(R.id.btnItemReminder);
         }

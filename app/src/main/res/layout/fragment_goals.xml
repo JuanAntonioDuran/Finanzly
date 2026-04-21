@@ -11,7 +11,9 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="120dp"> <!-- 🔥 ESPACIO PARA EL MENÚ -->
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -35,8 +37,6 @@
                 app:layout_constraintHorizontal_bias="0"
                 android:layout_marginBottom="8dp"/>
 
-
-
             <!-- 🧭 FILTROS -->
             <LinearLayout
                 android:id="@+id/filter_container"
@@ -51,7 +51,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <!-- Primera fila: título y estado -->
+                <!-- Primera fila -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -83,7 +83,7 @@
                         android:textAlignment="center"/>
                 </LinearLayout>
 
-                <!-- Segunda fila: botones -->
+                <!-- Botones -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -121,19 +121,20 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 🧾 LISTA DE METAS -->
+            <!-- 🧾 LISTA -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvGoals"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="16dp"
+                android:clipToPadding="false"
+                android:paddingBottom="32dp"
                 app:layout_constraintTop_toBottomOf="@id/filter_container"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:clipToPadding="false"/>
+                app:layout_constraintEnd_toEndOf="parent"/>
 
-            <!-- ⚠️ VISTA VACÍA -->
+            <!-- ⚠️ VACÍO -->
             <TextView
                 android:id="@+id/tvNoGoals"
                 android:layout_width="0dp"
@@ -151,6 +152,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
+    <!-- ➕ BOTÓN -->
     <Button
         android:id="@+id/btnAddGoal"
         android:layout_width="64dp"
@@ -166,6 +168,5 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="96dp"/>
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

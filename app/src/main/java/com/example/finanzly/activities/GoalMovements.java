@@ -44,8 +44,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GoalMovements extends AppCompatActivity {
 
@@ -125,7 +128,6 @@ public class GoalMovements extends AppCompatActivity {
 
                     if (currentGoal != null) {
 
-                        // ✅ ADAPTER AQUÍ (YA TENEMOS OWNER REAL)
                         adapter = new MovementAdapter(
                                 GoalMovements.this,
                                 filteredList,
@@ -145,7 +147,11 @@ public class GoalMovements extends AppCompatActivity {
 
                         updateRemainingText();
                         updateProgressBar();
+
                         loadMovements();
+
+                        // 🔥 FIX IMPORTANTE
+                        setupUserFilterSpinner();
 
                         boolean isOwner = uid.equals(currentGoal.getUserId());
                         fabEditGoal.setVisibility(isOwner ? View.VISIBLE : View.GONE);
@@ -232,28 +238,96 @@ public class GoalMovements extends AppCompatActivity {
 
         if (currentGoal == null) return;
 
-        userNameToIdMap.clear();
-        List<String> userNames = new ArrayList<>();
-        userNames.add("Todos");
+        if (userNameToIdMap == null) {
+            userNameToIdMap = new HashMap<>();
+        } else {
+            userNameToIdMap.clear();
+        }
 
-        HashSet<String> userIds = new HashSet<>();
+        final LinkedHashSet<String> userIdsToInclude = new LinkedHashSet<>();
 
-        //  Owner
+        // Owner
         if (currentGoal.getUserId() != null) {
-            userIds.add(currentGoal.getUserId());
+            userIdsToInclude.add(currentGoal.getUserId());
         }
 
         // Shared users
         if (currentGoal.getSharedUserIds() != null) {
-            userIds.addAll(currentGoal.getSharedUserIds());
-        }
-
-        //  Usuarios que aparecen en movimientos
-        for (Movement m : movementList) {
-            if (m.getUserId() != null) {
-                userIds.add(m.getUserId());
+            for (String uid : currentGoal.getSharedUserIds()) {
+                if (uid != null) userIdsToInclude.add(uid);
             }
         }
+
+        // Users from movements
+        for (Movement m : movementList) {
+            if (m.getUserId() != null) {
+                userIdsToInclude.add(m.getUserId());
+            }
+        }
+
+        // 🔥 CASO: vacío → solo "Todos"
+        if (userIdsToInclude.isEmpty()) {
+
+            List<String> userNames = new ArrayList<>();
+            userNames.add("Todos");
+
+            userNameToIdMap.put("Todos", "");
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    userNames
+            );
+
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spUserFilter.setAdapter(adapter);
+            spUserFilter.setOnItemSelectedListener(spinnerListener());
+            return;
+        }
+
+        final Set<String> missingUserIds = new HashSet<>();
+
+        for (String uid : userIdsToInclude) {
+            if (!userIdToNameMap.containsKey(uid)) {
+                missingUserIds.add(uid);
+            }
+        }
+
+        if (missingUserIds.isEmpty()) {
+            populateSpinnerFromUserIds(userIdsToInclude);
+        } else {
+
+            final AtomicInteger counter = new AtomicInteger(missingUserIds.size());
+
+            for (String missingId : missingUserIds) {
+
+                userService.getById(missingId).get()
+                        .addOnSuccessListener(userSnap -> {
+
+                            if (userSnap.exists()) {
+                                User u = userSnap.getValue(User.class);
+                                if (u != null && u.getName() != null) {
+                                    userIdToNameMap.put(missingId, u.getName());
+                                }
+                            }
+
+                            if (counter.decrementAndGet() <= 0) {
+                                populateSpinnerFromUserIds(userIdsToInclude);
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            if (counter.decrementAndGet() <= 0) {
+                                populateSpinnerFromUserIds(userIdsToInclude);
+                            }
+                        });
+            }
+        }
+    }
+
+    private void populateSpinnerFromUserIds(Set<String> userIds) {
+
+        List<String> userNames = new ArrayList<>();
+        userNames.add("Todos");
 
         for (String uid : userIds) {
             String name = userIdToNameMap.get(uid);
@@ -263,16 +337,19 @@ public class GoalMovements extends AppCompatActivity {
             }
         }
 
-        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
                 userNames
         );
 
-        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spUserFilter.setAdapter(adapterSpinner);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spUserFilter.setAdapter(adapter);
+        spUserFilter.setOnItemSelectedListener(spinnerListener());
+    }
 
-        spUserFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    private AdapterView.OnItemSelectedListener spinnerListener() {
+        return new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
@@ -284,14 +361,14 @@ public class GoalMovements extends AppCompatActivity {
                     filterUser = userNameToIdMap.get(selectedName);
                 }
 
-                applyFilters(); // si quieres solo con botón, quita esta línea
+                applyFilters();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 filterUser = "";
             }
-        });
+        };
     }
 
     // Abre un diálogo para crear o editar un movimiento y actualiza la lista al guardarlo
@@ -327,35 +404,51 @@ public class GoalMovements extends AppCompatActivity {
                         userIdToNameMap.clear();
 
                         List<Movement> allMovements = new ArrayList<>();
+
                         for (DataSnapshot ds : snapshot.getChildren()) {
                             Movement m = ds.getValue(Movement.class);
                             if (m != null) allMovements.add(m);
                         }
 
+                        // 🔥 CASO: no hay movimientos
                         if (allMovements.isEmpty()) {
+                            movementList.clear();
+
+                            setupUserFilterSpinner(); // 🔥 IMPORTANTE
+
                             applyFilters();
                             recalculateGoalCurrentAmount();
                             return;
                         }
 
                         for (Movement m : allMovements) {
+
                             if (!userIdToNameMap.containsKey(m.getUserId())) {
                                 userService.getById(m.getUserId()).get()
                                         .addOnSuccessListener(userSnap -> {
                                             if (userSnap.exists()) {
                                                 User u = userSnap.getValue(User.class);
-                                                if (u != null) userIdToNameMap.put(m.getUserId(), u.getName());
+                                                if (u != null) {
+                                                    userIdToNameMap.put(m.getUserId(), u.getName());
+                                                }
                                             }
+
                                             movementList.add(m);
-                                            if (movementList.size() == allMovements.size()) refreshAdapter();
+                                            if (movementList.size() == allMovements.size()) {
+                                                refreshAdapter();
+                                            }
                                         });
                             } else {
                                 movementList.add(m);
-                                if (movementList.size() == allMovements.size()) refreshAdapter();
+                                if (movementList.size() == allMovements.size()) {
+                                    refreshAdapter();
+                                }
                             }
                         }
                     }
-                    @Override public void onCancelled(DatabaseError error) {}
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {}
                 });
     }
     // Actualiza el adaptador con los nombres de usuario, aplica filtros y recalcula el total del objetivo

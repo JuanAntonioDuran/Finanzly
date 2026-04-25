@@ -540,7 +540,7 @@ public class GoalMovements extends AppCompatActivity {
                         Movement m = ds.getValue(Movement.class);
                         if (m != null) total += m.getType().equals("income") ? m.getAmount() : -m.getAmount();
                     }
-                    if (total < 0) total = 0;
+
                     if (total > currentGoal.getTargetAmount()) total = currentGoal.getTargetAmount();
 
                     currentGoal.setCurrentAmount(total);

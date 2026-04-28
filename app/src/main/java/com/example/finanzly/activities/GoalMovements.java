@@ -150,7 +150,7 @@ public class GoalMovements extends AppCompatActivity {
 
                         loadMovements();
 
-                        // 🔥 FIX IMPORTANTE
+
                         setupUserFilterSpinner();
 
                         boolean isOwner = uid.equals(currentGoal.getUserId());
@@ -181,7 +181,6 @@ public class GoalMovements extends AppCompatActivity {
             usersRef.child(uid).get().addOnSuccessListener(snapshot -> {
                 User user = snapshot.getValue(User.class);
 
-                // ✅ Variable final dentro de la lambda
                 final String currentUserName = (user != null && user.getName() != null)
                         ? user.getName()
                         : "Usuario";
@@ -265,7 +264,7 @@ public class GoalMovements extends AppCompatActivity {
             }
         }
 
-        // 🔥 CASO: vacío → solo "Todos"
+
         if (userIdsToInclude.isEmpty()) {
 
             List<String> userNames = new ArrayList<>();
@@ -410,11 +409,11 @@ public class GoalMovements extends AppCompatActivity {
                             if (m != null) allMovements.add(m);
                         }
 
-                        // 🔥 CASO: no hay movimientos
+                        // CASO: no hay movimientos
                         if (allMovements.isEmpty()) {
                             movementList.clear();
 
-                            setupUserFilterSpinner(); // 🔥 IMPORTANTE
+                            setupUserFilterSpinner();
 
                             applyFilters();
                             recalculateGoalCurrentAmount();

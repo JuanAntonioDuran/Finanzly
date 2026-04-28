@@ -214,10 +214,10 @@ public class BudgetMovements extends AppCompatActivity {
     private void setupUserFilterSpinner() {
         if (currentBudget == null) return;
 
-        // 1) Recolectar ids que debemos mostrar: owner + sharedUserIds + (opcional) usuarios en movimientos
+        //  Recolectar ids que debemos mostrar: owner + sharedUserIds +usuarios en movimientos
         final LinkedHashSet<String> userIdsToInclude = new LinkedHashSet<>();
 
-        // Owner siempre primero (si existe)
+        // Owner siempre primero
         if (currentBudget.getUserId() != null) {
             userIdsToInclude.add(currentBudget.getUserId());
         }
@@ -229,12 +229,12 @@ public class BudgetMovements extends AppCompatActivity {
             }
         }
 
-        // Opcional: añadir usuarios que aparecen en los movimientos (si quieres mostrarlos también)
+        //  añadir usuarios que aparecen en los movimientos
         for (Movement m : movementList) {
             if (m.getUserId() != null) userIdsToInclude.add(m.getUserId());
         }
 
-        // 2) Detectar qué userIds faltan en la caché userIdToNameMap
+        //  Detectar qué userIds faltan en la caché userIdToNameMap
         final Set<String> missingUserIds = new HashSet<>();
         for (String uid : userIdsToInclude) {
             if (!userIdToNameMap.containsKey(uid)) {
@@ -302,7 +302,7 @@ public class BudgetMovements extends AppCompatActivity {
                 String shortId = uid.length() > 6 ? uid.substring(0, 6) : uid;
                 name = "Desconocido (" + shortId + ")";
             }
-            // Evitar duplicados de nombre (si 2 usuarios comparten nombre, añadimos sufijo para mapear correctamente)
+            // Evitar duplicados de nombre
             String uniqueName = name;
             int suffix = 1;
             while (userNames.contains(uniqueName)) {
@@ -496,7 +496,7 @@ public class BudgetMovements extends AppCompatActivity {
                             recalculateBudgetSpent();
                             updateProgressBar();
 
-                            // 🔥 Si los usuarios ya están cargados, inicializamos spinner
+                            //  Si los usuarios ya están cargados, inicializamos spinner
                             if (!userIdToNameMap.isEmpty()) {
                                 setupUserFilterSpinner();
                             }
@@ -751,7 +751,7 @@ public class BudgetMovements extends AppCompatActivity {
             adapter.notifyDataSetChanged();
         }
 
-        // 🔹 Mostrar mensaje vacío si no hay resultados
+        //  Mostrar mensaje vacío si no hay resultados
         tvEmptyState.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 

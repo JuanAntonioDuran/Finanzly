@@ -99,7 +99,7 @@ public class EditBudgetDialog {
             adapter.notifyDataSetChanged();
             updateRecyclerVisibility(rvCollaborators);
 
-            // 2. 🔥 ACTUALIZAR FIREBASE AL INSTANTE
+            // 2.  ACTUALIZAR FIREBASE AL INSTANTE
             DatabaseReference budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
 
             Map<String, Object> updates = new HashMap<>();
@@ -125,7 +125,7 @@ public class EditBudgetDialog {
         rvCollaborators.setAdapter(adapter);
         rvCollaborators.setVisibility(View.GONE);
 
-        // 🔹 Cargar SOLO colaboradores reales
+        //  Cargar SOLO colaboradores reales
         if (!budget.getSharedUserIds().isEmpty()) {
             usersRef.get().addOnSuccessListener(snapshot -> {
                 for (String uid : budget.getSharedUserIds()) {
@@ -146,7 +146,7 @@ public class EditBudgetDialog {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        // ➕ INVITAR (SIN añadir colaborador)
+        //  INVITAR
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
 

@@ -57,10 +57,10 @@ public class LoginActivity extends AppCompatActivity {
             dialog.show(getSupportFragmentManager(), "password_reset_dialog");
         });
 
-        // 🔹 Acción de inicio de sesión
+        //  Acción de inicio de sesión
         btnLogin.setOnClickListener(v -> loginUser());
 
-        // 🔹 Enlace al registro
+        //  Enlace al registro
         tvRegisterLink.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             finish();

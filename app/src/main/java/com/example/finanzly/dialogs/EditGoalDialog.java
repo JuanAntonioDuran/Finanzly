@@ -101,7 +101,7 @@ public class EditGoalDialog {
             adapter.notifyDataSetChanged();
             updateRecyclerVisibility(rvCollaborators);
 
-            // 2. 🔥 ACTUALIZAR FIREBASE AL INSTANTE
+            // 2. ACTUALIZAR FIREBASE AL INSTANTE
             DatabaseReference goalsRef = FirebaseDatabase.getInstance().getReference("goals");
 
             Map<String, Object> updates = new HashMap<>();
@@ -127,7 +127,7 @@ public class EditGoalDialog {
         rvCollaborators.setAdapter(adapter);
         rvCollaborators.setVisibility(View.GONE);
 
-        // 🔹 Cargar SOLO colaboradores reales
+        //  Cargar SOLO colaboradores reales
         if (!goal.getSharedUserIds().isEmpty()) {
             usersRef.get().addOnSuccessListener(snapshot -> {
                 for (String uid : goal.getSharedUserIds()) {
@@ -148,7 +148,7 @@ public class EditGoalDialog {
             layoutCollaborators.setVisibility(View.GONE);
         }
 
-        // ➕ Invitar usuario (SIN añadirlo aún como colaborador)
+        //  Invitar usuario
         btnAddEmail.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
 

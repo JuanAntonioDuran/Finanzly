@@ -107,7 +107,7 @@ public class BudgetsFragment extends Fragment {
                 .setOnClickListener(v -> openBudgetDialog(null));
 
         loadBudgets();
-        loadReminders(); // 🔥 IMPORTANTE
+        loadReminders();
 
         return root;
     }
@@ -256,7 +256,7 @@ public class BudgetsFragment extends Fragment {
                 budgetService,
                 new UserService(getContext()),
                 () -> {
-                    // 🔥 Esto se ejecuta al guardar
+                    //  Esto se ejecuta al guardar
                     loadBudgets();
                 }
         );

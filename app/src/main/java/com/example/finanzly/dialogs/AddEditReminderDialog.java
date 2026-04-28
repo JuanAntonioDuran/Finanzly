@@ -70,10 +70,10 @@ public class AddEditReminderDialog {
                 .inflate(R.layout.dialog_add_edit_reminder, null);
         builder.setView(view);
 
-        // 🔥 HEADER TITLE
+        //  HEADER TITLE
         TextView tvHeaderTitle = view.findViewById(R.id.tvHeaderTitle);
 
-        // 🔥 AQUÍ ESTÁ LA CLAVE
+
         if (existing != null) {
             tvHeaderTitle.setText("Editar recordatorio");
         } else {

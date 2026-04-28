@@ -95,7 +95,7 @@ public class MovementDialog {
             selectedUserId[0] = m.getUserId();
         }
 
-        // 🔹 BOTÓN TIPO (solo Goal)
+        //  BOTÓN TIPO (solo Goal)
         if (currentGoal != null) {
 
             btnType.setVisibility(View.VISIBLE);
@@ -119,7 +119,7 @@ public class MovementDialog {
             m.setType("expense");
         }
 
-        // 👤 SPINNER SOLO PARA OWNER
+        //  SPINNER SOLO PARA OWNER
         String ownerId = currentBudget != null
                 ? currentBudget.getUserId()
                 : currentGoal != null
@@ -141,7 +141,7 @@ public class MovementDialog {
             tvUserLabel.setVisibility(View.GONE);
         }
 
-        // 📅 DATE PICKER
+        //  DATE PICKER
         etDate.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
 

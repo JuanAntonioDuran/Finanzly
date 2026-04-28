@@ -44,7 +44,7 @@ public class GoalsFragment extends Fragment {
 
     private GoalAdapter adapter;
 
-    // 🔥 IMPORTANTE: inicializado
+
     private Map<String, List<Reminder>> remindersByGoal = new HashMap<>();
 
     private String currentUserId;
@@ -103,7 +103,7 @@ public class GoalsFragment extends Fragment {
         rvGoals.setAdapter(adapter);
 
         loadGoals();
-        loadReminders(); // 🔥 CLAVE
+        loadReminders();
 
         btnApplyFilter.setOnClickListener(v -> applyFilters());
         btnClearFilter.setOnClickListener(v -> clearFilters());

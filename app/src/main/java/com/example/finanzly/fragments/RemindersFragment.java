@@ -134,11 +134,11 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         DatabaseReference goalsRef = FirebaseDatabase.getInstance().getReference("goals");
         DatabaseReference budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
 
-        // 👇 Sets para evitar duplicados
+        // Sets para evitar duplicados
         Set<String> goalIds = new HashSet<>();
         Set<String> budgetIds = new HashSet<>();
 
-        // 1️⃣ PRIMERO: sacar IDs usados en reminders del usuario
+        // PRIMERO: sacar IDs usados en reminders del usuario
         remindersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -147,7 +147,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     String userId = ds.child("userId").getValue(String.class);
 
-                    // ⚠️ Filtrar solo los del usuario actual
+                    //  Filtrar solo los del usuario actual
                     if (userId == null || !userId.equals(currentUserId)) continue;
 
                     String goalId = ds.child("linkedGoalId").getValue(String.class);

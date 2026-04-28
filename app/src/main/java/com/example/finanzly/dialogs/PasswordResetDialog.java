@@ -53,7 +53,7 @@ public class PasswordResetDialog extends DialogFragment {
                     .addOnCompleteListener(task -> {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
-                            tvError.setText("📩 Correo enviado correctamente");
+                            tvError.setText(" Correo enviado correctamente");
                             tvError.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
                         } else {
                             String msg;

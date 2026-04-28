@@ -48,7 +48,7 @@ public class MovementFragmentAdapter extends RecyclerView.Adapter<MovementFragme
                         : "Sin descripción"
         );
 
-        // 🏷 Categoría
+        // Categoría
         holder.tvCategory.setText(
                 movement.getCategory() != null && !movement.getCategory().isEmpty()
                         ? movement.getCategory()

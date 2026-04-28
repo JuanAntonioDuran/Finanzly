@@ -103,7 +103,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         holder.btnLeave.setVisibility(!isOwner ? View.VISIBLE : View.GONE);
 
-        //  LÓGICA REMINDERS (IGUAL QUE BUDGET)
+        //  LÓGICA REMINDERS
         List<Reminder> reminders =
                 remindersByGoal != null
                         ? remindersByGoal.get(goal.getId())

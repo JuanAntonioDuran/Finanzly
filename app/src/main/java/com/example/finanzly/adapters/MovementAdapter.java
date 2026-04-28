@@ -75,7 +75,7 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
             holder.tvAmount.setTextColor(context.getColor(R.color.red_error));
         }
 
-        // 🔥 CORREGIDO: usar userId en vez de movementId
+
         String userName = movementIdToUserName.get(movement.getUserId());
         holder.tvUserName.setText(userName != null ? userName : movement.getUserId());
 
@@ -84,21 +84,21 @@ public class MovementAdapter extends RecyclerView.Adapter<MovementAdapter.Moveme
 
         boolean canEdit = isBudgetOwner || isMovementOwner;
 
-        // 🔹 botones visibles solo si tiene permisos
+        //  botones visibles solo si tiene permisos
         holder.btnEdit.setVisibility(canEdit ? View.VISIBLE : View.GONE);
         holder.btnDelete.setVisibility(canEdit ? View.VISIBLE : View.GONE);
 
-        // 🔹 click editar botón
+        //  click editar botón
         holder.btnEdit.setOnClickListener(v -> {
             if (listener != null) listener.onEdit(movement);
         });
 
-        // 🔹 click eliminar botón
+        //  click eliminar botón
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) listener.onDelete(movement);
         });
 
-        // 🔥 CLICK EN TODA LA TARJETA (NUEVO)
+        //  CLICK EN TODA LA TARJETA
         holder.itemView.setOnClickListener(v -> {
             if (listener != null && canEdit) {
                 listener.onEdit(movement);

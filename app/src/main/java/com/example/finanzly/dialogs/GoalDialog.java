@@ -59,7 +59,7 @@ public class GoalDialog {
         boolean isEdit = existingGoal != null;
 
         // -----------------------------
-        // 🔥 FECHA POR DEFECTO (SOLO CREAR)
+        //  FECHA POR DEFECTO (SOLO CREAR)
         // -----------------------------
         if (!isEdit) {
             String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())

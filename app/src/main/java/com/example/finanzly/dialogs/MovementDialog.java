@@ -52,6 +52,41 @@ public class MovementDialog {
 
     public void open(Movement movement) {
 
+        String currentUserId = FirebaseAuth.getInstance().getUid();
+
+        // ===================== 🔥 PERMISOS GLOBAL =====================
+        String ownerId = currentBudget != null
+                ? currentBudget.getUserId()
+                : currentGoal != null
+                ? currentGoal.getUserId()
+                : null;
+
+        Set<String> allowedUsers = new HashSet<>();
+
+        if (currentBudget != null) {
+            allowedUsers.add(currentBudget.getUserId());
+            if (currentBudget.getSharedUserIds() != null)
+                allowedUsers.addAll(currentBudget.getSharedUserIds());
+        }
+
+        if (currentGoal != null) {
+            allowedUsers.add(currentGoal.getUserId());
+            if (currentGoal.getSharedUserIds() != null)
+                allowedUsers.addAll(currentGoal.getSharedUserIds());
+        }
+
+        boolean hasAccess = ownerId != null &&
+                allowedUsers.contains(currentUserId);
+
+        // ❌ BLOQUEO TOTAL
+        if (!hasAccess) {
+            Toast.makeText(context,
+                    "No tienes permisos para gestionar movimientos",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // ===================== CONTINUACIÓN NORMAL =====================
         boolean isNew = movement == null;
         Movement m = isNew ? new Movement() : movement;
 
@@ -72,14 +107,12 @@ public class MovementDialog {
         movementService = new MovementService(context);
         userService = new UserService(context);
 
-        String currentUserId = FirebaseAuth.getInstance().getUid();
         final String[] selectedUserId = {currentUserId};
 
         if (isNew) {
             tvDialogTitle.setText("Nuevo movimiento");
             btnSave.setText("Guardar");
 
-            // 🔥 FECHA POR DEFECTO (HOY)
             String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     .format(new Date());
             etDate.setText(today);
@@ -95,7 +128,7 @@ public class MovementDialog {
             selectedUserId[0] = m.getUserId();
         }
 
-        //  BOTÓN TIPO (solo Goal)
+        // ===================== TIPO =====================
         if (currentGoal != null) {
 
             btnType.setVisibility(View.VISIBLE);
@@ -119,29 +152,19 @@ public class MovementDialog {
             m.setType("expense");
         }
 
-        //  SPINNER SOLO PARA OWNER
-        String ownerId = currentBudget != null
-                ? currentBudget.getUserId()
-                : currentGoal != null
-                ? currentGoal.getUserId()
-                : null;
-
+        // ===================== OWNER CONTROL =====================
         boolean isOwner = ownerId != null && ownerId.equals(currentUserId);
 
         if (isOwner) {
-
             spUserAssign.setVisibility(View.VISIBLE);
             tvUserLabel.setVisibility(View.VISIBLE);
-
             loadUsersForSpinner(spUserAssign, selectedUserId);
-
         } else {
-
             spUserAssign.setVisibility(View.GONE);
             tvUserLabel.setVisibility(View.GONE);
         }
 
-        //  DATE PICKER
+        // ===================== DATE PICKER =====================
         etDate.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
 
@@ -186,7 +209,6 @@ public class MovementDialog {
                 Toast.makeText(context, "Cantidad inválida", Toast.LENGTH_SHORT).show();
                 return;
             }
-
 
             if (amount <= 0) {
                 Toast.makeText(context, "La cantidad debe ser mayor que 0", Toast.LENGTH_SHORT).show();

@@ -187,6 +187,12 @@ public class MovementDialog {
                 return;
             }
 
+
+            if (amount <= 0) {
+                Toast.makeText(context, "La cantidad debe ser mayor que 0", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             m.setDate(date);
             m.setDescription(desc);
             m.setAmount(amount);

@@ -113,18 +113,19 @@ public class BudgetMovements extends AppCompatActivity {
 
         // FAB – Añadir movimiento
         fabAddMovement.setOnClickListener(v -> {
-            MovementDialog dialog = new MovementDialog(this, m -> {
-                String id = m.getId() != null ? m.getId() : movementsRef.child(budgetId).push().getKey();
-                m.setId(id);
 
-                movementsRef.child(budgetId).child(id)
-                        .setValue(m)
-                        .addOnSuccessListener(aVoid -> {
-                            // ❌ No añadimos manualmente a movementList, el listener de loadMovements() se encargará
-                            Toast.makeText(this, "Movimiento guardado", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e ->
-                                Toast.makeText(this, "Error guardando movimiento", Toast.LENGTH_SHORT).show());
+            MovementDialog dialog = new MovementDialog(this, m -> {
+
+                MovementService movementService = new MovementService(this);
+
+                if (m.getId() == null) {
+                    String id = movementService.insert(m);
+                    m.setId(id);
+                } else {
+                    movementService.update(m.getId(), m);
+                }
+
+                Toast.makeText(this, "Movimiento guardado", Toast.LENGTH_SHORT).show();
             });
 
             dialog.setBudget(currentBudget, budgetId);

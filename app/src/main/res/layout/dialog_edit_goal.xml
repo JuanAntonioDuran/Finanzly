@@ -72,7 +72,7 @@
 
             <!-- Fecha límite -->
             <TextView
-                android:text="Fecha límite (opcional)"
+                android:text="Fecha límite"
                 android:textStyle="bold"
                 android:textSize="14sp"
                 android:layout_width="wrap_content"

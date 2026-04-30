@@ -1,6 +1,7 @@
 package com.example.finanzly.dialogs;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
@@ -59,6 +60,8 @@ public class EditGoalDialog {
 
     public void show() {
 
+
+
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (firebaseUser != null) {
@@ -89,6 +92,33 @@ public class EditGoalDialog {
         if (goal.getSharedUserIds() == null) {
             goal.setSharedUserIds(new ArrayList<>());
         }
+
+
+        etDeadline.setFocusable(false);
+        etDeadline.setClickable(true);
+
+        etDeadline.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(context,
+                    (view1, selectedYear, selectedMonth, selectedDay) -> {
+
+                        String formattedDate = String.format(Locale.getDefault(),
+                                "%04d-%02d-%02d",
+                                selectedYear,
+                                selectedMonth + 1,
+                                selectedDay);
+
+                        etDeadline.setText(formattedDate);
+                    },
+                    year, month, day);
+
+            datePickerDialog.show();
+        });
 
         collaboratorList = new ArrayList<>();
 

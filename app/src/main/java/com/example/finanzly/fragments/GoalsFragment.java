@@ -278,6 +278,7 @@ public class GoalsFragment extends Fragment {
     // Metodo para limpiar filtros
     private void clearFilters() {
         etTitleFilter.setText("");
+        spinnerGoalStatusFilter.setSelection(0);
         applyFilters();
     }
 

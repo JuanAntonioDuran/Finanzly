@@ -7,6 +7,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -70,7 +71,7 @@ public class GoalMovements extends AppCompatActivity {
 
     private EditText etStartDateFilter;
     private EditText etEndDateFilter;
-    private EditText etUserFilter;
+
     private Spinner spUserFilter;
     private String goalId;
     private Goal currentGoal;
@@ -79,6 +80,8 @@ public class GoalMovements extends AppCompatActivity {
 
     private HashMap<String, String> userNameToIdMap = new HashMap<>();
     private ImageButton btnBack;
+
+    private Button btnApplyFilter, btnClearFilter;
     private FloatingActionButton fabAddMovement, fabEditGoal, fabAddReminder;
 
     @Override
@@ -93,6 +96,10 @@ public class GoalMovements extends AppCompatActivity {
         progressTop = findViewById(R.id.progressTop);
         tvTitle = findViewById(R.id.tvTitleMovements);
         uid = FirebaseAuth.getInstance().getUid();
+
+        btnApplyFilter = findViewById(R.id.btnApplyFilter);
+        btnClearFilter = findViewById(R.id.btnClearFilter);
+
 
         etStartDateFilter = findViewById(R.id.etStartDateFilter);
         etEndDateFilter = findViewById(R.id.etEndDateFilter);
@@ -222,16 +229,20 @@ public class GoalMovements extends AppCompatActivity {
         etStartDateFilter.setOnClickListener(v -> showDatePicker(etStartDateFilter));
         etEndDateFilter.setOnClickListener(v -> showDatePicker(etEndDateFilter));
 
-        TextWatcher filterWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) { applyFilters(); }
-        };
-        etStartDateFilter.addTextChangedListener(filterWatcher);
-        etEndDateFilter.addTextChangedListener(filterWatcher);
+        btnClearFilter.setOnClickListener(v -> cleanFilters());
+        btnApplyFilter.setOnClickListener(v -> applyFilters());
+
+
 
     }
 
+    private void cleanFilters(){
+        etStartDateFilter.setText("");
+        etEndDateFilter.setText("");
+        spUserFilter.setSelection(0);
+        filterUser = "";
+        applyFilters();
+    }
 
     private void setupUserFilterSpinner() {
 
@@ -360,7 +371,7 @@ public class GoalMovements extends AppCompatActivity {
                     filterUser = userNameToIdMap.get(selectedName);
                 }
 
-                applyFilters();
+
             }
 
             @Override

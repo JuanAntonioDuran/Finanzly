@@ -32,7 +32,7 @@ public class BudgetMovements extends AppCompatActivity {
 
     // UI
     private TextView tvPercent, tvSpent, tvEmptyState;
-    private EditText  etUserFilter, etStartDateFilter, etEndDateFilter;
+    private EditText   etStartDateFilter, etEndDateFilter;
     private RecyclerView recyclerView;
     private ProgressBar progressTop;
     private FloatingActionButton fabAddMovement, fabEditBudget, fabAddReminder;
@@ -40,7 +40,6 @@ public class BudgetMovements extends AppCompatActivity {
     private Spinner spUserFilter;  // en lugar de EditText
     // Firebase references
     private DatabaseReference budgetsRef;
-    private DatabaseReference movementsRef;
     private DatabaseReference usersRef;
     private String uid;
 
@@ -71,7 +70,6 @@ public class BudgetMovements extends AppCompatActivity {
 
         uid = FirebaseAuth.getInstance().getUid();
         budgetsRef = FirebaseDatabase.getInstance().getReference("budgets");
-        movementsRef = FirebaseDatabase.getInstance().getReference("movements");
         usersRef = FirebaseDatabase.getInstance().getReference("users");
 
         budgetId = getIntent().getStringExtra("budgetId");
@@ -386,23 +384,25 @@ public class BudgetMovements extends AppCompatActivity {
         adapter.setOnMovementActionListener(new MovementAdapter.OnMovementActionListener() {
             @Override
             public void onEdit(Movement movement) {
+
                 MovementDialog dialog = new MovementDialog(BudgetMovements.this, m -> {
-                    // Actualizar en Firebase correctamente
-                    movementsRef.child(m.getLinkedBudgetId()).child(m.getId())
-                            .setValue(m)
-                            .addOnSuccessListener(aVoid -> {
-                                // Actualizar lista en memoria buscando por id
-                                int index = findMovementIndexById(m.getId());
-                                if (index != -1) {
-                                    movementList.set(index, m);
-                                    applyFilters();
-                                } else {
-                                    // Si no está, no forzamos duplicados — la escucha de Firebase sincronizará en breve
-                                }
-                                recalculateBudgetSpent();
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(BudgetMovements.this, "Error actualizando movimiento", Toast.LENGTH_SHORT).show());
+
+                    MovementService movementService = new MovementService(BudgetMovements.this);
+
+                    //  ACTUALIZAR CORRECTAMENTE
+                    movementService.update(m.getId(), m);
+
+                    //  ACTUALIZAR UI
+                    int index = findMovementIndexById(m.getId());
+
+                    if (index != -1) {
+                        movementList.set(index, m);
+                        applyFilters();
+                    }
+
+                    recalculateBudgetSpent();
+
+                    Toast.makeText(BudgetMovements.this, "Movimiento actualizado", Toast.LENGTH_SHORT).show();
                 });
 
                 dialog.setBudget(currentBudget, budgetId);

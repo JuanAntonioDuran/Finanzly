@@ -259,24 +259,44 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         String selectedResource = spinnerLinkedResource.getSelectedItem() != null
                 ? spinnerLinkedResource.getSelectedItem().toString()
                 : "Todos";
-        String selectedResourceId = linkedResourceMap.get(selectedResource);
 
+        String selectedResourceId = linkedResourceMap.get(selectedResource);
 
         List<Reminder> filtered = new ArrayList<>();
 
         for (Reminder r : allReminders) {
 
-            // ---- FILTRO TEXTO ----
-            boolean matchesText = r.getTitle() != null &&
-                    r.getTitle().toLowerCase().contains(searchText);
+            // =========================
+            //  FILTRO POR NAVEGACIÓN
+            // =========================
+            if (filterGoalId != null) {
+                if (r.getLinkedGoalId() == null ||
+                        !r.getLinkedGoalId().equals(filterGoalId)) {
+                    continue;
+                }
+            }
 
-            boolean matchesResource = true;
+            if (filterBudgetId != null) {
+                if (r.getLinkedBudgetId() == null ||
+                        !r.getLinkedBudgetId().equals(filterBudgetId)) {
+                    continue;
+                }
+            }
+
+            // =========================
+            //  FILTRO TEXTO
+            // =========================
+            boolean matchesText = (searchText.isEmpty()) ||
+                    (r.getTitle() != null &&
+                            r.getTitle().toLowerCase().contains(searchText));
+
+            // =========================
+            // ESTADO
+            // =========================
             boolean isExpired = isReminderExpired(r);
-            boolean matchesState = true;
+            boolean matchesState;
 
-            // ---- FILTRO ESTADO ----
             switch (selectedStatus) {
-
                 case "Pendientes":
                     matchesState = !r.getIsCompleted() && !isExpired;
                     break;
@@ -289,17 +309,17 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     matchesState = isExpired;
                     break;
 
-                case "Todos":
                 default:
                     matchesState = true;
                     break;
             }
 
-            // ---- FILTRO TIPO (META / PRESUPUESTO) ----
-            boolean matchesType = true;
+            // =========================
+            //  TIPO
+            // =========================
+            boolean matchesType;
 
             switch (selectedType) {
-
                 case "Meta":
                     matchesType = r.getLinkedGoalId() != null;
                     break;
@@ -308,18 +328,28 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     matchesType = r.getLinkedBudgetId() != null;
                     break;
 
-                case "Todos":
                 default:
                     matchesType = true;
                     break;
             }
 
+            // =========================
+            //  RESOURCE (spinner)
+            // =========================
+            boolean matchesResource = true;
+
             if (!selectedResource.equals("Todos") && selectedResourceId != null) {
                 matchesResource =
-                        (r.getLinkedGoalId() != null && r.getLinkedGoalId().equals(selectedResourceId)) ||
-                                (r.getLinkedBudgetId() != null && r.getLinkedBudgetId().equals(selectedResourceId));
+                        (r.getLinkedGoalId() != null &&
+                                r.getLinkedGoalId().equals(selectedResourceId)) ||
+
+                                (r.getLinkedBudgetId() != null &&
+                                        r.getLinkedBudgetId().equals(selectedResourceId));
             }
 
+            // =========================
+            //  RESULTADO FINAL
+            // =========================
             if (matchesText && matchesState && matchesType && matchesResource) {
                 filtered.add(r);
             }
@@ -346,11 +376,17 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
     //Funcion para limpiar filtros
     private void cleanFilters() {
 
+        // Limpiar UI
         edtFilterSearch.setText("");
         spinnerLinkedResource.setSelection(0);
         spinnerReminderStatus.setSelection(0);
         spinnerReminderType.setSelection(0);
 
+
+        filterGoalId = null;
+        filterBudgetId = null;
+
+        // Mostrar todos los reminders
         adapter.updateList(new ArrayList<>(allReminders));
     }
 
@@ -398,7 +434,6 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                 sharedUsersMap.clear();
 
                 long now = System.currentTimeMillis();
-
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
 
                 for (DataSnapshot ds : snapshot.getChildren()) {
@@ -409,22 +444,24 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     if (r.getId() == null) r.setId(ds.getKey());
                     if (r.getSharedUserIds() == null) r.setSharedUserIds(new ArrayList<>());
 
+                    // ✅ Acceso: owner o compartido
                     boolean accepted = currentUserId != null &&
                             (currentUserId.equals(r.getUserId()) ||
                                     r.getSharedUserIds().contains(currentUserId));
 
                     if (!accepted) continue;
 
-                    //  CALCULAR EXPIRACIÓN
+                    // ⏰ Expiración
                     try {
-                        String dateTimeString = r.getDate() + "T" + (r.getTime() != null ? r.getTime() : "00:00");
+                        String dateTimeString = r.getDate() + "T" +
+                                (r.getTime() != null ? r.getTime() : "00:00");
+
                         Date reminderDate = sdf.parse(dateTimeString);
 
                         if (reminderDate != null) {
                             boolean isExpired = !r.getIsCompleted() &&
                                     reminderDate.getTime() < now;
 
-                            // Persistir en Firebase si cambia
                             if (isExpired && !r.getIsExpired()) {
                                 r.setIsExpired(true);
                                 remindersRef.child(r.getId()).child("isExpired").setValue(true);
@@ -437,11 +474,10 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                         Log.e("RemindersFragment", "Error parseando fecha: " + e.getMessage());
                     }
 
-                    //  Usuarios compartidos
+                    // 👥 Usuarios compartidos
                     List<String> names = new ArrayList<>();
 
                     for (String uid : r.getSharedUserIds()) {
-
                         Map<String, Object> userData = usersMap.get(uid);
 
                         if (userData != null && userData.get("name") != null) {
@@ -453,26 +489,16 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     sharedUsersMap.put(r.getId(), names);
 
-                    //  Filtro por goal
-                    if (filterGoalId != null) {
-                        if (r.getLinkedGoalId() == null || !r.getLinkedGoalId().equals(filterGoalId)) {
-                            continue;
-                        }
-                    }
-
+                    // 🚫 SIN FILTROS AQUÍ
                     reminderList.add(r);
                 }
 
+                // Guardar todos
                 allReminders.clear();
                 allReminders.addAll(reminderList);
 
-                if (filterGoalId != null) {
-                    applyFilters();
-                } else {
-                    adapter.notifyDataSetChanged();
-                }
-
-                adapter.notifyDataSetChanged();
+                // 🔥 SOLO AQUÍ se filtra
+                applyFilters();
             }
 
             @Override

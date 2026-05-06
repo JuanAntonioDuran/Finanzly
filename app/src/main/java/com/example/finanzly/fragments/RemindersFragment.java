@@ -138,7 +138,6 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
         Set<String> goalIds = new HashSet<>();
         Set<String> budgetIds = new HashSet<>();
 
-        // PRIMERO: sacar IDs usados en reminders del usuario
         remindersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -147,8 +146,18 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                     String userId = ds.child("userId").getValue(String.class);
 
-                    //  Filtrar solo los del usuario actual
-                    if (userId == null || !userId.equals(currentUserId)) continue;
+                    //  recoger sharedUserIds
+                    List<String> sharedUsers = new ArrayList<>();
+                    for (DataSnapshot userSnap : ds.child("sharedUserIds").getChildren()) {
+                        String uid = userSnap.getValue(String.class);
+                        if (uid != null) sharedUsers.add(uid);
+                    }
+
+                    boolean isOwner = userId != null && userId.equals(currentUserId);
+                    boolean isShared = sharedUsers.contains(currentUserId);
+
+                    // Aceptar si eres owner o estás compartido
+                    if (!isOwner && !isShared) continue;
 
                     String goalId = ds.child("linkedGoalId").getValue(String.class);
                     String budgetId = ds.child("linkedBudgetId").getValue(String.class);
@@ -162,7 +171,7 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                     }
                 }
 
-                // 2 Cargar SOLO esos goals
+                //  Cargar SOLO esos goals
                 goalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -203,6 +212,8 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
 
                                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                                 spinnerLinkedResource.setAdapter(adapter);
+
+                                //  Aplicar filtro si viene de navegación
                                 if (filterGoalId != null || filterBudgetId != null) {
 
                                     spinnerLinkedResource.post(() -> {
@@ -223,15 +234,18 @@ public class RemindersFragment extends Fragment implements ReminderAdapter.OnRem
                                 }
                             }
 
-                            @Override public void onCancelled(@NonNull DatabaseError error) {}
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {}
                         });
                     }
 
-                    @Override public void onCancelled(@NonNull DatabaseError error) {}
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
                 });
             }
 
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
